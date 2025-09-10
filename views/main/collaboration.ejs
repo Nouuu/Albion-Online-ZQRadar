@@ -1,0 +1,168 @@
+
+<div class="container px-6 mx-auto grid">
+  <div class="grid gap-6 mb-8 md:grid-cols-1 xl:grid-cols-1">
+    <!-- Card -->
+
+    <div class="mt-4 flex items-start p-4 bg-white rounded-lg shadow-xs dark:bg-gray-800">
+      <div>
+        <h2 id="collaboration-text" class=" text-4xl font-semibold text-gray-600 dark:text-gray-300">
+          Collaboration
+        </h2>
+      </div>
+    </div>
+
+    <div class="flex items-center p-4 bg-white rounded-lg shadow-xs dark:bg-gray-800">
+      <div>
+        <h4 id="collaboration-mobs-id-text" class="mb-4 text-2xl font-semibold text-gray-600 dark:text-gray-300">
+          Mobs
+        </h4>
+
+        <div class = "ml-4"></div>
+
+        <label class="block text-sm mb-2">
+            <span class="text-gray-700 dark:text-gray-400">Mob ID</span>
+            <input
+              id = "mobID"
+              class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input"
+              placeholder="ID"
+              type="number"
+            />
+        </label>
+
+        <label class="block text-sm mb-2">
+          <span class="text-gray-700 dark:text-gray-400">Mob Type</span>
+          <div class="relative mr-6">
+            <button id="mob-type-dropdown" data-dropdown-toggle="dropdown" class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input" type="button">
+              <div class="flex items-center">
+                  <div id="mob-type-dropdown-text">Living Harvestable</div>
+                  <div>
+                      <svg
+                          class="w-4 h-4"
+                          aria-hidden="true"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                      >
+                          <path
+                              fill-rule="evenodd"
+                              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                              clip-rule="evenodd"
+                          ></path>
+                      </svg>
+                  </div>
+              </div>
+            </button>
+            <button id="mob-type-drpMenu" class="hidden absolute mt-2 dark:bg-gray-700 dark::text-white border border-gray-300 rounded shadow-lg" style="width: max-content;">
+              <p class="block c-pointer px-4 py-2 dark:text-gray-300 hover:bg-blue-100" style="width: 100%;">Living Harvestable</p>
+              <p class="block c-pointer px-4 py-2 dark:text-gray-300 hover:bg-blue-100" style="width: 100%;">Living Skinnable</p>
+              <p class="block c-pointer px-4 py-2 dark:text-gray-300 hover:bg-blue-100" style="width: 100%;">Enemy</p>
+              <p class="block c-pointer px-4 py-2 dark:text-gray-300 hover:bg-blue-100" style="width: 100%;">Medium Enemy</p>
+              <p class="block c-pointer px-4 py-2 dark:text-gray-300 hover:bg-blue-100" style="width: 100%;">Enchanted Enemy</p>
+              <p class="block c-pointer px-4 py-2 dark:text-gray-300 hover:bg-blue-100" style="width: 100%;">Mini Boss</p>
+              <p class="block c-pointer px-4 py-2 dark:text-gray-300 hover:bg-blue-100" style="width: 100%;">Boss</p>
+              <p class="block c-pointer px-4 py-2 dark:text-gray-300 hover:bg-blue-100" style="width: 100%;">Drone</p>
+              <p class="block c-pointer px-4 py-2 dark:text-gray-300 hover:bg-blue-100" style="width: 100%;">MistBoss</p>
+              <p class="block c-pointer px-4 py-2 dark:text-gray-300 hover:bg-blue-100" style="width: 100%;">Events</p>
+            </button>
+          </div>
+        </label>
+        
+        <label class="block text-sm mb-6">
+            <span class="text-gray-700 dark:text-gray-400">Mob Tier</span>
+            <input
+              id = "mobTier"
+              class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input"
+              placeholder="Tier"
+              type="number"
+            />
+        </label>
+
+        <button
+          id="mob-send-button"
+          class="block mb-2 w-28 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input">
+          Send
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+
+  function returnLocalBool(item)
+  {
+    return localStorage.getItem(item) == "true";
+  }
+
+  //#region Mob
+  let isOpen = false;
+  let selectedType = "Living Harvestable";
+
+  let drpMenu = document.getElementById("mob-type-drpMenu");
+  let dropdownDefaultButton = document.getElementById("mob-type-dropdown");
+  let dropdownDefaultText = document.getElementById("mob-type-dropdown-text");
+
+  dropdownDefaultButton.addEventListener("blur", () => {
+    if (isOpen)
+    {
+      setTimeout(() => {
+        drpMenu.classList.toggle("hidden");
+        isOpen = !isOpen;
+      }, 100);
+    }
+  }, true);
+
+  dropdownDefaultButton.addEventListener("click", () =>
+  {
+    isOpen = !isOpen;
+
+    drpMenu.classList.toggle("hidden");
+  });
+
+  Array.from(drpMenu.children).forEach(element => {
+    element.addEventListener("click", () => {
+      dropdownDefaultText.textContent = element.textContent;
+      selectedType = element.textContent;
+    }, false);
+  });
+
+  const mobID = document.getElementById('mobID');
+  const mobType = document.getElementById('mob-type-dropdown-text');
+  const mobTier = document.getElementById('mobTier');
+
+
+  let mobSendButton = document.getElementById("mob-send-button");
+  mobSendButton.addEventListener("click", () => {
+    location.href = `/send-collab-mob/${mobID.value}/${mobType.textContent}/${mobTier.value}`;
+  });
+  //#endregion
+
+
+  function SetLanguage(lang)
+  {
+    
+  }
+</script>
+
+<style>
+  .group:hover .group-hover\:opacity-100 {
+    opacity: 1;
+  }
+  .whitespace-nowrap {
+    white-space: nowrap;
+  }
+  .group .group-hover\:opacity-100 {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+  }
+  .group:hover .group-hover\:opacity-100 {
+    opacity: 1;
+  }
+  .relative.group .absolute {
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    transform: translateX(0.5rem) translateY(-50%);
+    pointer-events: none;
+  }
+</style>

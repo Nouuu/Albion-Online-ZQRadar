@@ -8,7 +8,8 @@ const fs = require("fs");
 
 const { getAdapterIp } = require('./server-scripts/adapter-selector');
 
-const EventCodes = require('./scripts/Utils/EventCodesApp.js')
+const EventCodes = require('./scripts/Utils/EventCodesApp.js');
+const { AddMobId } = require('./scripts/Utils/Collaboration.js');
 
 StartRadar();
 
@@ -73,6 +74,10 @@ function StartRadar()
     res.render('layout', { mainContent: viewName });
   });
 
+  app.get('/collaboration', (req, res) => {
+    const viewName = 'main/collaboration'; 
+    res.render('layout', { mainContent: viewName });
+  });
 
 
   app.get('/drawing', (req, res) => {
@@ -91,6 +96,13 @@ function StartRadar()
     res.redirect('/');
   });*/
 
+
+  app.get('/send-collab-mob/:mobId/:mobType/:mobTier', async (req, res) => {
+    AddMobId(req.params.mobId, req.params.mobType, req.params.mobTier);
+
+    const viewName = 'main/collaboration'; 
+    res.render('layout', { mainContent: viewName });
+  });
 
 
   app.use('/scripts', express.static(__dirname + '/scripts'));
