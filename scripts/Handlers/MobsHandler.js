@@ -322,8 +322,19 @@ class MobsHandler {
     }
 
     removeMob(id) {
+        const before = this.mobsList.length;
+        const found = this.mobsList.find(m => m.id === id);
         this.mobsList = this.mobsList.filter(m => m.id !== id);
         this.harvestablesNotGood = this.harvestablesNotGood.filter(x => x.id !== id);
+        const after = this.mobsList.length;
+
+        if (this.settings && this.settings.logLivingResources) {
+            if (before !== after) {
+                console.log(`[MobsHandler] 🗑️ Removed mob ${id} (living resources: ${before} → ${after})`);
+            } else if (found === undefined) {
+                console.log(`[MobsHandler] ⚠️ Entity ${id} not in living list (already removed or was static)`);
+            }
+        }
     }
 
     updateMobPosition(id, posX, posY) {
