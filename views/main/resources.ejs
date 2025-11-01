@@ -861,8 +861,14 @@
 
                 <label class="flex items-center">
                     <input type="checkbox" id="settingLogLivingResources" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                    <span class="dark:text-white ml-2">🔍 Log Living Resources to Console</span>
+                    <span class="dark:text-white ml-2">🔍 Log Living Resources (JSON)</span>
                 </label>
+
+                <label class="flex items-center">
+                    <input type="checkbox" id="settingLogLivingCreatures" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                    <span class="dark:text-white ml-2">📊 Log Living Creatures (CSV)</span>
+                </label>
+
                 <!-- Bouton pour vider le cache TypeID -->
                 <div style="margin-top:10px;">
                     <button
@@ -1863,6 +1869,18 @@
 	let settingLivingResourcesID = document.getElementById("settingLivingResourcesID");
 	settingLivingResourcesID.checked = returnLocalBool("settingLivingResourcesID");
 	settingLivingResourcesID.addEventListener("click", () => {localStorage.setItem("settingLivingResourcesID", settingLivingResourcesID.checked);});
+
+	let settingLogLivingCreatures = document.getElementById("settingLogLivingCreatures");
+	settingLogLivingCreatures.checked = returnLocalBool("settingLogLivingCreatures");
+	settingLogLivingCreatures.addEventListener("click", () => {
+		localStorage.setItem("settingLogLivingCreatures", settingLogLivingCreatures.checked);
+		if (settingLogLivingCreatures.checked) {
+			console.log("📊 Living Creatures CSV Logging ENABLED");
+			console.log("📋 CSV Header: Timestamp,TypeID,Tier,Name,Type,Enchant,Health,State,EntityID");
+		} else {
+			console.log("📊 Living Creatures CSV Logging DISABLED");
+		}
+	});
 
     let settingLogLivingResources = document.getElementById("settingLogLivingResources");
     settingLogLivingResources.checked = returnLocalBool("settingLogLivingResources");
