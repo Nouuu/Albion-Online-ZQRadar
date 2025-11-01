@@ -56,10 +56,8 @@ class Mist
     }
 }
 
-class MobsHandler
-{
-    constructor(settings)
-    {
+class MobsHandler {
+    constructor(settings) {
         this.settings = settings;
 
         this.mobsList = [];
@@ -68,12 +66,16 @@ class MobsHandler
 
         this.harvestablesNotGood = [];
 
-        // 🔍 Enhanced logging tracking
-        this.detectedTypeIDs = new Set(); // Track unique TypeIDs
-        this.loggingStartTime = null;
-
         // 🔗 Cross-reference with HarvestablesHandler
         this.staticResourceTypeIDs = new Map(); // TypeID → {type: 'Fiber'|'Hide'|'Wood'|'Ore'|'Rock', tier: number}
+
+        // (Minimal behavior) No pending/debounce: commit static registrations immediately.
+        // This file no longer attempts to suppress or blacklist registrations here.
+
+        // Internal: track last logged registration state to avoid repetitive logs
+        this._registrationLogState = new Map(); // typeId -> { type, tier }
+        // Internal: dedupe human pretty logs per entity (entityId -> signature)
+        this._lastHumanLog = new Map();
 
         // (no DOM wiring here — UI buttons are bound centrally in Utils.js)
     }
@@ -101,8 +103,11 @@ class MobsHandler
 
         // If user wants JSON output for living logs, emit only NDJSON
         if (!wantHuman) {
-            try { console.log(JSON.stringify(record)); }
-            catch (err) { console.log(record); }
+            try {
+                console.log(JSON.stringify(record));
+            } catch (err) {
+                console.log(record);
+            }
             return;
         }
 
@@ -115,6 +120,27 @@ class MobsHandler
             const repType = payload.reportedTypeId != null ? payload.reportedTypeId : '';
             const resType = payload.resolvedTypeId != null ? payload.resolvedTypeId : '';
             const resolvedBy = payload.resolvedBy || '';
+
+            // Deduplicate human logs per entity to avoid spamming when only position or frequent updates happen.
+            try {
+                const sigParts = [payload.classification || '', String(resType), payload.staticInfo ? (payload.staticInfo.type || '') : '', payload.staticInfo ? String(payload.staticInfo.tier || '') : '', String(payload.health || ''), String(payload.enchant || ''), String(payload.rarity || ''), String(payload.resolvedBy || '')];
+                const signature = sigParts.join('|');
+                const last = this._lastHumanLog.get(id);
+                if (last && last.signature === signature) {
+                    // nothing changed in significant fields -> skip pretty print
+                    return;
+                }
+                // update last signature and schedule a removal after 5s to allow future reprints
+                this._lastHumanLog.set(id, {signature, ts: Date.now()});
+                setTimeout(() => {
+                    try {
+                        this._lastHumanLog.delete(id);
+                    } catch (e) {
+                    }
+                }, 5000);
+            } catch (e) { /* non-blocking if dedupe fails */
+            }
+
             const cls = payload.classification || '';
             const health = (payload.health != null) ? payload.health : '';
             const enchant = (payload.enchant != null) ? payload.enchant : null;
@@ -141,7 +167,8 @@ class MobsHandler
                     if (!resourceSubType && payload.knownInfo[1] === EnemyType.LivingSkinnable) {
                         resourceSubType = 'Hide';
                     }
-                } catch (e) { /* ignore */ }
+                } catch (e) { /* ignore */
+                }
             }
 
             // Detect conflicts between known info and static cross-ref
@@ -156,7 +183,8 @@ class MobsHandler
                         // both present but different classification
                         conflictNote = `⚠️ CONFLICT knownType=${knownType} vs staticType=${staticTypeLabel}`;
                     }
-                } catch (e) { /* ignore */ }
+                } catch (e) { /* ignore */
+                }
             }
 
             // Clarify whether the number reported is Enchant or Tier: display both
@@ -165,553 +193,281 @@ class MobsHandler
 
             const aliveMarker = (typeof health === 'number' && health > 0) ? '✅ ALIVE' : (health === 0 ? '❌ DEAD' : '');
 
-            console.log('┌' + '─'.repeat(70));
-            // Display unified living classification but show subtype (hide/rock/fiber) and name/tier
+            // Build TypeID description
+            let typeIdDesc = `TypeID ${repType}`;
+            if (payload.staticInfo) {
+                typeIdDesc += ` → STATIC ${payload.staticInfo.type} T${payload.staticInfo.tier}`;
+            } else if (payload.knownInfo) {
+                typeIdDesc += ` → KNOWN ${name || '?'} T${tier || '?'}`;
+            } else {
+                typeIdDesc += ` → UNKNOWN (not in mobinfo, not cross-referenced)`;
+            }
+
+            // Determine source tag for quick recognition
+            let sourceTag = 'HEUR';
+            if (payload.resolvedBy === 'retroactive_override') sourceTag = 'RETRO';
+            else if (payload.staticInfo) sourceTag = 'STATIC';
+            else if (payload.knownInfo) sourceTag = 'KNOWN';
+
             const subtypeText = resourceSubType ? `${resourceSubType}` : (name ? `${name}` : '');
-            console.log(`│ ${emoji} ${cls} ${subtypeText ? `- ${subtypeText} ${tierDisplay}` : `${tierDisplay}`} ${conflictNote}`);
-            console.log('├' + '─'.repeat(70));
-            console.log(`│ ⏰ Time:      ${time}`);
-            console.log(`│ 🆔 EntityID:  ${id}`);
-            console.log(`│ 🔢 TypeIDs:   reported=${repType} resolved=${resType} (${resolvedBy || 'source? '})`);
-            console.log(`│ 🏷️ Tier/Enchant: ${tierDisplay} ${enchantDisplay}`);
-            console.log(`│ ❤️ Health:     ${health} ${aliveMarker}`);
-            console.log(`│ ✨ Enchant:     ${enchantDisplay}`);
-            console.log(`│ 💎 Rarity:      ${rarity}`);
-            console.log(`│ 📍 Position:    (${posX}, ${posY})`);
-            console.log('└' + '─'.repeat(70));
+            // One-line summary (compact)
+            const oneLine = `${emoji} [${sourceTag}] ${cls} ${subtypeText ? `- ${subtypeText} ${tierDisplay}` : `${tierDisplay}`} ${resolvedBy ? `(${resolvedBy})` : ''} — ${typeIdDesc} ${enchantDisplay} health=${health} pos=(${posX}, ${posY})`;
+            console.log(oneLine);
+
+            // Human-friendly pretty block (single consistent format)
+            try {
+                const width = 70;
+                // Header title: emoji + classification + subtype + tier/enchant + optional resolvedBy
+                const resolvedTag = resolvedBy ? `(${resolvedBy})` : '';
+                const headerLine = `${emoji} ${cls} ${subtypeText ? `- ${subtypeText}` : ''} ${tierDisplay} ${enchantDisplay} ${resolvedTag}`.trim();
+
+                console.log('┌' + '─'.repeat(width));
+                console.log(`│ ${headerLine}`);
+                console.log('├' + '─'.repeat(width));
+                console.log(`│ ⏰ Time:      ${time}`);
+                console.log(`│ 🆔 EntityID:  ${id}`);
+                console.log(`│ 🔢 ${typeIdDesc}`);
+                // Show both Tier and Enchant explicitly so it's never ambiguous
+                console.log(`│ 🏷️ Tier:       ${tierDisplay.replace('T', '') !== '?' ? tierDisplay : 'T?'}` + `   ✨ Enchant: ${enchantDisplay || 'e?'}`);
+                console.log(`│ ❤️ Health:     ${health} ${aliveMarker}`);
+                console.log(`│ 💎 Rarity:      ${rarity}`);
+                console.log(`│ 📍 Position:    (${posX}, ${posY})`);
+                if (conflictNote) console.log(`│ ${conflictNote}`);
+                console.log('└' + '─'.repeat(width));
+            } catch (e) {
+                // Fallback: simple line if anything goes wrong
+                const oneLineFallback = `${emoji} ${cls} ${subtypeText ? `- ${subtypeText}` : ''} ${tierDisplay} ${enchantDisplay} — ${typeIdDesc} health=${health} pos=(${posX}, ${posY})`;
+                console.log(oneLineFallback);
+            }
         } catch (e) {
             console.error('Logger pretty-print failed', e);
         }
     }
 
-    // New helper: decide if we should emit a log line (filter enemy spam)
-    shouldLogCreature(classification, staticInfo, isLikelyLivingResource, settings) {
-        // Always log living resources or cross-referenced types
-        if (classification && classification.startsWith('LIVING')) return true;
-        if (staticInfo) return true;
-
-        // If user asked to see unmanaged enemies explicitly, allow it
-        if (settings && settings.showUnmanagedEnemies) return true;
-
-        // Otherwise, skip logging plain ENEMY to reduce spam
-        if (classification === 'ENEMY') return false;
-
-        // Default: log (unknowns) only if verbose/DEBUG mode
-        return (settings && settings.logVerbose);
-    }
-
     // 🔗 Called by HarvestablesHandler to register static resource TypeIDs
-    registerStaticResourceTypeID(typeId, typeNumber, tier)
-    {
+    registerStaticResourceTypeID(typeId, typeNumber, tier) {
+        // Determine resource type
         const resourceType = this.getResourceTypeFromNumber(typeNumber);
+        const existing = this.staticResourceTypeIDs.get(typeId);
+        const alreadyHas = !!existing;
 
-        if (resourceType && !this.staticResourceTypeIDs.has(typeId)) {
-            this.staticResourceTypeIDs.set(typeId, { type: resourceType, tier: tier });
+        // If nothing to register, skip silently
+        if (!resourceType) return;
+
+        // If already registered with same info, suppress noisy logs
+        if (alreadyHas && existing.type === resourceType && existing.tier === tier) {
+            // No change — skip logging to reduce spam
+            return;
+        }
+
+        // If already registered but with different type/tier, log that an update occurred
+        if (alreadyHas && (existing.type !== resourceType || existing.tier !== tier)) {
+            console.log(`[DEBUG registerStaticResourceTypeID] 🔁 UPDATE TypeID ${typeId}: ${existing.type} T${existing.tier} -> ${resourceType} T${tier}`);
+            this.staticResourceTypeIDs.set(typeId, {type: resourceType, tier: tier});
+            this._registrationLogState.set(typeId, {type: resourceType, tier: tier});
+        }
+
+        // New registration: commit immediately (minimal behavior)
+        if (!alreadyHas) {
+            this.staticResourceTypeIDs.set(typeId, {type: resourceType, tier: tier});
+            this._registrationLogState.set(typeId, {type: resourceType, tier: tier});
+            console.log(`[DEBUG registerStaticResourceTypeID] ✅ REGISTERED TypeID ${typeId} as ${resourceType} T${tier}`);
 
             if (this.settings.logLivingResources) {
-                // keep a structured registration log
-                this.structuredLog('CROSS_REFERENCE_REGISTERED', {
-                    typeId: typeId,
-                    staticType: resourceType,
-                    staticTier: tier
-                });
+                if (this.settings.logLivingHuman) {
+                    console.log(`[DEBUG registerStaticResourceTypeID] (cross-ref) TypeID ${typeId} registered as ${resourceType} T${tier}`);
+                } else {
+                    this.structuredLog('CROSS_REFERENCE_REGISTERED', {
+                        typeId: typeId,
+                        staticType: resourceType,
+                        staticTier: tier
+                    });
+                }
             }
+        } else {
+            // Not registered because already existed with same values — suppressed to reduce noise
+            return;
         }
     }
 
     // Convert HarvestablesHandler type number to resource type
-    getResourceTypeFromNumber(typeNumber)
-    {
+    getResourceTypeFromNumber(typeNumber) {
+        if (typeof typeNumber !== 'number') return null;
         if (typeNumber >= 0 && typeNumber <= 5) return 'Wood';
         else if (typeNumber >= 6 && typeNumber <= 10) return 'Rock';
         else if (typeNumber >= 11 && typeNumber <= 15) return 'Fiber';
         else if (typeNumber >= 16 && typeNumber <= 22) return 'Hide';
         else if (typeNumber >= 23 && typeNumber <= 27) return 'Ore';
-        else return null;
+        return null;
     }
 
-    updateMobInfo(newData)
-    {
-        this.mobinfo = newData;
+    updateMobInfo(newData) {
+        // replace mobinfo map atomically
+        try { this.mobinfo = Object.assign({}, newData); } catch (e) { this.mobinfo = {}; }
     }
 
-    NewMobEvent(parameters)
-    {
-        // Removed raw parameters dump to avoid noisy truncated objects
-
-        const id = this.normalizeNumber(parameters[0], 0); // entity id
-        let typeId = this.normalizeNumber(parameters[1], 0); // real type id
-
-        const loc = parameters[7] || [0,0];
-        let posX = this.normalizeNumber(loc[0], 0);
-        let posY = this.normalizeNumber(loc[1], 0);
-
-        let exp = 0
-        try
-        {
-            exp = this.normalizeNumber(parameters[13], 0);
-        }
-        catch (error)
-        {
-            exp = 0;
-        }
+    NewMobEvent(parameters) {
+        // Minimal parser: index conventions may vary, keep safe with defaults
+        const id = this.normalizeNumber(parameters[0], 0);
+        const typeId = this.normalizeNumber(parameters[1], 0);
+        const loc = parameters[7] || [0, 0];
+        const posX = this.normalizeNumber(loc[0], 0);
+        const posY = this.normalizeNumber(loc[1], 0);
+        const health = this.normalizeNumber(parameters[2], 0) || this.normalizeNumber(parameters[13], 0) || 0;
+        const enchant = this.normalizeNumber(parameters[33], 0) || 0;
+        const rarity = this.normalizeNumber(parameters[19], null);
 
         let name = null;
-        try
-        {
-            name = parameters[32] || parameters[31] || null;
-        }
-        catch (error)
-        {
-            name = null;
-        }
+        try { name = parameters[32] || parameters[31] || null; } catch (e) { name = null; }
 
-        let enchant = this.normalizeNumber(parameters[33], 0);
-
-        let rarity = this.normalizeNumber(parameters[19], null);
-
-        if (name != null)
-        {
+        if (name) {
             this.AddMist(id, posX, posY, name, enchant);
-        }
-        else
-        {
-            this.AddEnemy(id, typeId, posX, posY, exp, enchant, rarity, parameters);
+        } else {
+            this.AddEnemy(id, typeId, posX, posY, health, enchant, rarity, parameters);
         }
     }
 
+    AddEnemy(id, typeId, posX, posY, health, enchant, rarity, parameters) {
+        // Simple, robust addition: avoid duplicates
+        if (this.mobsList.some(m => m.id === id)) return;
+        if (this.harvestablesNotGood.some(m => m.id === id)) return;
 
-    AddEnemy(id, typeId, posX, posY, health, enchant, rarity, parameters)
-    {
-        if (this.mobsList.some(mob => mob.id === id))
-            return;
+        const mob = new Mob(id, typeId, posX, posY, health, enchant, rarity);
+        const normHealth = Number(health) || 0;
 
-        if (this.harvestablesNotGood.some(mob => mob.id === id))
-            return;
-
-        const h = new Mob(id, typeId, posX, posY, health, enchant, rarity);
-
-        // Prepare normalized values
-        const normHealth = this.normalizeNumber(health, 0);
-        const normEnchant = this.normalizeNumber(enchant, 0);
-        const normRarity = this.normalizeNumber(rarity, null);
-
-        // Initialize logging session if needed
-        if (!this.loggingStartTime) {
-            this.loggingStartTime = new Date();
+        // 1️⃣ Try to get known info from mobinfo database (Priority 1)
+        const knownInfo = this.mobinfo[typeId];
+        let hasKnownInfo = false;
+        if (Array.isArray(knownInfo)) {
+            mob.tier = knownInfo[0] || 0;
+            mob.type = knownInfo[1] || EnemyType.Enemy;
+            mob.name = knownInfo[2] || null;
+            hasKnownInfo = true;
         }
 
-        // Track unique TypeIDs
-        if (!this.detectedTypeIDs.has(typeId)) {
-            this.detectedTypeIDs.add(typeId);
+        // 2️⃣ Get cross-referenced static resource info (Priority 2)
+        const staticInfo = this.staticResourceTypeIDs.get(typeId);
+
+        // 3️⃣ CONSOLIDATED CLASSIFICATION: Use all sources (mobinfo > staticInfo > heuristics)
+
+        // Known living resource from mobinfo (highest priority)
+        if (hasKnownInfo && (knownInfo[1] === EnemyType.LivingHarvestable || knownInfo[1] === EnemyType.LivingSkinnable)) {
+            mob.type = knownInfo[1];
         }
+        // Cross-referenced resource + has health = living resource (Priority 2)
+        else if (staticInfo && normHealth > 0) {
+            mob.type = EnemyType.LivingHarvestable;
 
-        // Collect candidate TypeIDs from other parameter positions to help detect mis-indexed events
-        const candidateIndices = [1,6,9,13,17,22,30,252];
-        const candidateTypeIds = [];
-        try {
-            if (parameters) {
-                candidateIndices.forEach(idx => {
-                    const v = parameters[idx];
-                    const n = this.normalizeNumber(v, null);
-                    if (n !== null && n !== typeId) candidateTypeIds.push({ idx, value: n });
-                });
-            }
-        } catch (e) {
-            // ignore
-        }
-
-        // Try to resolve a better TypeID: prefer candidates that map to static resources or known living mobinfo
-        let resolvedTypeId = typeId;
-        let resolvedBy = 'reported';
-
-        const isLivingMobInfo = (info) => {
-            if (!info) return false;
-            try { return info[1] === EnemyType.LivingHarvestable || info[1] === EnemyType.LivingSkinnable; } catch (e) { return false; }
-        };
-
-        // If reported typeId has no static or known info, search candidates
-        const reportedStatic = this.staticResourceTypeIDs.get(typeId);
-        const reportedKnown = this.mobinfo[typeId];
-
-        if (!reportedStatic && !isLivingMobInfo(reportedKnown) && candidateTypeIds.length > 0) {
-            for (const c of candidateTypeIds) {
-                const cand = c.value;
-                if (this.staticResourceTypeIDs.has(cand)) {
-                    resolvedTypeId = cand; resolvedBy = `candidate_idx_${c.idx}`; break;
-                }
-                const k = this.mobinfo[cand];
-                if (isLivingMobInfo(k)) { resolvedTypeId = cand; resolvedBy = `candidate_idx_${c.idx}`; break; }
+            // Consolidate tier: use static tier if mobinfo didn't provide one
+            if (!mob.tier || mob.tier === 0) {
+                mob.tier = staticInfo.tier;
             }
 
-            // Informative SUSPECT_TYPEID log when we replaced the id
-            if (resolvedTypeId !== typeId && this.settings && this.settings.debugTypeIdMapping) {
-                this.structuredLog('SUSPECT_TYPEID_RESOLVED', {
-                    entityId: id,
-                    reportedTypeId: typeId,
-                    resolvedTypeId: resolvedTypeId,
-                    resolvedBy: resolvedBy,
-                    candidates: candidateTypeIds
-                });
-            }
-            else if (this.settings && this.settings.debugTypeIdMapping) {
-                // If not resolved, still emit SUSPECT_TYPEID for inspection
-                this.structuredLog('SUSPECT_TYPEID', {
-                    entityId: id,
-                    reportedTypeId: typeId,
-                    classificationGuessed: null,
-                    candidates: candidateTypeIds,
-                    paramCount: parameters ? Object.keys(parameters).length : 0
-                });
+            // Use static resource type as name if no name from mobinfo
+            if (!mob.name) {
+                mob.name = staticInfo.type; // "Fiber", "Hide", "Wood", "Ore", "Rock"
             }
         }
-
-        // After resolution, fetch staticInfo/knownInfo for resolvedTypeId
-        const staticInfoResolved = this.staticResourceTypeIDs.get(resolvedTypeId);
-        const knownInfoResolved = this.mobinfo[resolvedTypeId];
-
-        // 🔍 Improved classification using resolved info + heuristics
-         const resolvedKnownInfo = knownInfoResolved || reportedKnown;
-         const resolvedStaticInfo = staticInfoResolved || reportedStatic;
-
-         let creatureType = 'UNKNOWN';
-         let emoji = '❓';
-
-        // If we have a registered static resource for this typeId -> trust it
-        if (resolvedStaticInfo) {
-            creatureType = 'LIVING_RESOURCE';
-            emoji = (resolvedStaticInfo.type === 'Hide') ? '🐾' : '🌿';
+        // Heuristic fallback: unknown creature with living resource health profile (Priority 3)
+        else if (!hasKnownInfo && typeId < 600 && normHealth > 20 && normHealth < 2000) {
+            mob.type = EnemyType.LivingHarvestable;
         }
-        // Else if we know the mob in mobinfo, use the type field but avoid name string parsing
-        else if (resolvedKnownInfo) {
-            const kt = resolvedKnownInfo[1];
-            if (kt === EnemyType.LivingHarvestable || kt === EnemyType.LivingSkinnable) {
-                creatureType = 'LIVING_RESOURCE';
-                // Only special-case skinnable for emoji/subtype
-                if (kt === EnemyType.LivingSkinnable) {
-                    emoji = '🐾';
-                } else {
-                    emoji = '🌿';
-                }
-            } else if (kt >= EnemyType.Enemy && kt <= EnemyType.Boss) {
-                creatureType = 'ENEMY'; emoji = '⚔️';
-            } else creatureType = 'UNKNOWN';
-        }
-         else {
-             // Heuristics fallback using resolvedTypeId
-             const isLikelyLivingResource = (resolvedTypeId < 600 && normHealth >= 20 && normHealth <= 2000 && (normRarity === null || (normRarity >= 70 && normRarity <= 150)));
-             const isLikelyEnemy = (resolvedTypeId >= 1500 || (normRarity !== null && normRarity > 150));
 
-             if (isLikelyLivingResource) { creatureType = 'LIVING_RESOURCE'; emoji = '🌿'; }
-             else if (isLikelyEnemy) { creatureType = 'ENEMY'; emoji = '⚔️'; }
-             else { creatureType = 'UNKNOWN'; }
-         }
+        this.mobsList.push(mob);
 
-        // Decide whether to log this event (reduce enemy spam)
-        const shouldLog = this.shouldLogCreature(creatureType, resolvedStaticInfo, (creatureType.startsWith('LIVING') || creatureType === 'LIVING_RESOURCE'), this.settings);
+        // 4️⃣ Structured logging with consolidated info
+        if (this.settings && this.settings.logLivingResources) {
+            const classification = (mob.type === EnemyType.LivingHarvestable) ? 'LIVING_RESOURCE' :
+                                  (mob.type === EnemyType.LivingSkinnable) ? 'LIVING_SKINNABLE' :
+                                  'ENEMY';
 
-        if (shouldLog && this.settings && this.settings.logLivingResources) {
-            // Build structured payload
+            let emoji = '⚔️';
+            if (mob.type === EnemyType.LivingHarvestable) emoji = '🌿';
+            else if (mob.type === EnemyType.LivingSkinnable) emoji = '🐾';
+
+            // Determine how we resolved this creature
+            let resolvedBy = 'heuristics';
+            if (hasKnownInfo) resolvedBy = 'mobinfo';
+            else if (staticInfo) resolvedBy = 'cross-reference';
+
             const payload = {
-                entityId: id,
-                reportedTypeId: typeId,
-                resolvedTypeId: resolvedTypeId,
+                entityId: mob.id,
+                reportedTypeId: mob.typeId,
+                resolvedTypeId: mob.typeId,
                 resolvedBy: resolvedBy,
-                classification: creatureType,
-                knownInfo: resolvedKnownInfo || null,
-                staticInfo: resolvedStaticInfo || null,
+                classification: classification,
+                knownInfo: knownInfo || null,
+                staticInfo: staticInfo || null,
                 health: normHealth,
-                enchant: normEnchant,
-                rarity: normRarity,
-                posX: Number(posX),
-                posY: Number(posY),
+                enchant: mob.enchantmentLevel,
+                rarity: mob.rarity,
+                tier: mob.tier,
+                name: mob.name,
+                posX: mob.posX,
+                posY: mob.posY,
                 emoji: emoji
             };
-
-            // Optionally include raw parameters only in debug
-            if (this.settings.logRawParams) payload.rawParameters = parameters;
-
             this.structuredLog('SPAWN', payload);
         }
-
-        // Process known mobinfo to decide if we keep or reject the mob for harvesting
-        if (this.mobinfo[resolvedTypeId] != null)
-        {
-            const mobsInfo = this.mobinfo[resolvedTypeId];
-
-            h.tier = mobsInfo[0];
-            h.type = mobsInfo[1];
-            h.name = mobsInfo[2];
-
-            // Normalise la distinction: on ne veut plus différencier Skinnable vs Harvestable
-            if (h.type === EnemyType.LivingSkinnable) {
-                h.type = EnemyType.LivingHarvestable;
-            }
-
-            // Keep previous human-readable detail only for known living resources if requested
-            if (this.settings.logLivingResources && (typeof this.settings.isHumanLogFormat === 'function' ? this.settings.isHumanLogFormat() : this.settings.humanReadableLivingResources)) {
-                if (h.type == EnemyType.LivingSkinnable || h.type == EnemyType.LivingHarvestable) {
-                    const typeLabel = h.type == EnemyType.LivingSkinnable ? "LivingSkinnable" : "LivingHarvestable";
-                    console.log(`🔍 LIVING RESOURCE FOUND (KNOWN): ${typeLabel} ${h.name} T${h.tier} - Health:${normHealth} Enchant:${normEnchant}`);
-                }
-            }
-
-            if (this.settings.logLivingResources) {
-                // minimal separator only when human readable is enabled
-                if (this.settings.logLivingHuman) console.log("============================");
-                }
-
-            if (h.type == EnemyType.LivingSkinnable)
-            {
-                if (!this.settings.harvestingLivingHide[`e${normEnchant}`][h.tier-1])
-                {
-                    this.harvestablesNotGood.push(h);
-                    return;
-                }
-
-            }
-            else if (h.type == EnemyType.LivingHarvestable)
-            {
-                let iG = true;
-
-                switch (h.name) {
-                    case "fiber":
-                        if (!this.settings.harvestingLivingFiber[`e${normEnchant}`][h.tier-1]) iG = false;
-                        break;
-
-                    case "hide":
-                        if (!this.settings.harvestingLivingHide[`e${normEnchant}`][h.tier-1]) iG = false;
-                        break;
-
-                    case "Logs":
-                        if (!this.settings.harvestingLivingWood[`e${normEnchant}`][h.tier-1]) iG = false;
-                        break;
-
-                    case "ore":
-                        if (!this.settings.harvestingLivingOre[`e${normEnchant}`][h.tier-1]) iG = false;
-                        break;
-
-                    case "rock":
-                        if (!this.settings.harvestingLivingRock[`e${normEnchant}`][h.tier-1]) iG = false;
-                        break;
-
-                    default:
-                        break;
-                }
-
-                if (!iG)
-                {
-                    this.harvestablesNotGood.push(h);
-                    return;
-                }
-            }
-            // Should do the work and handle all the enemies
-            else if (h.type >= EnemyType.Enemy && h.type <= EnemyType.Boss)
-            {
-                const offset = EnemyType.Enemy;
-
-                if (!this.settings.enemyLevels[h.type - offset])
-                    return;
-
-                if (this.settings.showMinimumHealthEnemies && health < this.settings.minimumHealthEnemies)
-                    return;
-            }
-            else if (h.type == EnemyType.Drone)
-            {
-                if (!this.settings.avaloneDrones) return;
-            }
-            else if (h.type == EnemyType.MistBoss)
-            {
-                if (h.name == "CRYSTALSPIDER" && !this.settings.bossCrystalSpider) return;
-                else if (h.name == "FAIRYDRAGON" && !this.settings.settingBossFairyDragon) return;
-                else if (h.name == "VEILWEAVER" && !this.settings.bossVeilWeaver) return;
-                else if (h.name == "GRIFFIN" && !this.settings.bossGriffin) return;
-            }
-            // Events
-            else if (h.type == EnemyType.Events)
-            {
-                if (!this.settings.showEventEnemies) return;
-            }
-            // Unmanaged type
-            else if (!this.settings.showUnmanagedEnemies) return;
-            else
-            {
-                if (this.settings.showMinimumHealthEnemies && health < this.settings.minimumHealthEnemies)
-                    return;
-            }
-
-        }
-        // Unmanaged id
-        else if (!this.settings.showUnmanagedEnemies) return;
-        else
-        {
-            if (this.settings.showMinimumHealthEnemies && health < this.settings.minimumHealthEnemies)
-                return;
-        }
-
-        this.mobsList.push(h);
     }
 
-    removeMob(id)
-    {
-        const pSize = this.mobsList.length;
-
-        this.mobsList = this.mobsList.filter((x) => x.id !== id);
-
-        // That means we already removed the enemy, so it can't be in the other list
-        if (this.mobsList.length < pSize) return;
-
-        this.harvestablesNotGood = this.harvestablesNotGood.filter((x) => x.id !== id);
-    }
-
-    updateMobPosition(id, posX, posY)
-    {
-        var enemy = this.mobsList.find((enemy) => enemy.id === id);
-
-        if (enemy)
-        {
-            enemy.posX = posX;
-            enemy.posY = posY;
-
-            return;
+    removeMob(id) {
+        const before = this.mobsList.length;
+        this.mobsList = this.mobsList.filter(m => m.id !== id);
+        if (this.mobsList.length < before) {
+            console.log(`[DEBUG removeMob] Removed EntityID=${id}`);
         }
-
-        // We don't need to update mobs we don't show yet
-        /*enemy = this.harvestablesNotGood.find((enemy) => enemy.id === id);
-
-        if (!enemy) return;
-
-        enemy.posX = posX;
-        enemy.posY = posY;*/
+        // also clean harvestablesNotGood
+        this.harvestablesNotGood = this.harvestablesNotGood.filter(x => x.id !== id);
     }
 
-    updateEnchantEvent(parameters)
-    {
+    updateMobPosition(id, posX, posY) {
+        const m = this.mobsList.find(x => x.id === id);
+        if (m) { m.posX = posX; m.posY = posY; }
+    }
+
+    updateEnchantEvent(parameters) {
         const mobId = parameters[0];
         const enchantmentLevel = parameters[1];
-
-        // Check in this list for the harvestables & skinnables with the id
-        var enemy = this.mobsList.find((mob) => mob.id == mobId);
-
-        if (enemy)
-        {
-            // normalize any legacy skinnable types to harvestable
-            if (enemy.type === EnemyType.LivingSkinnable) enemy.type = EnemyType.LivingHarvestable;
-             enemy.enchantmentLevel = enchantmentLevel;
-             return;
-        }
-
-        // Else try in our not good list
-        enemy = this.harvestablesNotGood.find((mob) => mob.id == mobId);
-
-        if (!enemy) return;
-
-        if (enemy.type === EnemyType.LivingSkinnable) enemy.type = EnemyType.LivingHarvestable;
-         enemy.enchantmentLevel = enchantmentLevel;
-
-        let hasToSwapFromList = false;
-
-        if (enemy.type == EnemyType.LivingSkinnable)
-        {
-            if (!this.settings.harvestingLivingHide[`e${enemy.enchantmentLevel}`][enemy.tier-1])
-                return;
-
-            hasToSwapFromList = true;
-        }
-        else if (enemy.type == EnemyType.LivingHarvestable)
-        {
-            switch (enemy.name) {
-                case "fiber":
-                    if (!this.settings.harvestingLivingFiber[`e${enemy.enchantmentLevel}`][enemy.tier-1])
-                        return;
-
-                    hasToSwapFromList = true;
-                    break;
-
-                case "hide":
-                    if (!this.settings.harvestingLivingHide[`e${enemy.enchantmentLevel}`][enemy.tier-1])
-                        return;
-
-                    hasToSwapFromList = true;
-                    break;
-
-                case "Logs":
-                    if (!this.settings.harvestingLivingWood[`e${enemy.enchantmentLevel}`][enemy.tier-1])
-                        return;
-
-                    hasToSwapFromList = true;
-                    break;
-
-                case "ore":
-                    if (!this.settings.harvestingLivingOre[`e${enemy.enchantmentLevel}`][enemy.tier-1])
-                        return;
-
-                    hasToSwapFromList = true;
-                    break;
-
-                case "rock":
-                    if (!this.settings.harvestingLivingRock[`e${enemy.enchantmentLevel}`][enemy.tier-1])
-                        return;
-
-                    hasToSwapFromList = true;
-                    break;
-
-                default:
-                    break;
-            }
-        }
-
-        if (!hasToSwapFromList) return;
-
-        this.mobsList.push(enemy);
-        this.harvestablesNotGood = this.harvestablesNotGood.filter((x) => x.id !== enemy.id);
+        const found = this.mobsList.find(m => m.id == mobId) || this.harvestablesNotGood.find(m => m.id == mobId);
+        if (found) { found.enchantmentLevel = enchantmentLevel; }
     }
 
-    getMobList()
-    {
+    getMobList() {
         return [...this.mobsList];
     }
 
-
-    AddMist(id, posX, posY, name, enchant)
-    {
-        if (this.mistList.some((mist) => mist.id === id))
-            return;
-
-        const d = new Mist(id, posX, posY, name, enchant);
-
-        this.mistList.push(d);
+    AddMist(id, posX, posY, name, enchant) {
+        if (this.mistList.some(m => m.id === id)) return;
+        const m = new Mist(id, posX, posY, name, enchant);
+        this.mistList.push(m);
     }
 
-    removeMist(id)
-    {
-        this.mistList = this.mistList.filter((mist) => mist.id !== id);
+    removeMist(id) {
+        this.mistList = this.mistList.filter(m => m.id !== id);
     }
 
-    updateMistPosition(id, posX, posY)
-    {
-        var mist = this.mistList.find((mist) => mist.id === id);
-
-        if (!mist) return;
-
-        mist.posX = posX;
-        mist.posY = posY;
+    updateMistPosition(id, posX, posY) {
+        const mist = this.mistList.find(m => m.id === id);
+        if (!mist) return; mist.posX = posX; mist.posY = posY;
     }
 
-    updateMistEnchantmentLevel(id, enchantmentLevel)
-    {
-        var mist = this.mistList.find((mist) => mist.id === id);
-
-        if (!mist) return;
-
-        mist.enchant = enchantmentLevel;
+    updateMistEnchantmentLevel(id, enchantmentLevel) {
+        const mist = this.mistList.find(m => m.id === id);
+        if (!mist) return; mist.enchant = enchantmentLevel;
     }
 
-    Clear()
-    {
-        this.mobsList = [];
-        this.mistList = [];
-        this.harvestablesNotGood = [];
+    Clear() {
+        this.mobsList = []; this.mistList = []; this.harvestablesNotGood = [];
+    }
+
+    // Additional helpers
+    updateMobInfoEntry(typeId, entry) {
+        this.mobinfo[typeId] = entry;
+    }
+
+    getMobInfo(typeId) {
+        return this.mobinfo[typeId] || null;
     }
 }
 

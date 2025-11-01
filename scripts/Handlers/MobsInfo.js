@@ -194,15 +194,15 @@ class MobsInfo{
         this.addItem(524, 5, EnemyType.LivingHarvestable, "rock");
         this.addItem(525, 6, EnemyType.LivingHarvestable, "rock");
         this.addItem(526, 7, EnemyType.LivingHarvestable, "rock");
-        this.addItem(527, 8, EnemyType.LivingHarvestable, "rock");
+        // this.addItem(527, 8, EnemyType.LivingHarvestable, "rock"); // ❌ INCORRECT - Actually Hide T3 based on packets
         // Veteran Roads <=> Tx_MOB_CRITTER_ROCK_ROADS_VETERAN +25
         this.addItem(528, 4, EnemyType.LivingHarvestable, "rock");
-        this.addItem(529, 5, EnemyType.LivingHarvestable, "rock");
+        // this.addItem(529, 5, EnemyType.LivingHarvestable, "rock"); // ❌ INCORRECT - Actually Hide T4 based on packets
         this.addItem(530, 6, EnemyType.LivingHarvestable, "rock");
-        this.addItem(533, 7, EnemyType.LivingHarvestable, "rock");
+        this.addItem(533, 7, EnemyType.LivingHarvestable, "rock"); // ⚠️ WARNING: TypeID 533 used twice (here and below)
         this.addItem(532, 8, EnemyType.LivingHarvestable, "rock");
         // Elite Roads <=> Tx_MOB_CRITTER_ROCK_ROADS_ELITE +25
-        this.addItem(533, 4, EnemyType.LivingHarvestable, "rock");
+        this.addItem(533, 4, EnemyType.LivingHarvestable, "rock"); // ⚠️ DUPLICATE: TypeID 533 already used for T7 above
         this.addItem(534, 5, EnemyType.LivingHarvestable, "rock");
         this.addItem(535, 6, EnemyType.LivingHarvestable, "rock");
         this.addItem(536, 7, EnemyType.LivingHarvestable, "rock");

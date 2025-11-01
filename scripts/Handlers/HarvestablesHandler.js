@@ -160,8 +160,6 @@ class HarvestablesHandler
     // Good
     newHarvestableObject(id, Parameters) // Update
     {
-        console.log(Parameters);
-
         const type = Parameters[5];  // typeNumber (0-27)
         const mobileTypeId = Parameters[6];  // 🔗 Mobile TypeID (421, 422, 527, etc.)
         const tier = Parameters[7];
