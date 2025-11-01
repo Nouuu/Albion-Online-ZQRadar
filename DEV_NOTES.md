@@ -290,11 +290,13 @@ Valider que les 230 TypeIDs détectent correctement les living resources (Fiber 
 - TypeID 530: **Rock T6 → Fiber T4** (CORRIGÉ terrain)
 - TypeID 531: **Rock T7 → Fiber T5** (CORRIGÉ terrain)
 - **Noms corrigés**: "fiber"→"Fiber", "hide"→"Hide", "Wood"→"Log" (majuscules + compatibilité HarvestableType)
+- **HarvestablesHandler**: Utilise mobinfo pour override typeNumber du jeu (cadavres Fiber correctement affichés)
 
 **🚨 BUG SERVEUR ALBION CONFIRMÉ**:
 - TypeID 528, 530, 531 = **Fiber** mais le jeu envoie `typeNumber=16` (Hide) au lieu de 14
-- Notre système override correctement via mobinfo priority
-- 12 autres TypeID suspects dans range 523-537 à vérifier en jeu (voir `find_suspect_typeids.js`)
+- **MobsHandler** override via mobinfo priority (spawns vivants) ✅
+- **HarvestablesHandler** override via mobinfo priority (cadavres) ✅
+- 12 autres TypeID suspects dans range 523-537 à vérifier en jeu (voir `tools/find_suspect_typeids.js`)
 
 **⚠️ Vérification interne** : Aucun TypeID manquant dans les ranges connus (330-639)
 

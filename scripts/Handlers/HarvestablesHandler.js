@@ -43,6 +43,24 @@ class HarvestablesHandler
         // 🔗 Cross-reference with MobsHandler BEFORE settings check (always register TypeID even if not displayed)
         if (this.mobsHandler && mobileTypeId !== null) {
             this.mobsHandler.registerStaticResourceTypeID(mobileTypeId, type, tier);
+
+            // 🔧 OVERRIDE: Use mobinfo data instead of game typeNumber (fixes Albion server bugs)
+            const staticInfo = this.mobsHandler.staticResourceTypeIDs.get(mobileTypeId);
+            if (staticInfo && staticInfo.type) {
+                // Convert our type name (Fiber/Hide/Log/Ore/Rock) to typeNumber
+                const typeMap = {
+                    'Fiber': 14,
+                    'Hide': 20,
+                    'Log': 3,
+                    'Rock': 8,
+                    'Ore': 25
+                };
+
+                if (typeMap[staticInfo.type]) {
+                    type = typeMap[staticInfo.type]; // Override game typeNumber
+                    tier = staticInfo.tier; // Use our tier too
+                }
+            }
         }
 
         switch (this.GetStringType(type))
@@ -90,6 +108,24 @@ class HarvestablesHandler
         // 🔗 Cross-reference with MobsHandler BEFORE settings check (always register TypeID even if not displayed)
         if (this.mobsHandler && mobileTypeId !== null) {
             this.mobsHandler.registerStaticResourceTypeID(mobileTypeId, type, tier);
+
+            // 🔧 OVERRIDE: Use mobinfo data instead of game typeNumber (fixes Albion server bugs)
+            const staticInfo = this.mobsHandler.staticResourceTypeIDs.get(mobileTypeId);
+            if (staticInfo && staticInfo.type) {
+                // Convert our type name (Fiber/Hide/Log/Ore/Rock) to typeNumber
+                const typeMap = {
+                    'Fiber': 14,
+                    'Hide': 20,
+                    'Log': 3,
+                    'Rock': 8,
+                    'Ore': 25
+                };
+
+                if (typeMap[staticInfo.type]) {
+                    type = typeMap[staticInfo.type]; // Override game typeNumber
+                    tier = staticInfo.tier; // Use our tier too
+                }
+            }
         }
 
         switch (this.GetStringType(type))
