@@ -1,102 +1,142 @@
-# 📚 ORGANISATION DE LA DOCUMENTATION
+# 📚 DOCUMENTATION ORGANIZATION
 
-⚠️ **RÈGLES STRICTES** :
-1. **NE PAS créer de nouveaux fichiers de documentation !**
-   - Utiliser les 4 fichiers existants seulement
-   - Pas de fichiers temporaires (WORKING_*, *_FIX.md, etc.)
-   - Toute nouvelle info va dans DEV_NOTES.md ou TODO.md
+⚠️ **STRICT RULES**:
+1. **DO NOT create new documentation files!**
+   - Use only the 4 existing files
+   - No temporary files (WORKING_*, *_FIX.md, etc.)
+   - New info goes to DEV_NOTES.md or TODO.md
 
-2. **NE PAS créer de fichiers de travail multiples !**
-   - Pas de WORKING_DOCUMENT_*.md
-   - Pas de *_ANALYSIS.md
-   - Une seule source de vérité par sujet
+2. **DO NOT create multiple work files!**
+   - No WORKING_DOCUMENT_*.md
+   - No *_ANALYSIS.md
+   - One single source of truth per subject
 
-3. **PAS de hardcoded TypeID exceptions !**
-   - Pas de mappings statiques en dur dans le code
-   - Utiliser uniquement MobsInfo.js (base de données)
-   - Le système d'apprentissage localStorage est la seule exception acceptable
+3. **NO hardcoded TypeID exceptions!**
+   - No static mappings in code
+   - Use only MobsInfo.js (database)
+   - localStorage learning system is the only acceptable exception
 
-Ce projet contient 4 fichiers de documentation :
+This project contains 4 documentation files:
 
 ---
 
-## 📄 Fichiers principaux
+## 📄 Main Files
 
 ### 🎯 [README.md](README.md)
-**Pour**: Utilisateurs finaux  
-**Contenu**: Guide d'utilisation, installation, fonctionnalités
+**For**: End users  
+**Content**: Usage guide, installation, features
 
 ### 📋 [TODO.md](TODO.md)
-**Pour**: Développeurs  
-**Contenu**: Liste des tâches, état d'avancement, prochaines étapes (concis)
+**For**: Developers  
+**Content**: Task list, progress status, next steps (concise)
 
 ### 📝 [DEV_NOTES.md](DEV_NOTES.md)
-**Pour**: Développeurs  
-**Contenu**: Documentation technique complète, architecture, bugs connus, changelog
+**For**: Developers  
+**Content**: Complete technical documentation, architecture, known bugs, changelog, **build system**
 
 ### 💬 [CLAUDE.md](CLAUDE.md)
-**Pour**: Contexte IA  
-**Contenu**: Notes de développement avec Claude AI (historique)
+**For**: AI Context  
+**Content**: Development notes with Claude AI (history)
 
 ### 🛠️ [tools/](tools/)
-**Pour**: Développeurs  
-**Contenu**: Scripts d'analyse TypeID, vérification logs, outils de diagnostic
+**For**: Developers  
+**Content**: TypeID analysis scripts, log verification, diagnostic tools
 
 ---
 
-## 🔍 Où trouver quoi ?
+## 🔍 Where to Find What?
 
-| Je cherche...                    | Document            |
+| I'm looking for...               | Document            |
 |----------------------------------|---------------------|
-| Comment utiliser le radar        | README.md           |
-| État d'avancement du projet      | TODO.md             |
-| **Priorités actuelles**          | **TODO.md**         |
-| **Guide collecte TypeID**        | **TODO.md**         |
-| **État actuel du projet**        | **TODO.md**         |
-| Détails techniques               | DEV_NOTES.md        |
-| Architecture du code             | DEV_NOTES.md        |
-| Bugs connus                      | DEV_NOTES.md        |
+| How to use the radar             | README.md           |
+| Project progress                 | TODO.md             |
+| **Current priorities**           | **TODO.md**         |
+| **TypeID collection guide**      | **TODO.md**         |
+| **Current project state**        | **TODO.md**         |
+| Technical details                | DEV_NOTES.md        |
+| Code architecture                | DEV_NOTES.md        |
+| Known bugs                       | DEV_NOTES.md        |
 | TypeID mappings                  | DEV_NOTES.md        |
-| Réflexions & Solutions           | DEV_NOTES.md        |
-| Pourquoi auto-learning a échoué  | DEV_NOTES.md        |
-| **Analyse TypeID / Logs**        | **tools/**          |
-| Scripts de vérification          | tools/              |
+| Reflections & Solutions          | DEV_NOTES.md        |
+| Why auto-learning failed         | DEV_NOTES.md        |
+| **Build system**                 | **DEV_NOTES.md**    |
+| **Cross-platform builds**        | **DEV_NOTES.md**    |
+| **TypeID Analysis / Logs**       | **tools/**          |
+| Verification scripts             | tools/              |
 | Changelog                        | DEV_NOTES.md        |
-| Historique développement IA      | CLAUDE.md           |
+| AI development history           | CLAUDE.md           |
 
 ---
 
-## 🎯 PRIORITÉS ACTUELLES
+## 🎯 CURRENT PRIORITIES
 
-### ✅ TERMINÉ
-- ✅ MobsInfo_Enriched.js fusionné (235 TypeIDs)
-- ✅ Corrections terrain appliquées (6 TypeID)
-- ✅ Aucun doublon, code propre
+### ✅ COMPLETED
+- ✅ MobsInfo_Enriched.js merged (235 TypeIDs)
+- ✅ Field corrections applied (6 TypeID)
+- ✅ No duplicates, clean code
+- ✅ Build system optimized (53 MB exe)
+- ✅ Multi-format archives (ZIP, TAR.GZ)
+- ✅ Cross-platform builds (Windows, Linux, macOS)
+- ✅ Lossless image optimization (dist/ only, preserves sources)
+- ✅ All-in-one build command (automated workflow)
+- ✅ Complete build scripts (Makefile, build.bat)
 
-### 🔴 Court terme (P1)
-1. **Session terrain longue** pour validation
-2. Analyser stabilité Fiber/Hide detection
-3. Collecter TypeID enchantés manquants
+### 🚀 BUILD SYSTEM COMMANDS
 
-### 🟠 Moyen terme (P2)
-- Décider si EventNormalizer nécessaire
-- Améliorer détection ressources enchantées
+**Windows (CMD - Recommended):**
+```cmd
+.\build.bat all-in-one    # 🌟 Complete automated build (with optimization)
+.\build.bat build:all     # Build all platforms
+.\build.bat optimize      # Optimize images in dist/ (manual step)
+.\build.bat clean         # Clean build artifacts
+```
 
-### 🟡 Long terme (P3)
-- Métriques & monitoring
+**Unix/Linux/macOS/WSL/Git Bash:**
+```bash
+make all-in-one          # 🌟 Complete automated build (with optimization)
+make build-all           # Build all platforms
+make optimize-images     # Optimize images in dist/ (manual step)
+make clean               # Clean build artifacts
+```
 
-> 📖 **Détails complets dans [TODO.md](TODO.md)**
+**Optimization Note**: 
+- `all-in-one` automatically optimizes images during post-build
+- **Integrated workflow**: Copy assets → Optimize images (95% quality) → Create archives
+- **Near-lossless** compression using sharp (imperceptible loss)
+- **Fast**: 2-3 minutes for 6693 files (parallel processing)
+- **Result**: Archives ~70% smaller (602 MB → 180 MB images)
+  - Windows: ~212 MB (vs ~630 MB before)
+  - Linux/macOS: ~215 MB (vs ~635 MB before)
+- **ZIP only**: Simplified to one format per platform
+- Manual optimization available: `npm run optimize:images` (for standalone use)
+
+### 🔴 Short term (P1)
+1. **Long field session** for validation
+2. Analyze Fiber/Hide detection stability
+3. Collect missing enchanted TypeIDs
+4. Test executables on Linux/macOS
+
+### 🟠 Medium term (P2)
+- Create release with optimized images
+- Decide if EventNormalizer needed
+- Improve enchanted resources detection
+
+### 🟡 Long term (P3)
+- Metrics & monitoring
+- CI/CD automation
+
+> 📖 **Full details in [TODO.md](TODO.md)**
 
 ---
 
-## 📦 Structure recommandée
+## 📦 Recommended Structure
 
 ```
 Documentation/
-├── README.md           ← Guide utilisateur
-├── TODO.md             ← Tâches (court)
-├── DEV_NOTES.md        ← Documentation dev (détaillé)
-└── CLAUDE.md           ← Contexte IA
+├── README.md           ← User guide
+├── TODO.md             ← Tasks (short)
+├── DEV_NOTES.md        ← Dev documentation (detailed + build)
+└── CLAUDE.md           ← AI Context
 
 Code/
 ├── scripts/
@@ -106,5 +146,5 @@ Code/
 
 ---
 
-**Dernière mise à jour**: 2025-11-01
+**Last update**: 2025-11-02
 

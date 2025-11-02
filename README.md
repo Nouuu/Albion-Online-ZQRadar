@@ -30,8 +30,9 @@ Join the [Discord](https://discord.gg/XAWjmzeaD3) to look at the to-do list and 
 
 ## 🔰 How to run (Windows)
 
-1. Download Npcap:
-- [Npcap 1.79](https://npcap.com/dist/npcap-1.79.exe)
+1. Download Npcap (version 1.79 or newer):
+- [Npcap Download Page](https://npcap.com/)
+- Direct link: [Npcap 1.79](https://npcap.com/dist/npcap-1.79.exe) (minimum version)
 2. Download the the latest release
 - [Releases](https://github.com/Zeldruck/Albion-Online-ZQRadar/releases)
 3. Open the radar and wait for the line:
@@ -52,7 +53,7 @@ input the number here:
 
 ### Prerequisites
 1. **Node.js v18.18.2**: [Download](https://nodejs.org/dist/v18.18.2/node-v18.18.2-x64.msi)
-2. **Npcap 1.79+**: [Download](https://npcap.com/dist/npcap-1.79.exe)
+2. **Npcap 1.79 or newer**: [Download Page](https://npcap.com/)
 3. **Python 3.10.2**: [Download](https://www.python.org/ftp/python/3.10.2/python-3.10.2-amd64.exe)
 4. **Windows Build Tools**: [Download](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022) - Select "Desktop development with C++"
 

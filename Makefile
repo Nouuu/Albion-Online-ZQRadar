@@ -5,7 +5,7 @@
 # Requires: Node.js v18.18.2, npm, Npcap 1.79
 # ============================================
 
-.PHONY: help install start dev check build release clean rebuild package
+.PHONY: help install start dev check build build-linux build-macos build-all release clean rebuild package optimize-images all-in-one
 
 # Variables
 NODE_VERSION = v18.18.2
@@ -58,8 +58,8 @@ check: ## Check system dependencies
 	@npm --version || (echo "$(RED)✗ npm not found!$(NC)" && exit 1)
 	@echo "$(GREEN)✓ npm OK$(NC)"
 	@echo ""
-	@echo "$(YELLOW)Note: Npcap $(NPCAP_VERSION) must be installed on Windows$(NC)"
-	@echo "      Download: https://npcap.com/dist/npcap-$(NPCAP_VERSION).exe"
+	@echo "$(YELLOW)Note: Npcap $(NPCAP_VERSION) or newer required on Windows$(NC)"
+	@echo "      Download: https://npcap.com/"
 	@echo ""
 	@echo "$(GREEN)✓ Check completed!$(NC)"
 
@@ -76,12 +76,88 @@ build: install-pkg ## Build Windows executable (.exe)
 	@echo ""
 	@echo "$(GREEN)✓ Build completed!$(NC)"
 	@echo "$(YELLOW)Executable created: $(DIST_DIR)/ZQRadar.exe$(NC)"
+	@echo "$(YELLOW)💡 Run 'node build/post-build.js' to copy assets + create archives$(NC)"
+	@echo "$(YELLOW)💡 Or run 'npm run optimize:images' first to reduce archive size$(NC)"
 
-build-all: install-pkg ## Build for Windows and Linux
-	@echo "$(GREEN)Multi-platform build...$(NC)"
+build-linux: install-pkg ## Build Linux executable
+	@echo "$(GREEN)[1/2] Checking dependencies...$(NC)"
+	@make check
+	@echo ""
+	@echo "$(GREEN)[2/2] Building Linux executable...$(NC)"
+	npm run build:linux
+	@echo ""
+	@echo "$(GREEN)✓ Build completed!$(NC)"
+	@echo "$(YELLOW)Executable created: $(DIST_DIR)/ZQRadar-linux$(NC)"
+	@echo "$(YELLOW)💡 Run 'node build/post-build.js' to copy assets + create archives$(NC)"
+
+build-macos: install-pkg ## Build macOS executable
+	@echo "$(GREEN)[1/2] Checking dependencies...$(NC)"
+	@make check
+	@echo ""
+	@echo "$(GREEN)[2/2] Building macOS executable...$(NC)"
+	npm run build:macos
+	@echo ""
+	@echo "$(GREEN)✓ Build completed!$(NC)"
+	@echo "$(YELLOW)Executable created: $(DIST_DIR)/ZQRadar-macos$(NC)"
+	@echo "$(YELLOW)💡 Run 'node build/post-build.js' to copy assets + create archives$(NC)"
+
+build-all: install-pkg ## Build for all platforms (Windows, Linux, macOS)
+	@echo "$(GREEN)[1/2] Checking dependencies...$(NC)"
+	@make check
+	@echo ""
+	@echo "$(GREEN)[2/2] Building for all platforms...$(NC)"
 	npm run build:all
 	@echo ""
 	@echo "$(GREEN)✓ Build completed for all platforms!$(NC)"
+	@echo "$(YELLOW)Executables created:$(NC)"
+	@echo "  - $(DIST_DIR)/albion-zqradar-win.exe (Windows)"
+	@echo "  - $(DIST_DIR)/albion-zqradar-linux (Linux)"
+	@echo "  - $(DIST_DIR)/albion-zqradar-macos (macOS)"
+	@echo ""
+	@echo "$(YELLOW)💡 Next steps:$(NC)"
+	@echo "  1. Optimize: npm run optimize:images (optional, reduces archives by 30-40%)"
+	@echo "  2. Package: node build/post-build.js (copies assets + creates archives)"
+
+
+all-in-one: ## Complete workflow: clean + install + build all + optimize + test
+	@echo ""
+	@echo "$(GREEN)╔════════════════════════════════════════════════════════════╗$(NC)"
+	@echo "$(GREEN)║          ZQRadar - Complete Build Workflow                 ║$(NC)"
+	@echo "$(GREEN)╚════════════════════════════════════════════════════════════╝$(NC)"
+	@echo ""
+	@echo "$(GREEN)[1/6] Cleaning...$(NC)"
+	-@rm -rf $(DIST_DIR) 2>/dev/null || true
+	-@rm -rf $(BUILD_DIR)/temp 2>/dev/null || true
+	-@rm -f *.log 2>/dev/null || true
+	@echo "$(GREEN)✓ Cleaning completed$(NC)"
+	@echo ""
+	@echo "$(GREEN)[2/6] Installing dependencies...$(NC)"
+	@npm install
+	@echo ""
+	@echo "$(GREEN)[3/6] Rebuilding native modules...$(NC)"
+	@npm rebuild cap node-sass
+	@echo ""
+	@echo "$(GREEN)[4/6] Installing build tools...$(NC)"
+	@npm install -D pkg archiver sharp
+	@echo ""
+	@echo "$(GREEN)[5/6] Building all platforms...$(NC)"
+	@npm run build:all
+	@echo ""
+	@echo "$(GREEN)[6/6] Post-build (assets + optimization + archives)...$(NC)"
+	@node build/post-build.js
+	@echo ""
+	@echo "$(GREEN)════════════════════════════════════════════════════════════$(NC)"
+	@echo "$(GREEN)✅ All-in-one build completed successfully!$(NC)"
+	@echo "$(GREEN)════════════════════════════════════════════════════════════$(NC)"
+	@echo ""
+	@echo "$(YELLOW)📦 Release packages created in $(DIST_DIR)/:$(NC)"
+	-@ls -lh $(DIST_DIR)/*.zip 2>/dev/null | awk '{print "  - " $$9 " (" $$5 ")"}'
+	@echo ""
+	@echo "$(YELLOW)💡 Next steps:$(NC)"
+	@echo "  1. Test the executables on target platforms"
+	@echo "  2. Upload archives to release page"
+	@echo "  3. Update changelog"
+	@echo ""
 
 clean: ## Clean temporary files and builds
 	@echo "$(GREEN)Cleaning temporary files...$(NC)"
@@ -94,6 +170,10 @@ clean-all: clean ## Complete cleanup (+ node_modules)
 	@echo "$(YELLOW)Removing node_modules...$(NC)"
 	rm -rf node_modules package-lock.json
 	@echo "$(GREEN)✓ Complete cleanup finished!$(NC)"
+
+optimize-images: ## Optimize PNG images (lossless compression)
+	@echo "$(GREEN)Optimizing images...$(NC)"
+	npm run optimize:images
 
 rebuild: clean install build ## Complete rebuild (clean + install + build)
 	@echo ""

@@ -13,9 +13,14 @@ if /i "%1"=="help" goto help
 if /i "%1"=="check" goto check
 if /i "%1"=="install" goto install
 if /i "%1"=="build" goto build
+if /i "%1"=="build:linux" goto buildlinux
+if /i "%1"=="build:macos" goto buildmacos
+if /i "%1"=="build:all" goto buildall
+if /i "%1"=="all-in-one" goto allinone
 if /i "%1"=="rebuild" goto rebuild
 if /i "%1"=="release" goto release
 if /i "%1"=="clean" goto clean
+if /i "%1"=="optimize" goto optimize
 if /i "%1"=="start" goto start
 goto error
 
@@ -32,9 +37,14 @@ echo.
 echo   check       Check system dependencies
 echo   install     Install all dependencies
 echo   build       Build Windows executable
+echo   build:linux Build Linux executable
+echo   build:macos Build macOS executable
+echo   all-in-one  Complete workflow (clean+install+build+optimize+test)
+echo   build:all   Build for all platforms
 echo   rebuild     Complete rebuild (clean + install + build)
 echo   release     Create complete release package
 echo   clean       Clean temporary files
+echo   optimize    Optimize images in dist/ (after build)
 echo   start       Launch ZQRadar in dev mode
 echo   help        Display this help
 echo.
@@ -82,7 +92,7 @@ goto end
 echo.
 echo 🏗️  Building ZQRadar for Windows...
 echo.
-echo [1/3] Checking...
+echo [1/4] Checking...
 call npm run check
 if errorlevel 1 (
     echo.
@@ -91,10 +101,10 @@ if errorlevel 1 (
     goto end
 )
 echo.
-echo [2/3] Installing pkg...
+echo [2/4] Installing pkg and archiver...
 call npm install -D pkg archiver
 echo.
-echo [3/3] Compiling...
+echo [3/4] Compiling...
 call npm run build:win
 if errorlevel 1 (
     echo.
@@ -103,10 +113,158 @@ if errorlevel 1 (
     goto end
 )
 echo.
+echo [4/4] Post-build (copying assets + creating archives)...
+call node build\post-build.js
+if errorlevel 1 (
+    echo.
+    echo ❌ Post-build failed!
+    pause
+    goto end
+)
+echo.
 echo ✅ Build completed!
 echo.
 echo 📍 Executable created: dist\ZQRadar.exe
+echo 📦 Archives created: dist\ZQRadar-*.zip, dist\ZQRadar-*.tar.gz
 echo.
+goto end
+
+:buildlinux
+echo.
+echo 🏗️  Building ZQRadar for Linux...
+echo.
+echo [1/2] Installing pkg and archiver...
+call npm install -D pkg archiver
+echo.
+echo [2/2] Compiling...
+call npm run build:linux
+if errorlevel 1 (
+    echo.
+    echo ❌ Build failed!
+    pause
+    goto end
+)
+echo.
+echo [Post-build] Copying assets and creating archives...
+call node build\post-build.js
+echo.
+echo ✅ Build completed!
+echo.
+echo 📍 Executable created: dist\ZQRadar-linux
+echo.
+goto end
+
+:buildmacos
+echo.
+echo 🏗️  Building ZQRadar for macOS...
+echo.
+echo [1/2] Installing pkg and archiver...
+call npm install -D pkg archiver
+echo.
+echo [2/2] Compiling...
+call npm run build:macos
+if errorlevel 1 (
+    echo.
+    echo ❌ Build failed!
+    pause
+    goto end
+)
+echo.
+echo [Post-build] Copying assets and creating archives...
+call node build\post-build.js
+echo.
+echo ✅ Build completed!
+echo.
+echo 📍 Executable created: dist\ZQRadar-macos
+echo.
+goto end
+
+:buildall
+echo.
+echo 🏗️  Building ZQRadar for all platforms...
+echo.
+echo [1/2] Installing pkg and archiver...
+call npm install -D pkg archiver
+echo.
+echo [2/2] Compiling for Windows, Linux, and macOS...
+call npm run build:all
+if errorlevel 1 (
+    echo.
+    echo ❌ Build failed!
+    pause
+    goto end
+)
+echo.
+echo [Post-build] Copying assets and creating archives...
+call node build\post-build.js
+echo.
+echo ✅ Build completed for all platforms!
+echo.
+echo 📍 Executables created:
+echo   - dist\ZQRadar.exe (Windows)
+echo   - dist\ZQRadar-linux (Linux)
+echo   - dist\ZQRadar-macos (macOS)
+echo.
+:allinone
+echo.
+echo ════════════════════════════════════════════════════════════
+echo          ZQRadar - Complete Build Workflow
+echo ════════════════════════════════════════════════════════════
+echo.
+echo [1/6] Cleaning...
+if exist dist rmdir /s /q dist
+if exist ip.txt del /q ip.txt
+echo ✓ Cleaning completed
+echo.
+echo [2/6] Installing dependencies...
+call npm install
+if errorlevel 1 (
+    echo ❌ Installation failed!
+    pause
+    goto end
+)
+echo.
+echo [3/6] Rebuilding native modules...
+call npm rebuild cap node-sass
+if errorlevel 1 (
+    echo ❌ Rebuild failed!
+    pause
+    goto end
+)
+echo.
+echo [4/6] Installing build tools...
+call npm install -D pkg archiver sharp
+echo.
+echo [5/6] Building all platforms...
+call npm run build:all
+if errorlevel 1 (
+    echo ❌ Build failed!
+    pause
+    goto end
+)
+echo.
+echo [6/6] Post-build (assets + optimization + archives)...
+call node build\post-build.js
+if errorlevel 1 (
+    echo ❌ Post-build failed!
+    pause
+    goto end
+)
+echo.
+echo ════════════════════════════════════════════════════════════
+echo ✅ All-in-one build completed successfully!
+echo ════════════════════════════════════════════════════════════
+echo.
+echo 📦 Release packages created in dist\:
+dir /b dist\*.zip 2>nul
+echo.
+echo 💡 Next steps:
+echo   1. Test the executables on target platforms
+echo   2. Upload archives to release page
+echo   3. Update changelog
+echo.
+goto end
+
 goto end
 
 :rebuild
@@ -199,6 +357,24 @@ if exist build\temp (
 del /q *.log 2>nul
 echo.
 echo ✅ Cleaning completed!
+goto end
+
+:optimize
+echo.
+echo 🖼️  Optimizing images in dist/ (source originals preserved)...
+echo.
+call npm run optimize:images
+if errorlevel 1 (
+    echo.
+    echo ❌ Optimization failed!
+    pause
+    goto end
+)
+echo.
+echo ✅ Image optimization completed!
+echo 📝 Note: Source images/ folder unchanged
+echo 💡 Tip: Run this after build to reduce archive size
+echo.
 goto end
 
 :start

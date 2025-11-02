@@ -1,11 +1,135 @@
 # 📝 DEV NOTES - Living Resources Detection
 
-**Dernière mise à jour**: 2025-11-02  
-**État du projet**: Phase 1 & 2 TERMINÉES ✅ | Code production-ready | Git nettoyé ✅
+men**Last update**: 2025-11-02  
+**Project status**: Phase 1 & 2 COMPLETED ✅ | Production-ready code | Git cleaned ✅
 
 ---
 
-## 🧹 NETTOYAGE GIT (2025-11-02)
+## 🏗️ BUILD SYSTEM (2025-11-02)
+
+### Architecture
+t- **Lightweight executable**: 53 MB (vs 656 MB before - 92% reduction!)
+  - Only native modules bundled in .exe (cap.node, node-sass)
+  - Assets copied alongside for easy updates and customization
+- **PKG Configuration**: Minimal assets in bundle
+- **Post-build**: Auto-copy assets + create multi-format archives
+- **Image Optimization**: Lossless PNG compression available (reduces archive size)
+
+### Release Packages (Multi-platform)
+**Windows:**
+- `ZQRadar-{version}-win64.zip` (~212 MB, optimized images)
+
+**Linux:**
+- `ZQRadar-{version}-linux-x64.zip` (~215 MB, optimized images)
+
+**macOS:**
+- `ZQRadar-{version}-macos-x64.zip` (~215 MB, optimized images)
+
+**Optimization integrated**: Images automatically optimized during build (602 MB → 180 MB, 70% compression)
+
+### Build Commands
+```bash
+
+# Windows CMD
+build.bat all-in-one      # Complete workflow (includes optimization)
+build.bat build:all       # Build all platforms
+build.bat optimize        # Optimize images in dist/ (manual)
+build.bat clean           # Clean dist/
+
+# Unix/WSL/Git Bash
+make all-in-one           # Complete workflow (includes optimization)
+make build-all            # Build all platforms
+make optimize-images      # Optimize images in dist/ (manual)
+make clean                # Clean dist/
+
+# Or via npm
+npm run build:all         # Build all platforms
+npm run optimize:images   # Optimize dist/images/ only
+```
+
+**`all-in-one` Workflow:**
+1. Clean all build artifacts
+2. Install all dependencies
+3. Check system requirements
+4. Build for all platforms (Windows, Linux, macOS)
+5. Post-build: Copy assets → **Optimize images (integrated)** → Create archives
+6. Display summary of created archives
+
+**Image optimization** is now **integrated in post-build.js**:
+- Runs automatically after copying assets
+- 95% quality (near-lossless)
+- 602 MB → ~180 MB (70% compression)
+- 2-3 minutes processing time
+- Archives created with optimized images
+
+### Distribution Structure
+```
+dist/
+├── ZQRadar.exe                          (53 MB - Windows)
+├── albion-zqradar-linux                 (61 MB - Linux)
+├── albion-zqradar-macos                 (66 MB - macOS)
+├── README-win.txt                       (Installation guide)
+├── README-linux.txt                     (Installation guide)
+├── README-macos.txt                     (Installation guide)
+├── views/                               (EJS templates)
+├── scripts/                             (Client-side JS)
+├── images/                              (Assets - can be optimized)
+├── images/                              (Optimized: 180 MB - 70% compression)
+├── ZQRadar-{version}-win64.zip          (~212 MB)
+├── ZQRadar-{version}-linux-x64.zip      (~215 MB)
+└── ZQRadar-{version}-macos-x64.zip      (~215 MB)
+
+### System Requirements
+**Windows:**
+- Npcap 1.79 or newer (download: https://npcap.com/)
+- Node.js v18.18.2 (for development)
+
+**Linux:**
+- libpcap-dev (`sudo apt-get install libpcap-dev` on Ubuntu/Debian)
+- Node.js v18.18.2 (for development)
+
+**macOS:**
+- libpcap (usually pre-installed, or `brew install libpcap`)
+- Node.js v18.18.2 (for development)
+
+### Cross-platform Support
+- **Windows**: ✅ Tested and working (node18-win-x64)
+- **Linux**: 🔄 Built successfully (node18-linux-x64) - runtime testing needed
+**Important:** Optimizes **dist/images/ ONLY** (source originals in images/ folder are preserved)
+
+- **macOS**: 🔄 Built successfully (node18-macos-x64) - runtime testing needed
+
+### Image Optimization
+**Command:** `npm run optimize:images` or `make optimize-images` or `build.bat optimize`
+
+**Important:** Optimizes **dist/images/ ONLY** (source originals in images/ folder are preserved)
+
+Uses sharp for fast PNG compression:
+- Quality: 95% (near-lossless, imperceptible loss)
+- Speed: Fast (50 files in parallel)
+- Typical savings: 30-40% on PNG files
+- Processing time: ~2-3 minutes for 6693 files
+- Strips metadata for additional savings
+- **Source images/ folder: UNTOUCHED** (originals kept for development)
+
+**Workflow:**
+```bash
+# Method 1: Automated (recommended)
+make all-in-one              # Build + optimize automatically
+
+# Method 2: Manual
+npm run build:all
+npm run optimize:images      # Optimizes dist/images/ only
+```
+
+**Result:**
+- Archives ~30-40% smaller
+- Development images unchanged
+- 95% quality (visually identical to original)
+
+---
+
+## 🧹 GIT CLEANUP (2025-11-02)
 
 ### Changements annulés
 ❌ **MobsHandler.js** - Logique de calcul enchantement supprimée

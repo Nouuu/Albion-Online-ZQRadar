@@ -7,14 +7,14 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
-# Logs de session
+# Session logs
 LOGS.json
 
-# Fichiers temporaires de diagnostic
+# Temporary diagnostic files
 diff_*.txt
 TYPEIDS_SUSPECTS.json
 
-# Fichiers de documentation temporaires (utiliser DEV_NOTES.md et TODO.md uniquement)
+# Temporary documentation files (use DEV_NOTES.md and TODO.md only)
 WORKING_*.md
 *_FIX.md
 *_ANALYSIS.md
@@ -23,7 +23,7 @@ WORKING_*.md
 *_FINAL.md
 *_TYPEIDS.md
 
-# Scripts Python temporaires (tools/)
+# Temporary Python scripts (tools/)
 tools/*.py
 tools/extract_*.py
 tools/scrape_*.py
@@ -32,7 +32,7 @@ tools/analyze_*.py
 tools/debug_*.py
 tools/generate_*.py
 
-# Gros fichiers JSON téléchargés (tools/)
+# Large downloaded JSON files (tools/)
 tools/*.json
 !tools/TYPEIDS_STATUS.json
 
@@ -120,6 +120,14 @@ out
 # Nuxt.js build / generate output
 .nuxt
 dist
+
+# Build artifacts and releases
+dist/
+*.exe
+*.zip
+*.7z
+*.tar.gz
+ip.txt
 
 # Gatsby files
 .cache/

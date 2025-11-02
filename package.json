@@ -10,9 +10,11 @@
     "prebuild": "npm run check",
     "build": "pkg . --compress GZip",
     "build:win": "pkg . --targets node18-win-x64 --compress GZip --output dist/ZQRadar.exe",
-    "build:all": "pkg . --targets node18-win-x64,node18-linux-x64 --compress GZip",
+    "build:linux": "pkg . --targets node18-linux-x64 --compress GZip --output dist/ZQRadar-linux",
+    "build:macos": "pkg . --targets node18-macos-x64 --compress GZip --output dist/ZQRadar-macos",
+    "build:all": "pkg . --targets node18-win-x64,node18-linux-x64,node18-macos-x64 --compress GZip",
     "postbuild": "node build/post-build.js",
-    "clean": "if exist dist rmdir /s /q dist && if exist build\\temp rmdir /s /q build\\temp && del /q *.log 2>nul",
+    "optimize:images": "node build/optimize-images.js",
     "clean:all": "npm run clean && if exist node_modules rmdir /s /q node_modules && del /q package-lock.json",
     "rebuild:native": "npm rebuild cap node-sass",
     "package": "node build/create-release.js",
@@ -26,7 +28,9 @@
       "node_modules/node-sass/vendor/**/*"
     ],
     "targets": [
-      "node18-win-x64"
+      "node18-win-x64",
+      "node18-linux-x64",
+      "node18-macos-x64"
     ],
     "outputPath": "dist",
     "scripts": [
@@ -60,6 +64,7 @@
   "devDependencies": {
     "archiver": "^7.0.1",
     "nodemon": "^3.1.7",
-    "pkg": "^5.8.1"
+    "pkg": "^5.8.1",
+    "sharp": "^0.33.5"
   }
 }
