@@ -1,5 +1,21 @@
 # 📚 ORGANISATION DE LA DOCUMENTATION
 
+⚠️ **RÈGLES STRICTES** :
+1. **NE PAS créer de nouveaux fichiers de documentation !**
+   - Utiliser les 4 fichiers existants seulement
+   - Pas de fichiers temporaires (WORKING_*, *_FIX.md, etc.)
+   - Toute nouvelle info va dans DEV_NOTES.md ou TODO.md
+
+2. **NE PAS créer de fichiers de travail multiples !**
+   - Pas de WORKING_DOCUMENT_*.md
+   - Pas de *_ANALYSIS.md
+   - Une seule source de vérité par sujet
+
+3. **PAS de hardcoded TypeID exceptions !**
+   - Pas de mappings statiques en dur dans le code
+   - Utiliser uniquement MobsInfo.js (base de données)
+   - Le système d'apprentissage localStorage est la seule exception acceptable
+
 Ce projet contient 4 fichiers de documentation :
 
 ---

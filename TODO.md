@@ -1,7 +1,7 @@
 # 📋 TODO
 
 **Dernière mise à jour**: 2025-11-02  
-**État**: Production-ready ✅ | Code nettoyé ✅
+**État**: 🔧 Amélioration détection enchantements en cours
 
 > 📖 **Détails techniques**: [DEV_NOTES.md](DEV_NOTES.md) | **Outils**: [tools/](tools/)
 
@@ -15,16 +15,35 @@
   - Fiber T3/T4/T5 (TypeID 528/530/531) ✅
 - **Cache localStorage** : Fonctionnel (cross-référence HarvestablesHandler)
 - **Filtrage settings** : Par Tier + Enchant opérationnel
+- **Fiber vivants T5** : Détection fiable ✅
 
-### ❌ Ce qui ne fonctionne pas
-- **Hide/Fiber ENCHANTÉS (.1, .2, .3)** : 0% détection
-  - Cause : Chaque enchantement = TypeID unique (inconnus)
-  - Solution : Collecte manuelle nécessaire (session terrain)
+### ❌ Problèmes identifiés
+- **Enchantements T5+ : 90% NON DÉTECTÉS sur le radar**
+  - Cause: Formule `calculateEnchantmentFromRarity()` incorrecte
+  - TypeIDs enchantés manquants dans MobsInfo.js
+  - Observations terrain:
+    - Hide T4e0 parfois détecté comme T4e1 ❌
+    - Hide T5e3 parfois détecté comme T5e0 ❌
+    - Hide T5e1 fonctionne ✅
+    - Fiber T4e0/e1/e2 fonctionnent ✅
 
-### 🔄 Derniers changements
-- ❌ Apprentissage automatique retiré (approche non viable)
-- ✅ Code retour état propre et simple
-- ✅ Documentation nettoyée et consolidée
+### 🔧 Correctif appliqué (2025-11-02 23:XX)
+- **Nouvelle formule rarity → enchantement**
+  ```javascript
+  Base rarity par tier: T4=92, T5=112, T6=132...
+  Calcul: diff = rarity - base
+  - e0: diff < 20
+  - e1: diff < 65  (≈ base + 45)
+  - e2: diff < 110 (≈ base + 90)
+  - e3: diff < 155 (≈ base + 145)
+  - e4: diff >= 155
+  ```
+
+### 🔄 Derniers changements (2025-11-02)
+- ✅ Refactoring formule enchantement (tier-based)
+- ✅ Suppression doublon système apprentissage
+- ✅ Nettoyage fichiers de travail temporaires
+- ✅ Règles strictes DOCS_GUIDE.md
 
 ---
 
@@ -41,16 +60,47 @@
 
 ## 🔄 PROCHAINES ÉTAPES
 
-### Court terme (immédiat)
-- [ ] **Session terrain longue** pour valider stabilité
-  - Fiber/Hide detection
-  - Analyse logs
-  - Performance
+### 🔥 URGENT (immédiat)
+1. **COLLECTER TypeIDs Skinnable (animaux) ENCHANTÉS**
+   - 🔍 **Découverte**: Pour Skinnable, le jeu envoie des valeurs `enchant` et `rarity` **CONSTANTES** par TypeID
+   - Exemple: TOUS les TypeID 425 envoient `enchant=1, rarity=137` (peu importe l'enchant réel)
+   - ✅ **Solution**: Enrichir MobsInfo.js avec enchantement en 4ème paramètre
+   - ❌ **Manque**: TypeIDs pour Hide/Fiber .1/.2/.3 (seulement .0 actuellement)
+   
+   **Comment collecter**:
+   ```
+   1. Aller en zone avec animaux enchantés (Hide T4/T5 .1/.2/.3)
+   2. Tuer un animal ET noter son VRAI enchantement (cadavre)
+   3. Regarder dans logs: "reportedTypeId":XXX
+   4. Mapper: TypeID XXX → Hide T4e1 (par exemple)
+   ```
+
+2. **Alternative: Scraper base de données communautaire**
+   - Script créé: `tools/scrape_albiononline2d_mobs.py`
+   - Script créé: `tools/fetch_ao_data.py`
+   - Chercher GitHub: broderickhyman/ao-bin-dumps
+   - Chercher API: AlbionOnline2D.com
+
+3. **TEST actuel avec enchant=0 par défaut**
+   - Recharger app (F5)
+   - Tous Skinnable affichés comme .0 (correct pour TypeIDs actuels)
+   - Harvestable (Fiber) utilisent calcul rarity (devrait marcher)
+
+### Court terme (cette semaine)
+- [ ] **Session terrain validation** (2h)
+  - Zones T4-T5 enchantés
+  - Valider formule rarity
+  - Collecter statistiques précises
   
-- [ ] **Collecte TypeID enchantés** (1-2h ciblée)
-  - Guide de collecte ci-dessous 👇
-  - Focus Hide T4/T5 et Fiber T4/T5 enchantés
-  - Noter TypeID dans logs JSON
+- [ ] **Enrichir MobsInfo.js**
+  - Ajouter TypeIDs enchantés collectés
+  - Validation avec BDD communautaire si possible
+
+### Moyen terme
+- [ ] Scraping bases de données officielles Albion
+  - https://albiononline2d.com/ (discuté)
+  - Autres sites communautaires
+- [ ] EventNormalizer (Phase 3) - seulement si nécessaire
 
 ---
 

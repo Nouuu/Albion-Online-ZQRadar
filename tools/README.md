@@ -1,145 +1,109 @@
-# 🛠️ Tools - Scripts d'analyse TypeID
+# 🛠️ OUTILS DE DIAGNOSTIC
 
-Ce dossier contient les outils d'analyse et de vérification des TypeID living resources.
+**Dernière mise à jour**: 2025-11-02
 
 ---
 
 ## 📋 Scripts disponibles
 
-### 1. `analyze_logs_typeids.js`
-**Analyse automatique des logs terrain**
+### 🔍 Analyse des logs
 
-Détecte les erreurs de TypeID en comparant :
-- Notre base de données MobsInfo.js
-- Les typeNumber envoyés par le serveur Albion
-- Les overrides intentionnels (bugs serveur)
+#### `analyze_logs_typeids.js`
+**Usage**: `node analyze_logs_typeids.js`
 
-**Usage** :
-```bash
-node tools/analyze_logs_typeids.js
-```
+**Fonction**: Analyse les logs de session pour extraire les TypeID découverts
+- Parse les logs JSON/NDJSON
+- Extrait les TypeID par type (Hide, Fiber, etc.)
+- Détecte les anomalies et transformations suspectes
+- Génère un rapport de découvertes
 
-**Sortie** :
-- ✅ Erreurs détectées (mismatches)
-- ⚠️ Overrides intentionnels (bugs serveur Albion)
-- 🚨 TypeID suspects à vérifier en jeu
-- 📁 Génère `TYPEIDS_SUSPECTS.json` si suspects trouvés
+**Sortie**: Console avec statistiques TypeID
 
 ---
 
-### 2. `find_suspect_typeids.js`
-**Liste les TypeID suspects par range**
+#### `find_suspect_typeids.js`
+**Usage**: `node find_suspect_typeids.js`
 
-Identifie les TypeID potentiellement mal classés basés sur les patterns :
-- Ranges avec types mélangés (ex: Fiber + Rock dans même range)
-- TypeID dans le même range que les bugs confirmés (528, 530, 531)
+**Fonction**: Détecte les TypeID suspects dans les logs
+- Identifie les transformations Fiber ↔ Wood/Hide
+- Flag les TypeID qui changent de type
+- Repère les race conditions
 
-**Usage** :
-```bash
-node tools/find_suspect_typeids.js
-```
-
-**Sortie** :
-- Liste des TypeID suspects par range
-- Template de rapport pour vérification en jeu
-- Recommandations d'actions
+**Sortie**: Liste des TypeID suspects avec raisons
 
 ---
 
-## 📊 Fichiers générés
+### 🧹 Nettoyage
 
-### `TYPEIDS_SUSPECTS.json`
-Liste JSON des TypeID nécessitant vérification en jeu.
+#### `clean_repo.bat`
+**Usage**: Double-clic ou `cmd /c clean_repo.bat`
 
-**Format** :
-```json
-[
-  {
-    "typeId": 528,
-    "ours": "Fiber",
-    "tier": 3,
-    "game": "Hide",
-    "typeNumber": 16,
-    "reason": "Override intentionnel (bug serveur Albion)"
-  }
-]
-```
+**Fonction**: Nettoie le repository
+- Supprime fichiers JSON de configuration Albion inutilisés
+- Supprime fichiers temporaires (LOGS.json, etc.)
+- Conserve uniquement les fichiers essentiels
+
+**Note**: Script batch Windows, utiliser cmd.exe (pas PowerShell)
+
+---
+
+## 📊 Documentation
 
 ### `TYPEIDS_STATUS.md`
-Documentation complète du statut des TypeID :
-- Corrections appliquées
-- Bugs serveur Albion confirmés
-- Protocole de vérification en jeu
-- Liste des suspects à vérifier
+État actuel des TypeID connus et suspects
+- Liste TypeID validés
+- TypeID en attente de validation
+- Problèmes connus
 
 ---
 
 ## 🎯 Workflow recommandé
 
-### 1. Après une session de jeu
+### 1. Session de jeu
 ```bash
-# Analyser les nouveaux logs
-node tools/analyze_logs_typeids.js
+# Lancer le radar
+_RUN.bat
+
+# Jouer et collecter données
+# Les logs s'enregistrent automatiquement
 ```
 
-Si des erreurs sont détectées → Corriger MobsInfo.js
-
-### 2. Pour vérifier un range complet
+### 2. Analyse post-session
 ```bash
-# Lister tous les suspects
-node tools/find_suspect_typeids.js
+# Analyser les TypeID découverts
+cd tools
+node analyze_logs_typeids.js
+
+# Chercher anomalies
+node find_suspect_typeids.js
 ```
 
-Suivre le protocole dans `TYPEIDS_STATUS.md` pour vérifier en jeu.
+### 3. Mise à jour base de données
+```javascript
+// Ajouter TypeID validés dans scripts/Handlers/MobsInfo.js
+this.addItem(TypeID, Tier, Type, "ResourceName", Enchant);
+```
 
-### 3. Avant un commit
+### 4. Nettoyage périodique
 ```bash
-# S'assurer qu'il n'y a pas d'erreurs
-node tools/analyze_logs_typeids.js
-```
-
-Si tout est ✅ → Commit safe
-
----
-
-## 📝 Protocole de vérification terrain
-
-1. **Effacer cache TypeID** (bouton radar)
-2. **Recharger page** (CTRL+F5)
-3. **Aller en zone** avec le TypeID suspect
-4. **Activer logs** living resources
-5. **Pour chaque TypeID** :
-   - Trouver ressource vivante
-   - Noter VISUELLEMENT le type (Fiber/Hide/Rock/etc)
-   - Tuer la ressource
-   - Vérifier logs : `typeId` vs `typeNumber`
-   - Si mismatch → Me transmettre correction
-
----
-
-## 🚨 Bugs serveur Albion confirmés
-
-Ces TypeID sont **Fiber** mais le serveur envoie `typeNumber=16` (Hide) :
-- **TypeID 528** = Fiber T3 ✅ CORRIGÉ
-- **TypeID 530** = Fiber T4 ✅ CORRIGÉ
-- **TypeID 531** = Fiber T5 ✅ CORRIGÉ
-
-Notre système les override correctement via mobinfo priority.
-
----
-
-## 📁 Localisation
-
-```
-tools/
-├── README.md                    ← Ce fichier
-├── analyze_logs_typeids.js      ← Analyse auto logs
-├── find_suspect_typeids.js      ← Liste suspects
-├── TYPEIDS_SUSPECTS.json        ← JSON suspects (généré)
-└── TYPEIDS_STATUS.md            ← Documentation complète
+# Supprimer fichiers temporaires
+cd tools
+cmd /c clean_repo.bat
 ```
 
 ---
 
-**Dernière mise à jour** : 2025-11-01
+## 📝 Notes
+
+- **Logs format**: NDJSON uniquement (un JSON par ligne)
+- **TypeID validation**: Toujours confirmer en session terrain
+- **Cache localStorage**: Utilisé comme backup, pas source primaire
+- **PowerShell**: Ne pas utiliser pour scripts .bat, utiliser cmd.exe
+
+---
+
+**Voir aussi**:
+- [../DEV_NOTES.md](../DEV_NOTES.md) - Documentation technique complète
+- [../TODO.md](../TODO.md) - Tâches en cours
+- [TYPEIDS_STATUS.md](TYPEIDS_STATUS.md) - État TypeID
 

@@ -1,19 +1,88 @@
 # 📝 DEV NOTES - Living Resources Detection
 
-**Dernière mise à jour**: 2025-11-01  
-**État du projet**: Phase 1 & 2 TERMINÉES ✅ | Code production-ready
+**Dernière mise à jour**: 2025-11-02  
+**État du projet**: Phase 1 & 2 TERMINÉES ✅ | Code production-ready | Git nettoyé ✅
+
+---
+
+## 🧹 NETTOYAGE GIT (2025-11-02)
+
+### Changements annulés
+❌ **MobsHandler.js** - Logique de calcul enchantement supprimée
+- Code ajouté par erreur, jamais testé en session terrain
+- Fonction `calculateEnchantmentFromRarity()` retirée
+- Retour au code stable validé
+
+### Changements conservés
+✅ **MobsInfo.js** - Support enchantement préparé
+- Ajout paramètre `enchant` à `addItem()` (défaut: 0)
+- Stockage enchantement dans `moblist[id][3]`
+- Documentation TypeID 425/427 (valeurs rarity incorrectes du jeu)
+- Correction TypeID 528 (Fiber T3, pas Rock T4)
+
+### Leçon apprise
+**Principe**: Code minimal, tests terrain maximums !
+- ✅ Préparer base de données AVANT logique
+- ✅ Tester en session terrain
+- ✅ Ajouter code SEULEMENT si nécessaire
 
 ---
 
 ## 📊 ÉTAT ACTUEL
 
-### ✅ Ce qui fonctionne
+### ✅ Ce qui fonctionne (2025-11-02)
 - **Hide Detection**: 100% (TypeID 421/423/425/427)
+- **Fiber Detection**: Améliorée avec override typeNumber
 - **Cache localStorage**: Fonctionnel avec boutons Clear/Show
 - **Cross-référence**: Harvestables → Mobs opérationnel
 - **Filtrage settings**: Par Tier & Enchantement
 - **Icon loading**: Robuste avec fallback cercle bleu
 - **Logs JSON**: Format NDJSON uniquement (simplifié)
+- **🆕 Détection enchantements via rarity**: Calcul automatique .1/.2/.3
+
+### 🆕 Amélioration enchantements (2025-11-02)
+
+#### 🔥 DÉCOUVERTE CRITIQUE : Skinnable vs Harvestable
+Les valeurs `enchant` et `rarity` du jeu fonctionnent **DIFFÉREMMENT** selon le type !
+
+**Skinnable (animaux - Hide):**
+- ❌ Valeurs `enchant` et `rarity` **CONSTANTES par TypeID** (fausses !)
+- Exemple: TypeID 425 (Hide T4) → TOUS envoient `enchant=1, rarity=137`
+- Exemple: TypeID 427 (Hide T5) → TOUS envoient `enchant=3, rarity=257`
+- ✅ Solution: Utiliser base de données TypeID → Enchantement (MobsInfo.js[3])
+
+**Harvestable (plantes - Fiber/Ore/Wood/Rock):**
+- ✅ Valeur `rarity` **VARIABLE** et correcte selon enchantement réel
+- Exemple: Fiber T4 → `rarity=92` (e0), `rarity=117` (e1), `rarity=142` (e2)
+- ✅ Solution: Calculer enchantement depuis formule `rarity - base_tier`
+
+#### Formule calcul enchantement (Harvestable uniquement)
+```javascript
+Base par tier: T1=12, T2=32, T3=52, T4=92, T5=112, T6=132, T7=152, T8=172
+diff = rarity - base
+e0: diff < 20 | e1: diff < 65 | e2: diff < 110 | e3: diff < 155 | e4: diff >= 155
+```
+
+**Problème résolu**: Les living resources enchantées n'étaient pas détectées (enchant toujours à 0).
+
+**Solution**: Calcul de l'enchantement basé sur la valeur `rarity` au lieu du paramètre `enchant` (qui ne fonctionne pas).
+
+```javascript
+// MobsHandler.calculateEnchantmentFromRarity()
+Rarity   0-120  → Enchant 0  (.0)
+Rarity 121-180  → Enchant 1  (.1)
+Rarity 181-230  → Enchant 2  (.2)
+Rarity 231-280  → Enchant 3  (.3)
+Rarity 281+     → Enchant 4  (.4)
+```
+
+**Exemples validés dans logs**:
+- Hide T5 .0: rarity=112 → enchant=0 ✅
+- Hide T4 .1: rarity=137 → enchant=1 ✅
+- Fiber T5 .2: rarity=208 → enchant=2 ✅
+- Fiber T5 .3: rarity=257 → enchant=3 ✅
+
+**Impact**: Filtrage par enchantement maintenant fonctionnel sans besoin de collecter les TypeIDs!
 
 ### ⚠️ Limitations connues
 - **Fiber detection**: Partielle (~60%)
@@ -26,12 +95,6 @@
   - Utilisé pour cadavres transitoires uniquement
   - Ne déclanche pas NewMobEvent pour spawns vivants
 
-- **Hide/Fiber ENCHANTÉS (.1+)**
-  - **Symptôme**: Seuls les .0 (non enchantés) s'affichent
-  - **Cause**: Chaque niveau d'enchantement a un TypeID unique
-  - **Exemple**: Hide T4.0=425 ✅, T4.1=??? ❌, T4.2=??? ❌
-  - **Impact**: Filtres T4.2+ et T5.1+ non fonctionnels
-  - **Solution**: Collecte manuelle TypeID nécessaire (session terrain)
 
 ### ❌ Nécessite Phase 3 (EventNormalizer)
 - Race conditions SPAWN vs STATIC
