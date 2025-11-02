@@ -3,7 +3,8 @@
 **Dernière mise à jour**: 2025-11-02  
 **État**: 🔧 Amélioration détection enchantements en cours
 
-> 📖 **Détails techniques**: [DEV_NOTES.md](DEV_NOTES.md) | **Outils**: [tools/](tools/)
+> 📖 **Détails techniques**: [DEV_NOTES.md](DEV_NOTES.md) | **Outils**: [tools/](tools/)  
+> 🎯 **Nouveau**: [Mode Overlay](OVERLAY_MODE.md) - Fenêtre popup pour le radar
 
 ---
 
@@ -16,6 +17,7 @@
 - **Cache localStorage** : Fonctionnel (cross-référence HarvestablesHandler)
 - **Filtrage settings** : Par Tier + Enchant opérationnel
 - **Fiber vivants T5** : Détection fiable ✅
+- **🆕 Mode Overlay** : Fenêtre popup avec contrôle d'opacité ✅
 
 ### ❌ Problèmes identifiés
 - **Enchantements T5+ : 90% NON DÉTECTÉS sur le radar**

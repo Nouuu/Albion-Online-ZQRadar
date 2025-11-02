@@ -94,6 +94,11 @@ function StartRadar()
     res.render('main/drawing-items');
   });
 
+  app.get('/radar-overlay', (req, res) => {
+
+    res.render('main/radar-overlay');
+  });
+
   /*app.get('/logout', (req, res) => {
 
     req.session.destroy();
