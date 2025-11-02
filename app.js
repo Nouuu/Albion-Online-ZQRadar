@@ -129,10 +129,12 @@ function StartRadar()
   var c = new Cap();
 
   let adapterIp;
-  const ipFilePath = path.join(appDir, 'ip.txt');
+  // En mode build (pkg) : ip.txt à côté de l'exécutable
+  // En mode dev : ip.txt dans server-scripts/
+  const ipFilePath = isPkg ? path.join(appDir, 'ip.txt') : path.join(appDir, 'server-scripts', 'ip.txt');
 
   if (fs.existsSync(ipFilePath))
-    adapterIp = fs.readFileSync(ipFilePath, { encoding: 'utf-8', flag: 'r' })
+    adapterIp = fs.readFileSync(ipFilePath, { encoding: 'utf-8', flag: 'r' }).trim();
 
 
   if (!adapterIp)

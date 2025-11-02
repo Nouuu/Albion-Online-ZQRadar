@@ -5,6 +5,8 @@ const path = require('path');
 
 // Detect if application is packaged with pkg
 const isPkg = typeof process.pkg !== 'undefined';
+// En mode build : ip.txt à côté de l'exécutable
+// En mode dev : ip.txt dans server-scripts/
 const appDir = isPkg ? path.dirname(process.execPath) : __dirname;
 
 const getAdapterIp = () => {
