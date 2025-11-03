@@ -95,7 +95,16 @@ export class HarvestablesDrawing extends DrawingUtils  {
             if (this.settings.resourceSize)
             {
                 harvestableOne.size = parseInt(harvestableOne.size);
-                this.drawText(point.x + 13, point.y + 15, harvestableOne.size, ctx, 8);
+                // Convertir les stacks en nombre de ressources réelles
+                let realResources = harvestableOne.size;
+                if (harvestableOne.tier <= 3) {
+                    realResources = harvestableOne.size * 3;
+                } else if (harvestableOne.tier === 4) {
+                    realResources = harvestableOne.size * 2;
+                }
+                // T5+ reste à 1:1 (pas besoin de conversion)
+
+                this.drawText(point.x + 13, point.y + 15, realResources, ctx, 8);
             }
             
         }

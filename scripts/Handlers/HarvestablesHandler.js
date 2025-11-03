@@ -197,9 +197,9 @@ class HarvestablesHandler
     {
 
         const id = Parameters[3];
-        // Parameters[5] contient le nombre de ressources récoltées (incluant les bonus)
-        // Mais on doit soustraire 1 stack au lieu du total récolté
-        const stackCount = 1; // Un seul coup de récolte = 1 stack, peu importe les bonus
+        // Un coup de récolte = 1 stack retiré (peu importe le tier ou les bonus)
+        // La conversion stack → ressources se fait uniquement à l'affichage
+        const stackCount = 1;
 
         this.updateHarvestable(id, stackCount);
     }

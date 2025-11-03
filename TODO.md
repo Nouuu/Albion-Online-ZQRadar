@@ -1,10 +1,11 @@
 # 📋 TODO
 
-**Dernière mise à jour**: 2025-11-02  
-**État**: 🔧 Amélioration détection enchantements en cours
+**Dernière mise à jour**: 2025-11-03  
+**État**: ✅ Amélioration détection ressources et enchantements
 
 > 📖 **Détails techniques**: [DEV_NOTES.md](DEV_NOTES.md) | **Outils**: [tools/](tools/)  
-> 🎯 **Nouveau**: [Mode Overlay](OVERLAY_MODE.md) - Fenêtre popup pour le radar
+> 🎯 **Nouveau**: [Mode Overlay](OVERLAY_MODE.md) - Fenêtre popup pour le radar  
+> 📊 **Nouveau**: [Affichage Ressources](RESOURCES_COUNT_FIX.md) - Compte réel de ressources
 
 ---
 
@@ -14,6 +15,13 @@
 - **Hide/Fiber .0 (non enchantés)** : 100% détection
   - Hide T1/T3/T4/T5 (TypeID 421/423/425/427) ✅
   - Fiber T3/T4/T5 (TypeID 528/530/531) ✅
+- **🆕 Affichage Nombre de Ressources (2025-11-03)** : ✅ **CORRIGÉ**
+  - ✅ Conversion stack → ressources selon le tier
+  - ✅ T1-T3 : 1 stack = **3 ressources** affichées
+  - ✅ T4 : 1 stack = **2 ressources** affichées
+  - ✅ T5+ : 1 stack = **1 ressource** affichée
+  - ✅ Décrémentation correcte lors de la récolte
+  - ✅ Affichage en temps réel du nombre exact de ressources disponibles
 - **🆕 DÉCOUVERTE MAJEURE (2025-11-03)** : **Enchantements living resources**
   - ✅ **Le TypeID NE CHANGE PAS avec l'enchantement !**
   - ✅ TypeID 427 = Hide T5 pour .0, .1, .2, .3, .4 (tous partagent le même ID)
@@ -43,6 +51,8 @@
 - **🆕 Mode Overlay** : Fenêtre popup avec contrôle d'opacité ✅
 
 ### ❌ Problèmes résolus
+- ✅ **Affichage ressources** : Maintenant affiche le nombre réel de ressources au lieu des stacks
+- ✅ **Décrémentation ressources** : Retire le bon nombre de ressources selon le tier (3/2/1)
 - ✅ **Enchantements Fiber détectés** : Formule basée sur rarity fonctionne
 - ✅ **Enchantements Hide** : Impossibles à calculer au spawn (rarity constante), détectés au kill via cadavre
 - ✅ **TypeIDs uniques** : Pas besoin de collecter des TypeIDs enchantés différents (même ID pour tous .0 à .4)

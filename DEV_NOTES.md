@@ -531,6 +531,15 @@ Estimation: 20-30 TypeID principaux en 1-2h
 
 ## 📝 CHANGELOG
 
+### 2025-11-03
+- ✅ **Affichage ressources**: Conversion stacks → ressources réelles selon tier
+  - T1-T3: 1 stack = 3 ressources affichées
+  - T4: 1 stack = 2 ressources affichées
+  - T5+: 1 stack = 1 ressource affichée
+  - `harvestable.size` stocke toujours les stacks (inchangé)
+  - Conversion uniquement dans `HarvestablesDrawing.js` pour l'affichage
+  - Décrémentation reste à 1 stack par récolte (correct)
+
 ### 2025-11-02
 - ❌ **Revert apprentissage automatique**: Approche non viable (harvestables non détectés)
 - ✅ **Code nettoyé**: Retour état simple et propre
