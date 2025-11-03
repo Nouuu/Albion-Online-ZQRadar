@@ -68,8 +68,91 @@ class MobsHandler {
         this._registrationLogState = new Map();
         this._lastHumanLog = new Map();
 
+        // Load living resources metadata for enhanced logging
+        this.livingResourcesMetadata = null;
+        this.loadLivingResourcesMetadata();
 
         this.loadCachedTypeIDs();
+    }
+
+    async loadLivingResourcesMetadata() {
+        try {
+            const response = await fetch('/tools/output/living-resources-enhanced.json');
+            if (response.ok) {
+                this.livingResourcesMetadata = await response.json();
+                console.log(`[MobsHandler] ✅ Loaded ${this.livingResourcesMetadata.length} living resources metadata`);
+            }
+        } catch (e) {
+            console.warn('[MobsHandler] Could not load living resources metadata:', e);
+        }
+    }
+
+    findCreatureMetadata(tier, resourceType, hp) {
+        if (!this.livingResourcesMetadata) return null;
+
+        // Filter by tier and type
+        const candidates = this.livingResourcesMetadata.filter(m =>
+            m.tier === tier &&
+            (resourceType === 'hide' ? m.faction?.includes('HIDE') || m.faction?.includes('COUGAR') || m.faction?.includes('WOLF') || m.faction?.includes('BOAR') || m.faction?.includes('BEAR') || m.faction?.includes('FOX') :
+             resourceType === 'fiber' ? m.faction?.includes('BEEKEEPER') :
+             false)
+        );
+
+        // Find best match by HP (closest match)
+        if (candidates.length === 0) return null;
+
+        let bestMatch = null;
+        let smallestDiff = Infinity;
+
+        for (const candidate of candidates) {
+            const diff = Math.abs(candidate.hp - hp);
+            if (diff < smallestDiff) {
+                smallestDiff = diff;
+                bestMatch = candidate;
+            }
+        }
+
+        // Only return if HP is reasonably close (within 20%)
+        if (bestMatch && smallestDiff <= bestMatch.hp * 0.2) {
+            return bestMatch;
+        }
+
+        return null;
+    }
+
+    printLoggingGuide() {
+        if (!this.settings.logLivingCreatures) return;
+
+        console.log('\n╔════════════════════════════════════════════════════════════════╗');
+        console.log('║         📋 LIVING RESOURCES COLLECTION GUIDE                   ║');
+        console.log('╚════════════════════════════════════════════════════════════════╝');
+        console.log('');
+        console.log('🎯 OBJECTIF: Collecter les TypeIDs des créatures enchantées');
+        console.log('');
+        console.log('📊 FORMAT DES LOGS:');
+        console.log('  - JSON structuré: Pour parsing automatique');
+        console.log('  - Validation HP: ✓ si HP correspond à la créature attendue');
+        console.log('  - État: ALIVE/DEAD pour suivre les kills');
+        console.log('');
+        console.log('🔍 CRÉATURES PAR TIER:');
+
+        if (this.livingResourcesMetadata) {
+            const tiers = [3, 4, 5, 6, 7, 8];
+            tiers.forEach(tier => {
+                const creatures = this.livingResourcesMetadata.filter(m => m.tier === tier && m.faction);
+                if (creatures.length > 0) {
+                    console.log(`\n  T${tier} Hide/Fiber:`);
+                    const uniqueAnimals = [...new Set(creatures.map(c => c.animal))];
+                    uniqueAnimals.slice(0, 3).forEach(animal => {
+                        const example = creatures.find(c => c.animal === animal);
+                        console.log(`    - ${animal} (HP ~${example.hp})`);
+                    });
+                }
+            });
+        }
+
+        console.log('\n═══════════════════════════════════════════════════════════════');
+        console.log('✅ Logging actif - Bonne collecte!\n');
     }
 
     loadCachedTypeIDs() {
@@ -95,13 +178,109 @@ class MobsHandler {
         }
     }
 
-    // 📊 CSV logging for living resources analysis
-    logLivingCreatureCSV(id, typeId, health, enchant, rarity, tier, type, name) {
+    // 🔍 Get base rarity for a given tier (used for enchantment calculation)
+    // Note: Only accurate for Harvestable (Fiber/Wood/Ore/Rock), NOT for Skinnable (Hide)
+    getBaseRarity(tier) {
+        // Base rarity values observed in-game for HARVESTABLE resources
+        const baseRarities = {
+            1: 0,    // T1
+            2: 0,    // T2
+            3: 78,   // T3 Fiber observed
+            4: 92,   // T4 Fiber observed
+            5: 112,  // T5 Fiber observed
+            6: 132,  // T6 (estimated +20/tier)
+            7: 152,  // T7 (estimated)
+            8: 172   // T8 (estimated)
+        };
+        return baseRarities[tier] || 0;
+    }
+
+    // 🔍 Calculate enchantment level from game parameters
+    // Harvestable (Fiber/Wood/Ore/Rock): Calculate from rarity (params[19])
+    // Skinnable (Hide): Cannot be calculated from rarity (game sends constant values)
+    calculateEnchantment(type, tier, rarity, paramsEnchant) {
+        // For Harvestable resources (Fiber/Wood/Ore/Rock): rarity is accurate
+        if (type === EnemyType.LivingHarvestable) {
+            if (rarity === null || rarity === undefined) return 0;
+
+            const baseRarity = this.getBaseRarity(tier);
+            if (baseRarity === 0) return 0;
+
+            // Formula validated: enchant increases rarity by ~45 per level
+            const diff = rarity - baseRarity;
+            const enchant = Math.floor(diff / 45);
+            return Math.max(0, Math.min(4, enchant));
+        }
+
+        // For Skinnable resources (Hide): rarity is CONSTANT per TypeID (unreliable)
+        // Game sends same rarity value regardless of actual enchantment
+        // Cannot calculate from rarity - must use TypeID database or harvestable event
+        if (type === EnemyType.LivingSkinnable) {
+            // TODO: Use MobsInfo enchantment data when available
+            // For now, return 0 (will be corrected when harvestable is created)
+            return 0;
+        }
+
+        return 0;
+    }
+
+    // 📊 Enhanced logging for living resources with validation
+    logLivingCreatureEnhanced(id, typeId, health, enchant, rarity, tier, type, name) {
+        if (!this.settings.logLivingCreatures) return;
+
         const typeLabel = type == EnemyType.LivingSkinnable ? "Skinnable" : "Harvestable";
-        const isAlive = health > 0 ? "ALIVE" : "DEAD";
+        const isAlive = health > 0;
         const timestamp = new Date().toISOString();
 
-        console.log(`[LIVING_CSV] ${timestamp},${typeId},${tier || 0},${name || 'unknown'},${typeLabel},${enchant},${health},${isAlive},${id}`);
+        // Calculate REAL enchantment using centralized method
+        const realEnchant = this.calculateEnchantment(type, tier, rarity, enchant);
+
+        // Try to find creature metadata
+        const metadata = this.findCreatureMetadata(tier, name, health);
+
+        // Build structured log
+        const logData = {
+            timestamp,
+            typeId,
+            resource: {
+                type: name,
+                tier,
+                enchant: realEnchant,  // Use calculated enchant
+                category: typeLabel
+            },
+            state: {
+                health,
+                alive: isAlive,
+                rarity
+            },
+            entityId: id
+        };
+
+        // Add validation if metadata found
+        if (metadata) {
+            const hpDiff = Math.abs(metadata.hp - health);
+            const hpMatch = hpDiff <= metadata.hp * 0.2;
+
+            logData.validation = {
+                animal: metadata.animal,
+                expectedHP: metadata.hp,
+                actualHP: health,
+                hpDiff,
+                match: hpMatch,
+                prefab: metadata.prefab
+            };
+        }
+
+        // JSON for parsing
+        console.log(`[LIVING_JSON] ${JSON.stringify(logData)}`);
+
+        // Human-readable format
+        const stateIcon = isAlive ? '🟢' : '🔴';
+        const matchIcon = metadata?.validation?.match ? '✓' : '?';
+        const animalInfo = metadata ? ` → ${metadata.animal}` : '';
+        const hpValidation = metadata ? ` (expected ~${metadata.validation.expectedHP}, diff: ${metadata.validation.hpDiff})` : '';
+
+        console.log(`${stateIcon} ${matchIcon} TypeID ${typeId} | ${name} T${tier}.${realEnchant} | HP: ${health}${hpValidation}${animalInfo}`);
     }
 
     // 💾 Save cached TypeID mappings to localStorage
@@ -150,18 +329,6 @@ class MobsHandler {
         return Number.isFinite(n) ? n : defaultValue;
     }
 
-    structuredLog(event, payload) {
-        const record = Object.assign({
-            timestamp: new Date().toISOString(),
-            module: 'MobsHandler',
-            event: event
-        }, payload);
-
-        if (!this.settings || !this.settings.logLivingResources) return;
-
-        // Always log as JSON (NDJSON format)
-        console.log(JSON.stringify(record));
-    }
 
     registerStaticResourceTypeID(typeId, typeNumber, tier) {
         if (typeId === 65535) return;
@@ -239,6 +406,14 @@ class MobsHandler {
         let name = null;
         try { name = parameters[32] || parameters[31] || null; } catch (e) { name = null; }
 
+        // 🔍 DEBUG: Log ALL parameters for living resources to find enchantment
+        if (this.settings && this.settings.logLivingCreatures) {
+            const knownInfo = this.mobinfo[typeId];
+            if (knownInfo && (knownInfo[1] === 0 || knownInfo[1] === 1)) { // Living resources
+                console.log(`[DEBUG_PARAMS] TypeID ${typeId} | params[19]=${parameters[19]} params[33]=${parameters[33]} params[8]=${parameters[8]} params[9]=${parameters[9]} params[252]=${parameters[252]}`);
+            }
+        }
+
         if (name) {
             this.AddMist(id, posX, posY, name, enchant);
         } else {
@@ -276,6 +451,11 @@ class MobsHandler {
             if (!mob.name) mob.name = staticInfo.type;
         }
 
+        // Calculate REAL enchantment using centralized method (after tier/type/name are set)
+        if (mob.type === EnemyType.LivingHarvestable || mob.type === EnemyType.LivingSkinnable) {
+            mob.enchantmentLevel = this.calculateEnchantment(mob.type, mob.tier, rarity, enchant);
+        }
+
         // Filter living resources based on user settings
         if (mob.type === EnemyType.LivingHarvestable || mob.type === EnemyType.LivingSkinnable) {
             if (mob.tier > 0 && mob.name) {
@@ -301,42 +481,11 @@ class MobsHandler {
 
         this.mobsList.push(mob);
 
-        // 📊 CSV Logging for living creatures (enhanced)
+        // 📊 Enhanced logging for living creatures
         if (this.settings && this.settings.logLivingCreatures) {
             if (mob.type === EnemyType.LivingHarvestable || mob.type === EnemyType.LivingSkinnable) {
-                this.logLivingCreatureCSV(id, typeId, health, enchant, rarity, mob.tier, mob.type, mob.name);
+                this.logLivingCreatureEnhanced(id, typeId, health, enchant, rarity, mob.tier, mob.type, mob.name);
             }
-        }
-
-        // Logging (JSON/Human format)
-        if (this.settings && this.settings.logLivingResources) {
-            const classification = (mob.type === EnemyType.LivingHarvestable) ? 'LIVING_RESOURCE' :
-                                  (mob.type === EnemyType.LivingSkinnable) ? 'LIVING_SKINNABLE' : 'ENEMY';
-
-            let emoji = '⚔️';
-            if (mob.type === EnemyType.LivingHarvestable) emoji = '🌿';
-            else if (mob.type === EnemyType.LivingSkinnable) emoji = '🐾';
-
-            let resolvedBy = 'unknown';
-            if (hasKnownInfo) resolvedBy = 'mobinfo';
-            else if (staticInfo) resolvedBy = 'cross-reference';
-
-            this.structuredLog('SPAWN', {
-                entityId: mob.id,
-                reportedTypeId: mob.typeId,
-                resolvedBy: resolvedBy,
-                classification: classification,
-                knownInfo: knownInfo || null,
-                staticInfo: staticInfo || null,
-                health: normHealth,
-                enchant: mob.enchantmentLevel,
-                rarity: mob.rarity,
-                tier: mob.tier,
-                name: mob.name,
-                posX: mob.posX,
-                posY: mob.posY,
-                emoji: emoji
-            });
         }
     }
 

@@ -1875,10 +1875,15 @@
 	settingLogLivingCreatures.addEventListener("click", () => {
 		localStorage.setItem("settingLogLivingCreatures", settingLogLivingCreatures.checked);
 		if (settingLogLivingCreatures.checked) {
-			console.log("📊 Living Creatures CSV Logging ENABLED");
-			console.log("📋 CSV Header: Timestamp,TypeID,Tier,Name,Type,Enchant,Health,State,EntityID");
+			console.log("📊 Living Creatures Enhanced Logging ENABLED");
+			// Display collection guide
+			setTimeout(() => {
+				if (handlers && handlers.mobs && typeof handlers.mobs.printLoggingGuide === 'function') {
+					handlers.mobs.printLoggingGuide();
+				}
+			}, 500);
 		} else {
-			console.log("📊 Living Creatures CSV Logging DISABLED");
+			console.log("📊 Living Creatures Enhanced Logging DISABLED");
 		}
 	});
 
