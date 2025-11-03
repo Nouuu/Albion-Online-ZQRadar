@@ -78,8 +78,6 @@
    ```
 
 2. **Alternative: Scraper base de données communautaire**
-   - Script créé: `tools/scrape_albiononline2d_mobs.py`
-   - Script créé: `tools/fetch_ao_data.py`
    - Chercher GitHub: broderickhyman/ao-bin-dumps
    - Chercher API: AlbionOnline2D.com
 
@@ -112,7 +110,7 @@
 ```
 ✅ Settings → Debug → Cocher "🔍 Log Living Resources (JSON)"
 ✅ Console (F12) ouverte
-✅ Aller en zone T4/T5 Hide ou Fiber
+✅ Aller en zone T4/T5 Hideou Fiber
 ```
 
 ### Pendant la session
@@ -209,6 +207,15 @@ TypeID 535 → Fiber T5.1
    - Exemple: Hide T4.0 (TypeID 425) ✅, T4.1/T4.2 (TypeID ???) ❌
    - Impact: Filtres T4.2+ et T5.1+ non fonctionnels
    - Solution: Collecte manuelle nécessaire (session terrain avec logs)
+
+5. **Cartes Blackzone manquantes**
+   - Symptôme: Fond noir sur le radar en blackzone (zones T6+)
+   - Cause: Pack Maps incomplet - tuiles blackzone non incluses
+   - Pack actuel: 103 tuiles (principalement zones bleues/jaunes/rouges)
+   - Tuiles manquantes: IDs de cartes blackzone (4000+, 5000+)
+   - Impact: Affichage fonctionne (entités visibles), juste pas de fond de carte
+   - Solution: Extraire tuiles blackzone depuis client Albion ou trouver pack complet
+   - Workaround: Désactiver "Show Map Background" dans Settings
 
 > Détails: [DEV_NOTES.md](DEV_NOTES.md) section "Comportement attendu"
 
