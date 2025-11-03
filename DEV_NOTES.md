@@ -785,5 +785,265 @@ Valider que les 230 TypeIDs détectent correctement les living resources (Fiber 
 
 ---
 
+## 📊 INVESTIGATION TYPEIDS - ao-bin-dumps (2025-11-03)
+
+### Objectif
+Déterminer si les TypeIDs des living resources peuvent être extraits automatiquement depuis ao-bin-dumps.
+
+### Conclusion: IMPOSSIBLE ❌
+
+**TypeIDs = Identifiants serveur runtime**, PAS dans les fichiers clients.
+
+### Résultats Obtenus
+
+#### ✅ Ressources Statiques (139 TypeIDs extraits)
+**Source**: `ao-bin-dumps/formatted/items.txt`
+
+| Type  | Tiers | Enchants | Count |
+|-------|-------|----------|-------|
+| Wood  | T1-T8 | .0 to .4 | 36    |
+| Ore   | T2-T8 | .0 to .4 | 27    |
+| Rock  | T1-T8 | .0 to .4 | 27    |
+| Fiber | T2-T8 | .0 to .4 | 27    |
+| Hide  | T1-T8 | .0 to .4 | 28    |
+
+**Fichiers générés**:
+- `tools/output/harvestables-typeids.js` - Format MobsInfo.js (prêt à utiliser)
+- `tools/output/all-resources-typeids.json` - Format JSON
+- `tools/output/all-resources-typeids.csv` - Format CSV
+
+#### ❌ Living Resources MOBs (TypeIDs introuvables)
+
+**Investigation effectuée**:
+1. `mobs.json` (15.7 MB, 4,372 mobs) → Aucun champ TypeID
+2. `harvestables.json` → Noms de prefabs uniquement
+3. `randomspawnbehaviors.json` → Noms de mobs, pas d'IDs
+4. `resources.json` → Valeurs de tier, pas TypeIDs
+5. `cluster/*.xml` (107 fichiers) → Coordonnées, pas TypeIDs
+6. `formatted/items.txt` → TypeIDs collision (même ID = objets différents)
+
+**Preuve: Collision d'ID**
+```
+TypeID 358:
+  items.txt → QUESTITEM_EXP_TOKEN_D16_T6_EXP_HRD_KEEPER_MUSHROOM
+  MobsInfo.js (réseau) → T1 Rabbit (Hide)
+
+TypeID 421:
+  items.txt → QUESTITEM_EXP_TOKEN_D7_T6_EXP_HRD_MORGANA_TORTURER
+  MobsInfo.js (réseau) → T1 Rabbit variant
+
+Conclusion: Namespaces séparés Items ≠ MOBs
+```
+
+**Champs analysés dans mobs.json** (73 attributs):
+- @uniquename, @tier, @prefab, @faction, @hitpointsmax, @abilitypower
+- **AUCUN champ**: @id, @typeid, @index (sauf @idleanimoffset=0 pour animations)
+
+### Métadonnées Extraites (Améliorations Possibles)
+
+#### ✅ Données exploitables récupérées
+**Source**: `mobs.json` + `randomspawnbehaviors.json`
+
+**Living Resources trouvées**:
+- **93 animaux** (LivingSkinnable - Hide)
+- **46 gardiens Fiber**
+- **43 gardiens Wood**
+- **43 gardiens Ore**
+- **43 gardiens Rock**
+
+**Métadonnées par créature**:
+```javascript
+{
+  uniqueName: "MOB_RABBIT",
+  tier: 1,
+  prefab: "MOB_HIDE_RABBIT_01",
+  hp: 20,
+  faction: "RABBIT",
+  enchant: 0  // Détecté via "_ROADS" ou "_MISTS" dans uniqueName
+}
+```
+
+**Fichiers data générés**:
+- `tools/output/living-resources-enhanced.json` - 225 créatures avec métadonnées
+- `tools/output/living-resources-reference.js` - Module JavaScript prêt à l'emploi
+
+### Améliorations Proposées (Sans TypeIDs)
+
+#### 1. Validation par HP
+**Principe**: Comparer HP détecté avec HP attendu
+
+```javascript
+// Dans MobsHandler.js
+validateCreature(typeId, hp, tier) {
+    const expected = this.mobsInfo.getExpectedHP(typeId, tier);
+    if (expected && Math.abs(hp - expected.hp) / expected.hp > 0.2) {
+        console.warn(`TypeID ${typeId}: HP ${hp} inattendu (attendu ~${expected.hp})`);
+        return false;
+    }
+    return true;
+}
+```
+
+**Données HP disponibles**:
+- T1 Rabbit: 20 HP
+- T2 Fox: 515 HP
+- T3 Wolf: 685 HP
+- T4 Boar: 1323 HP
+- T5 Bear: 1385 HP
+- +175 gardiens avec HP
+
+#### 2. Enrichissement MobsInfo.js
+
+**Format actuel**:
+```javascript
+this.addItem(358, 1, 1, "hide");
+```
+
+**Format proposé**:
+```javascript
+this.addItemWithMetadata(358, {
+    tier: 1,
+    enemyType: 1,
+    resourceType: "hide",
+    animal: "Rabbit",          // ← Nouveau
+    expectedHP: 20,            // ← Nouveau
+    prefab: "MOB_HIDE_RABBIT_01", // ← Nouveau
+    faction: "RABBIT"          // ← Nouveau
+});
+```
+
+**Bénéfices**:
+- Validation automatique HP
+- Meilleur debugging (nom animal exact)
+- Filtrage par faction possible
+
+#### 3. Détection Enchantement par HP
+
+**Principe**: Ratio HP vs HP base → Estimation enchantement
+
+```javascript
+detectEnchantmentLevel(hp, baseTier) {
+    const baseHP = this.getBaseHP(baseTier);
+    const hpRatio = hp / baseHP;
+
+    if (hpRatio >= 1.8) return 3; // .3
+    if (hpRatio >= 1.5) return 2; // .2
+    if (hpRatio >= 1.2) return 1; // .1
+    return 0; // .0
+}
+```
+
+**Exemples terrain**:
+- `MOB_WOLF` normal → HP 685 → .0
+- `T4_MOB_CRITTER_HIDE_MISTCOUGAR` → HP 962 → .1 (ratio 1.4)
+- `T4_MOB_CRITTER_HIDE_MISTCOUGAR_VETERAN` → HP 6448 → .3+ (boss)
+
+#### 4. Guide Créatures Attendues
+
+**Interface utilisateur** (resources.ejs):
+```html
+<div class="expected-creatures">
+    <h4>Créatures T5 Attendues</h4>
+    <ul>
+        <li>Bear (HP ~1385)</li>
+        <li>Direwolf (HP ~1200)</li>
+        <li>Terrorbird (HP ~1367)</li>
+    </ul>
+</div>
+```
+
+**Données** (`living-resources-reference.js`):
+- T1: Rabbit (4 variants), Chicken
+- T2: Goose, Goat, Fox (4 variants)
+- T3: Fox, Boar, Wolf, Deer, Moabird
+- T4: Wolf, Deer, Bear, Boar, Cougar
+- T5: Bear (8 variants), Direwolf, Terrorbird
+- T6: Direbear, Terrorbird
+- T7: Moabird, Swamp Dragon
+- T8: Mammoth, Rhinoceros
+
+#### 5. Logging Amélioré
+
+**Avant**:
+```
+[LIVING] TypeID: 425 | Tier: 4 | Type: 1 | Enchant: 0
+```
+
+**Après** (avec métadonnées):
+```
+[LIVING RESOURCE DETECTED]
+TypeID: 425
+Tier: T4 | Enchant: .0
+HP: 1323 (expected ~1323) ✓ MATCH
+Resource: Hide
+Creature: Boar (MOB_HIDE_BOAR_01)
+Faction: BOAR
+Validation: ✓ CONFIRMED
+```
+
+### Scripts Créés
+
+#### Scripts Python d'analyse
+1. `tools/parse-all-resources.py` - Extraction ressources statiques ✅
+2. `tools/analyze-missing-typeids.py` - Analyse couverture MobsInfo.js ✅
+3. `tools/search-living-mobs.py` - Recherche exhaustive champs ID ✅
+4. `tools/extract-mob-metadata.py` - Extraction métadonnées living resources ✅
+
+#### Fichiers Data (à conserver)
+- `tools/output/harvestables-typeids.js` - 139 TypeIDs statiques
+- `tools/output/living-resources-enhanced.json` - 225 créatures avec métadonnées
+- `tools/output/living-resources-reference.js` - Module JS prêt à l'emploi
+
+### Méthode de Collection (Inchangée)
+
+**Seule méthode viable**: **In-game logging**
+
+1. Activer "Log Living Creatures" dans Settings
+2. Ouvrir console navigateur (F12)
+3. Tuer/récolter chaque créature en jeu
+4. Noter TypeIDs depuis logs
+5. Mettre à jour MobsInfo.js
+
+**Estimation**: 2-4h de gameplay pour collecter ~100-150 TypeIDs manquants
+
+### Statut Actuel MobsInfo.js
+
+**Total**: 197 TypeIDs collectés manuellement
+
+| Resource | .0 (Base) | .1/.2/.3 (Enchanted) | Status |
+|----------|-----------|----------------------|--------|
+| Hide     | 85 IDs    | 0 IDs                | ✓ Base complet |
+| Fiber    | 39 IDs    | 0 IDs                | ✓ Base complet |
+| Ore      | 38 IDs    | 0 IDs                | ⚠ Partiel |
+| Rock     | 35 IDs    | 0 IDs                | ⚠ Partiel |
+| Logs     | 0 IDs     | 0 IDs                | ❌ Manquant |
+
+**Manquants critiques** (~50-60 TypeIDs):
+- Hide T4-T5 .1/.2/.3 (3×2 tiers = 6 variantes)
+- Fiber T4-T5 .1/.2/.3 (6 variantes)
+- Wood guardians (T3-T8, all variants)
+- Ore/Rock guardians enchanted
+
+### Plan d'Implémentation Proposé
+
+#### Phase 1: Validation (1-2h) - OPTIONNEL
+- [ ] Ajouter validation HP dans MobsHandler.js
+- [ ] Améliorer logging avec créatures attendues
+- [ ] Tester avec TypeIDs existants
+
+#### Phase 2: Interface (2-3h) - OPTIONNEL
+- [ ] Ajouter guide créatures dans resources.ejs
+- [ ] Implémenter filtres par animal
+- [ ] Afficher métadonnées dans radar
+
+#### Phase 3: Enrichissement (2-3h) - OPTIONNEL
+- [ ] Modifier structure MobsInfo.js avec métadonnées
+- [ ] Ajouter détection auto enchantement par HP
+- [ ] Implémenter filtres avancés
+
+**Note**: Améliorations optionnelles. Système actuel fonctionnel pour collection TypeIDs.
+
+---
+
 Fin du document.
 
