@@ -23,9 +23,9 @@ Albion ZQRadar provides a real-time map, helping players detect other players, c
 - Display mist portals (solo/duo, enchantments)
 - Display dungeons (solo/duo, enchantments)
 - Display background map on radar
-- **🆕 Overlay mode**: Open radar in a separate popup window with opacity control and keyboard shortcuts
+- **🆕 Overlay mode**: Open radar in a separate popup window with custom drag handle and controls
 
-> 💡 **Want a PERFECT overlay?** Check out [ELECTRON_EXECUTIVE_SUMMARY.md](ELECTRON_EXECUTIVE_SUMMARY.md) for analysis on migrating to Electron (frameless window, true always-on-top, native app)
+> 💡 **Tip**: Use [DeskPins](https://efotinis.neocities.org/deskpins/) (free) to keep the overlay window always on top
 
 And much more to come!
 \
