@@ -33,62 +33,79 @@ men**Last update**: 2025-11-02
 
 ---
 
-## 🏗️ BUILD SYSTEM (2025-11-02)
+## 🏗️ BUILD SYSTEM (2025-11-03)
 
 ### Architecture
-t- **Lightweight executable**: 53 MB (vs 656 MB before - 92% reduction!)
+- **Lightweight executable**: 53 MB (vs 656 MB before - 92% reduction!)
   - Only native modules bundled in .exe (cap.node, node-sass)
   - Assets copied alongside for easy updates and customization
 - **PKG Configuration**: Minimal assets in bundle
 - **Post-build**: Auto-copy assets + create multi-format archives
-- **Image Optimization**: Lossless PNG compression available (reduces archive size)
+- **Image Optimization**: Lossless PNG compression with intelligent caching
+  - **Smart caching**: Images optimized once, preserved across builds
+  - **Marker system**: `.optimized` file tracks optimization state
+  - **Fast rebuilds**: Skip 2-3 min optimization on subsequent builds
 
-### Release Packages (Multi-platform)
-**Windows:**
-- `ZQRadar-{version}-win64.zip` (~212 MB, optimized images)
+### Optimization Workflow
+**First build** (with optimization):
+1. Build executable (~1-2 min)
+2. Copy assets to dist/ (~30 sec)
+3. Optimize images (602 MB → 180 MB, ~2-3 min) ⏱️
+4. Create marker: `dist/images/.optimized`
+5. Create archives (~1 min)
+**Total: ~4-6 min**
 
-**Linux:**
-- `ZQRadar-{version}-linux-x64.zip` (~215 MB, optimized images)
-
-**macOS:**
-- `ZQRadar-{version}-macos-x64.zip` (~215 MB, optimized images)
-
-**Optimization integrated**: Images automatically optimized during build (602 MB → 180 MB, 70% compression)
+**Subsequent builds** (cached optimization):
+1. Build executable (~1-2 min)
+2. Skip image copy (marker detected) ⚡
+3. Skip optimization (already done) ⚡
+4. Create archives (~1 min)
+**Total: ~2-3 min** (50% faster!)
 
 ### Build Commands
 ```bash
-
 # Windows CMD
-build.bat all-in-one      # Complete workflow (includes optimization)
-build.bat build:all       # Build all platforms
-build.bat optimize        # Optimize images in dist/ (manual)
-build.bat clean           # Clean dist/
+build.bat build:all         # Build all platforms (preserves optimized images)
+build.bat clean             # Clean but preserve optimized images ⚡
+build.bat clean:all         # Clean everything (re-optimize next time)
+build.bat all-in-one        # Complete workflow with smart caching
 
 # Unix/WSL/Git Bash
-make all-in-one           # Complete workflow (includes optimization)
-make build-all            # Build all platforms
-make optimize-images      # Optimize images in dist/ (manual)
-make clean                # Clean dist/
+make build-all              # Build all platforms (preserves optimized images)
+make clean                  # Clean but preserve optimized images ⚡
+make clean-all              # Clean everything (re-optimize next time)
+make all-in-one             # Complete workflow with smart caching
 
 # Or via npm
-npm run build:all         # Build all platforms
-npm run optimize:images   # Optimize dist/images/ only
+npm run build:all           # Build all platforms
+npm run clean               # Clean preserving images
+npm run clean:all           # Full clean
+npm run clean:images        # Delete only optimized images
+npm run optimize:images     # Manual optimization (if needed)
 ```
 
-**`all-in-one` Workflow:**
-1. Clean all build artifacts
-2. Install all dependencies
-3. Check system requirements
-4. Build for all platforms (Windows, Linux, macOS)
-5. Post-build: Copy assets → **Optimize images (integrated)** → Create archives
-6. Display summary of created archives
+### Smart Caching System
+**Marker file**: `dist/images/.optimized`
+- Created after successful optimization
+- Contains timestamp
+- Checked by post-build script
 
-**Image optimization** is now **integrated in post-build.js**:
-- Runs automatically after copying assets
-- 95% quality (near-lossless)
-- 602 MB → ~180 MB (70% compression)
-- 2-3 minutes processing time
-- Archives created with optimized images
+**Benefits**:
+- ⚡ 50% faster rebuilds (skip 2-3 min optimization)
+- 💾 Preserve 180 MB optimized images
+- 🔄 Automatic on first build
+- 🧹 Clean when needed with `clean:all`
+
+**Force re-optimization**:
+```bash
+# Delete images and rebuild
+npm run clean:images
+npm run build:all
+
+# Or full clean
+npm run clean:all
+npm run build:all
+```
 
 ---
 
@@ -532,6 +549,16 @@ Estimation: 20-30 TypeID principaux en 1-2h
 ## 📝 CHANGELOG
 
 ### 2025-11-03
+- ✅ **Build system amélioré**: Cache intelligent pour les images optimisées
+  - Système de marqueur (`.optimized`) pour détecter images déjà optimisées
+  - `clean` préserve les images optimisées (⚡ 50% plus rapide)
+  - **FIX**: Correction du clean pour ne plus supprimer dist/ complètement
+  - `clean` supprime uniquement: exe, archives, dossiers sauf images/
+  - `clean:all` supprime tout (force re-optimization)
+  - `clean:images` supprime uniquement les images optimisées
+  - Post-build skip automatique si images déjà optimisées
+  - Gain de temps: 4-6 min → 2-3 min sur les rebuilds
+  - Tests automatisés confirmant la préservation correcte
 - ✅ **Affichage ressources**: Conversion stacks → ressources réelles selon tier
   - T1-T3: 1 stack = 3 ressources affichées
   - T4: 1 stack = 2 ressources affichées
@@ -539,6 +566,13 @@ Estimation: 20-30 TypeID principaux en 1-2h
   - `harvestable.size` stocke toujours les stacks (inchangé)
   - Conversion uniquement dans `HarvestablesDrawing.js` pour l'affichage
   - Décrémentation reste à 1 stack par récolte (correct)
+- ✅ **Fix metadata living resources**: `living-resources-enhanced.json` chargement complet
+  - Fichier copié depuis `tools/output/` vers `server-scripts/`
+  - Chemin corrigé dans `MobsHandler.js` : `/server-scripts/living-resources-enhanced.json`
+  - Route statique ajoutée dans `app.js` pour servir le dossier `server-scripts/`
+  - Parsing JSON corrigé pour fusionner `data.animals` + `data.guardians.*`
+  - Fusion de toutes les catégories (fiber, hide, etc.) en un seul tableau
+  - Metadata complet maintenant chargé (animals + guardians)
 
 ### 2025-11-02
 - ❌ **Revert apprentissage automatique**: Approche non viable (harvestables non détectés)

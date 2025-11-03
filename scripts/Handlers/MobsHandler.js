@@ -77,9 +77,23 @@ class MobsHandler {
 
     async loadLivingResourcesMetadata() {
         try {
-            const response = await fetch('/tools/output/living-resources-enhanced.json');
+            const response = await fetch('/server-scripts/living-resources-enhanced.json');
             if (response.ok) {
-                this.livingResourcesMetadata = await response.json();
+                const data = await response.json();
+
+                // Merge animals and all guardian types
+                let allResources = data.animals || [];
+
+                if (data.guardians) {
+                    // Merge all guardian categories (fiber, hide, etc.)
+                    for (const category in data.guardians) {
+                        if (Array.isArray(data.guardians[category])) {
+                            allResources = allResources.concat(data.guardians[category]);
+                        }
+                    }
+                }
+
+                this.livingResourcesMetadata = allResources;
                 console.log(`[MobsHandler] ✅ Loaded ${this.livingResourcesMetadata.length} living resources metadata`);
             }
         } catch (e) {

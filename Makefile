@@ -125,10 +125,8 @@ all-in-one: ## Complete workflow: clean + install + build all + optimize + test
 	@echo "$(GREEN)║          ZQRadar - Complete Build Workflow                 ║$(NC)"
 	@echo "$(GREEN)╚════════════════════════════════════════════════════════════╝$(NC)"
 	@echo ""
-	@echo "$(GREEN)[1/6] Cleaning...$(NC)"
-	-@rm -rf $(DIST_DIR) 2>/dev/null || true
-	-@rm -rf $(BUILD_DIR)/temp 2>/dev/null || true
-	-@rm -f *.log 2>/dev/null || true
+	@echo "$(GREEN)[1/6] Cleaning (preserving optimized images)...$(NC)"
+	@make clean > /dev/null 2>&1
 	@echo "$(GREEN)✓ Cleaning completed$(NC)"
 	@echo ""
 	@echo "$(GREEN)[2/6] Installing dependencies...$(NC)"
@@ -159,17 +157,29 @@ all-in-one: ## Complete workflow: clean + install + build all + optimize + test
 	@echo "  3. Update changelog"
 	@echo ""
 
-clean: ## Clean temporary files and builds
+clean: ## Clean temporary files (preserves optimized images)
 	@echo "$(GREEN)Cleaning temporary files...$(NC)"
-	rm -rf $(DIST_DIR)
-	rm -rf $(BUILD_DIR)/temp
-	rm -f *.log
+	@if [ -f "$(DIST_DIR)/images/.optimized" ]; then \
+		echo "$(YELLOW)💡 Preserving optimized images (dist/images/)$(NC)"; \
+		echo "$(YELLOW)   To force re-optimization, use: make clean-all$(NC)"; \
+		find $(DIST_DIR) -mindepth 1 -maxdepth 1 ! -name 'images' -exec rm -rf {} + 2>/dev/null || true; \
+		echo "$(GREEN)✓ Executables and archives deleted$(NC)"; \
+	else \
+		rm -rf $(DIST_DIR); \
+		echo "$(GREEN)✓ dist/ deleted (no optimized images found)$(NC)"; \
+	fi
+	@rm -rf $(BUILD_DIR)/temp 2>/dev/null || true
+	@rm -f *.log 2>/dev/null || true
 	@echo "$(GREEN)✓ Cleaning completed!$(NC)"
 
-clean-all: clean ## Complete cleanup (+ node_modules)
-	@echo "$(YELLOW)Removing node_modules...$(NC)"
-	rm -rf node_modules package-lock.json
+clean-all: ## Complete cleanup (including optimized images + node_modules)
+	@echo "$(YELLOW)Removing everything (including optimized images)...$(NC)"
+	@rm -rf $(DIST_DIR)
+	@rm -rf $(BUILD_DIR)/temp
+	@rm -f *.log
+	@rm -rf node_modules package-lock.json
 	@echo "$(GREEN)✓ Complete cleanup finished!$(NC)"
+	@echo "$(YELLOW)💡 Next build will re-optimize images (2-3 min)$(NC)"
 
 optimize-images: ## Optimize PNG images (lossless compression)
 	@echo "$(GREEN)Optimizing images...$(NC)"

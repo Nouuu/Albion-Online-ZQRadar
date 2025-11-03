@@ -86,22 +86,29 @@ This project contains 4 documentation files:
 
 **Windows (CMD - Recommended):**
 ```cmd
-.\build.bat all-in-one    # 🌟 Complete automated build (with optimization)
+.\build.bat all-in-one    # 🌟 Complete automated build (preserves optimized images)
 .\build.bat build:all     # Build all platforms
+.\build.bat clean         # Clean but preserve optimized images ⚡
+.\build.bat clean:all     # Force full clean (re-optimize next time)
 .\build.bat optimize      # Optimize images in dist/ (manual step)
-.\build.bat clean         # Clean build artifacts
 ```
 
 **Unix/Linux/macOS/WSL/Git Bash:**
 ```bash
-make all-in-one          # 🌟 Complete automated build (with optimization)
+make all-in-one          # 🌟 Complete automated build (preserves optimized images)
 make build-all           # Build all platforms
+make clean               # Clean but preserve optimized images ⚡
+make clean-all           # Force full clean (re-optimize next time)
 make optimize-images     # Optimize images in dist/ (manual step)
-make clean               # Clean build artifacts
 ```
 
 **Optimization Note**: 
-- `all-in-one` automatically optimizes images during post-build
+- **Smart caching**: Images optimized once, preserved across builds ⚡
+- **Marker system**: `dist/images/.optimized` tracks optimization state
+- **Fast rebuilds**: `all-in-one` and `clean` preserve optimized images
+- **First build**: Optimizes images automatically (2-3 min)
+- **Subsequent builds**: Skips optimization (already done) - 50% faster!
+- `all-in-one` automatically optimizes images on first build only
 - **Integrated workflow**: Copy assets → Optimize images (95% quality) → Create archives
 - **Near-lossless** compression using sharp (imperceptible loss)
 - **Fast**: 2-3 minutes for 6693 files (parallel processing)
@@ -109,7 +116,7 @@ make clean               # Clean build artifacts
   - Windows: ~212 MB (vs ~630 MB before)
   - Linux/macOS: ~215 MB (vs ~635 MB before)
 - **ZIP only**: Simplified to one format per platform
-- Manual optimization available: `npm run optimize:images` (for standalone use)
+- Force re-optimization: `build.bat clean:all` or `make clean-all`
 
 ---
 
@@ -183,5 +190,5 @@ Code/
 
 ---
 
-**Last update**: 2025-11-02
+**Last update**: 2025-11-03
 

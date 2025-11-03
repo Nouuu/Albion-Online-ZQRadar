@@ -20,6 +20,7 @@ if /i "%1"=="all-in-one" goto allinone
 if /i "%1"=="rebuild" goto rebuild
 if /i "%1"=="release" goto release
 if /i "%1"=="clean" goto clean
+if /i "%1"=="clean:all" goto cleanall
 if /i "%1"=="optimize" goto optimize
 if /i "%1"=="start" goto start
 goto error
@@ -43,7 +44,8 @@ echo   all-in-one  Complete workflow (clean+install+build+optimize+test)
 echo   build:all   Build for all platforms
 echo   rebuild     Complete rebuild (clean + install + build)
 echo   release     Create complete release package
-echo   clean       Clean temporary files
+echo   clean       Clean temporary files (preserves optimized images)
+echo   clean:all   Clean everything (including optimized images)
 echo   optimize    Optimize images in dist/ (after build)
 echo   start       Launch ZQRadar in dev mode
 echo   help        Display this help
@@ -211,9 +213,8 @@ echo ═════════════════════════
 echo          ZQRadar - Complete Build Workflow
 echo ════════════════════════════════════════════════════════════
 echo.
-echo [1/6] Cleaning...
-if exist dist rmdir /s /q dist
-if exist ip.txt del /q ip.txt
+echo [1/6] Cleaning (preserving optimized images)...
+call :clean >nul 2>&1
 echo ✓ Cleaning completed
 echo.
 echo [2/6] Installing dependencies...
@@ -346,9 +347,30 @@ goto end
 echo.
 echo 🧹 Cleaning...
 echo.
-if exist dist (
-    rmdir /s /q dist
-    echo ✓ dist\ deleted
+if exist dist\images\.optimized (
+    echo 💡 Preserving optimized images (dist\images\)
+    echo    To force re-optimization, use: build.bat clean:all
+    echo.
+    REM Delete everything in dist except images folder
+    for /d %%d in (dist\*) do (
+        if /i not "%%~nxd"=="images" (
+            rmdir /s /q "%%d" 2>nul
+            if not exist "%%d" echo ✓ %%~nxd\ deleted
+        )
+    )
+    REM Delete only executables and archives in dist root (preserve .optimized)
+    del /q dist\*.exe 2>nul
+    del /q dist\*.zip 2>nul
+    del /q dist\*.tar.gz 2>nul
+    del /q dist\*.7z 2>nul
+    del /q dist\ZQRadar* 2>nul
+    del /q dist\README*.txt 2>nul
+    echo ✓ Executables and archives deleted
+) else (
+    if exist dist (
+        rmdir /s /q dist
+        echo ✓ dist\ deleted (no optimized images found)
+    )
 )
 if exist build\temp (
     rmdir /s /q build\temp
@@ -357,6 +379,24 @@ if exist build\temp (
 del /q *.log 2>nul
 echo.
 echo ✅ Cleaning completed!
+goto end
+
+:cleanall
+echo.
+echo 🧹 Complete cleaning (including optimized images)...
+echo.
+if exist dist (
+    rmdir /s /q dist
+    echo ✓ dist\ deleted (including optimized images)
+)
+if exist build\temp (
+    rmdir /s /q build\temp
+    echo ✓ build\temp\ deleted
+)
+del /q *.log 2>nul
+echo.
+echo ✅ Complete cleaning completed!
+echo 💡 Next build will re-optimize images (2-3 min)
 goto end
 
 :optimize
