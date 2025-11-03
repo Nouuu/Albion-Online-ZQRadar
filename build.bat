@@ -358,20 +358,30 @@ if exist dist\images\.optimized (
             if not exist "%%d" echo ✓ %%~nxd\ deleted
         )
     )
-    REM Delete only executables and archives in dist root (preserve .optimized)
-    del /q dist\*.exe 2>nul
-    del /q dist\*.zip 2>nul
-    del /q dist\*.tar.gz 2>nul
-    del /q dist\*.7z 2>nul
-    del /q dist\ZQRadar* 2>nul
-    del /q dist\README*.txt 2>nul
-    echo ✓ Executables and archives deleted
-) else (
-    if exist dist (
-        rmdir /s /q dist
-        echo ✓ dist\ deleted (no optimized images found)
+    REM Delete only specific file types in dist root (avoid wildcards that could delete dist itself)
+    for %%f in (dist\*.exe dist\*.zip dist\*.tar.gz dist\*.7z) do (
+        if exist "%%f" del /q "%%f" 2>nul
     )
+    REM Delete specific executables (both naming conventions)
+    if exist dist\ZQRadar.exe del /q dist\ZQRadar.exe 2>nul
+    if exist dist\ZQRadar-linux del /q dist\ZQRadar-linux 2>nul
+    if exist dist\ZQRadar-macos del /q dist\ZQRadar-macos 2>nul
+    if exist dist\albion-zqradar-win.exe del /q dist\albion-zqradar-win.exe 2>nul
+    if exist dist\albion-zqradar-linux del /q dist\albion-zqradar-linux 2>nul
+    if exist dist\albion-zqradar-macos del /q dist\albion-zqradar-macos 2>nul
+    REM Delete README files
+    for %%f in (dist\README*.txt) do (
+        if exist "%%f" del /q "%%f" 2>nul
+    )
+    echo ✓ Executables and archives deleted
+    goto clean_temp
 )
+REM If no marker, delete everything
+if exist dist (
+    rmdir /s /q dist
+    echo ✓ dist\ deleted (no optimized images found)
+)
+:clean_temp
 if exist build\temp (
     rmdir /s /q build\temp
     echo ✓ build\temp\ deleted

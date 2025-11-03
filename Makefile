@@ -163,6 +163,8 @@ clean: ## Clean temporary files (preserves optimized images)
 		echo "$(YELLOW)💡 Preserving optimized images (dist/images/)$(NC)"; \
 		echo "$(YELLOW)   To force re-optimization, use: make clean-all$(NC)"; \
 		find $(DIST_DIR) -mindepth 1 -maxdepth 1 ! -name 'images' -exec rm -rf {} + 2>/dev/null || true; \
+		rm -f $(DIST_DIR)/*.exe $(DIST_DIR)/*.zip $(DIST_DIR)/*.tar.gz $(DIST_DIR)/*.7z 2>/dev/null || true; \
+		rm -f $(DIST_DIR)/ZQRadar* $(DIST_DIR)/albion-zqradar-* $(DIST_DIR)/README*.txt 2>/dev/null || true; \
 		echo "$(GREEN)✓ Executables and archives deleted$(NC)"; \
 	else \
 		rm -rf $(DIST_DIR); \

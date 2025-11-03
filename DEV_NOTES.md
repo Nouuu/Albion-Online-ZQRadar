@@ -551,14 +551,17 @@ Estimation: 20-30 TypeID principaux en 1-2h
 ### 2025-11-03
 - ✅ **Build system amélioré**: Cache intelligent pour les images optimisées
   - Système de marqueur (`.optimized`) pour détecter images déjà optimisées
-  - `clean` préserve les images optimisées (⚡ 50% plus rapide)
-  - **FIX**: Correction du clean pour ne plus supprimer dist/ complètement
-  - `clean` supprime uniquement: exe, archives, dossiers sauf images/
+  - `clean` préserve les images optimisées (⚡ 50% plus rapides)
+  - **FIX CRITIQUE**: Structure if-else corrigée avec goto pour éviter double exécution
+  - **FIX**: Suppression des exécutables avec les 2 conventions de nommage
+    - `ZQRadar-*` et `albion-zqradar-*` (pkg peut générer les deux)
+    - Synchronisation build.bat (Windows) et Makefile (Unix/Linux/macOS)
+  - `clean` supprime: exe (toutes conventions), archives, dossiers sauf images/
   - `clean:all` supprime tout (force re-optimization)
   - `clean:images` supprime uniquement les images optimisées
   - Post-build skip automatique si images déjà optimisées
   - Gain de temps: 4-6 min → 2-3 min sur les rebuilds
-  - Tests automatisés confirmant la préservation correcte
+  - Tests validés: Seul images/ reste après clean ✅
 - ✅ **Affichage ressources**: Conversion stacks → ressources réelles selon tier
   - T1-T3: 1 stack = 3 ressources affichées
   - T4: 1 stack = 2 ressources affichées
