@@ -248,6 +248,87 @@ class DrawingUtils {
         ctx.restore();
     }
 
+    /**
+     * Draw a health bar with gradient colors based on HP percentage
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     * @param {number} x - Center X position
+     * @param {number} y - Center Y position (bar will be drawn below this point)
+     * @param {number} currentHP - Current HP value
+     * @param {number} maxHP - Maximum HP value
+     * @param {number} width - Bar width in pixels (default: 50)
+     * @param {number} height - Bar height in pixels (default: 6)
+     */
+    drawHealthBar(ctx, x, y, currentHP, maxHP, width = 50, height = 6) {
+        if (!currentHP || !maxHP || maxHP <= 0) return;
+
+        ctx.save();
+
+        // Calculate HP percentage
+        const hpPercent = Math.max(0, Math.min(100, (currentHP / maxHP) * 100));
+        const fillWidth = (width * hpPercent) / 100;
+
+        // Position (centered horizontally, below the entity)
+        const barX = x - width / 2;
+        const barY = y + 16; // 16px below entity
+
+        // Background (dark with slight transparency)
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        ctx.fillRect(barX, barY, width, height);
+
+        // Gradient based on HP percentage
+        const gradient = ctx.createLinearGradient(barX, barY, barX + width, barY);
+
+        if (hpPercent > 75) {
+            // 100-75%: Green gradient
+            gradient.addColorStop(0, "#00FF00");
+            gradient.addColorStop(1, "#88FF88");
+        } else if (hpPercent > 50) {
+            // 75-50%: Yellow-green gradient
+            gradient.addColorStop(0, "#BBFF00");
+            gradient.addColorStop(1, "#FFFF00");
+        } else if (hpPercent > 25) {
+            // 50-25%: Orange gradient
+            gradient.addColorStop(0, "#FFAA00");
+            gradient.addColorStop(1, "#FF6600");
+        } else {
+            // 25-0%: Red gradient
+            gradient.addColorStop(0, "#FF3300");
+            gradient.addColorStop(1, "#FF0000");
+        }
+
+        // Fill HP bar with gradient
+        ctx.fillStyle = gradient;
+        ctx.fillRect(barX, barY, fillWidth, height);
+
+        // Border (white with transparency)
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(barX, barY, width, height);
+
+        // HP text inside bar
+        ctx.font = "bold 11px monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        // Format HP text
+        let hpText;
+        if (maxHP < 10000) {
+            hpText = `${Math.round(currentHP)}/${maxHP}`;
+        } else {
+            hpText = `${Math.round(hpPercent)}%`;
+        }
+
+        // Text shadow for better readability (stronger shadow)
+        ctx.shadowColor = "rgba(0, 0, 0, 1.0)";
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillText(hpText, x, barY + height / 2);
+
+        ctx.restore();
+    }
+
     calculateDistance(x1, y1, x2, y2) {
         const dx = x2 - x1; const dy = y2 - y1; return Math.sqrt(dx * dx + dy * dy);
     }

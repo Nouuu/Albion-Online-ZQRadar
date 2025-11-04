@@ -144,37 +144,21 @@ export class MobsDrawing extends DrawingUtils
             }
 
             // 📊 Display enemy information
-            let infoYOffset = 24; // Start below the mob
 
             if (drawHp)
             {
-                // Display real HP (current/max) or percentage
+                // Draw health bar with gradient colors
                 const currentHP = mobOne.getCurrentHP();
                 const maxHP = mobOne.maxHealth;
-                const healthPercent = mobOne.getHealthPercent();
-
-                // Choose display format based on HP values
-                let healthText;
-                if (maxHP > 0 && maxHP < 10000) {
-                    healthText = `${currentHP}/${maxHP}`; // Show actual numbers if reasonable
-                } else if (maxHP > 0) {
-                    healthText = `${healthPercent}%`; // Show percentage for large HP pools
-                } else {
-                    healthText = `${healthPercent}%`; // Fallback to percentage
-                }
-
-                const healthColor = healthPercent > 75 ? "#00FF00" : healthPercent > 50 ? "#FFFF00" : healthPercent > 25 ? "#FF8800" : "#FF0000";
-
-                const textWidth = ctx.measureText(healthText).width;
-                this.drawTextItems(point.x - textWidth / 2, point.y + infoYOffset, healthText, ctx, "12px", healthColor);
-                infoYOffset += 14; // Next line
+                this.drawHealthBar(ctx, point.x, point.y, currentHP, maxHP, 60, 10);
             }
 
             if (drawId)
             {
+                // Display TypeID below the health bar
                 const idText = `${mobOne.typeId}`;
                 const idWidth = ctx.measureText(idText).width;
-                this.drawTextItems(point.x - idWidth / 2, point.y + infoYOffset, idText, ctx, "10px", "#CCCCCC");
+                this.drawTextItems(point.x - idWidth / 2, point.y + 34, idText, ctx, "10px", "#CCCCCC");
             }
         }
 

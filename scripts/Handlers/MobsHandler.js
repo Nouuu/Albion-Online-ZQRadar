@@ -462,8 +462,13 @@ class MobsHandler {
         if (this.mobsList.some(m => m.id === id)) return;
         if (this.harvestablesNotGood.some(m => m.id === id)) return;
 
-        const mob = new Mob(id, typeId, posX, posY, healthNormalized, maxHealth, enchant, rarity);
-        const normHealth = Number(healthNormalized) || 0;
+        // Fix for fort/dungeon NPCs spawning with low HP value (params[2]=5)
+        // If healthNormalized is very low (< 10), it's likely a spawn default value, not real HP
+        // In that case, assume full health (255)
+        const actualHealth = healthNormalized < 10 ? 255 : healthNormalized;
+
+        const mob = new Mob(id, typeId, posX, posY, actualHealth, maxHealth, enchant, rarity);
+        const normHealth = Number(actualHealth) || 0;
 
         // Get known info from mobinfo database
         const knownInfo = this.mobinfo[typeId];
