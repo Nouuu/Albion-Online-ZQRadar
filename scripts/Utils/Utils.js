@@ -395,6 +395,7 @@ function render()
     mapsDrawing.Draw(contextMap, map);
 
     // Unified cluster detection + drawing (merge static harvestables + living resources)
+    let __clustersForInfo = null;
     if (settings.overlayCluster) {
         try {
             // Prepare merged list: static harvestables + living resources from mobs
@@ -408,10 +409,18 @@ function render()
 
             const clusters = drawingUtils.detectClusters(merged, settings.overlayClusterRadius, settings.overlayClusterMinSize);
 
-            // Draw cluster indicators behind resources
+            // Draw only rings now (behind resources)
             for (const cluster of clusters) {
-                drawingUtils.drawClusterIndicatorFromCluster(context, cluster);
+                if (drawingUtils && typeof drawingUtils.drawClusterRingsFromCluster === 'function') {
+                    drawingUtils.drawClusterRingsFromCluster(context, cluster);
+                } else if (drawingUtils && typeof drawingUtils.drawClusterIndicatorFromCluster === 'function') {
+                    // fallback to legacy method
+                    drawingUtils.drawClusterIndicatorFromCluster(context, cluster);
+                }
             }
+
+            // keep clusters for later to draw info boxes above everything
+            __clustersForInfo = clusters;
         } catch (e) {
             console.error('[Cluster] Failed to compute/draw clusters:', e);
         }
@@ -425,6 +434,22 @@ function render()
     fishingDrawing.Draw(context, fishingHandler.fishes);
     dungeonsDrawing.Draw(context, dungeonsHandler.dungeonList);
     playersDrawing.invalidate(context, playersHandler.playersInRange);
+
+    // Draw cluster info boxes on top of all elements if any
+    if (__clustersForInfo && __clustersForInfo.length) {
+        for (const cluster of __clustersForInfo) {
+            try {
+                if (drawingUtils && typeof drawingUtils.drawClusterInfoBox === 'function') {
+                    drawingUtils.drawClusterInfoBox(context, cluster);
+                } else if (drawingUtils && typeof drawingUtils.drawClusterIndicatorFromCluster === 'function') {
+                    // fallback: draw both (legacy)
+                    drawingUtils.drawClusterIndicatorFromCluster(context, cluster);
+                }
+            } catch (e) {
+                console.error('[Cluster] Failed to draw cluster info box:', e);
+            }
+        }
+    }
 
     // Flash
     if (settings.settingFlash && flashTime >= 0)
