@@ -193,9 +193,22 @@ class DrawingUtils {
     drawDistanceIndicator(ctx, x, y, distance) {
         if (!distance || distance <= 0) return;
         ctx.save();
-        const realDistance = this.convertGameUnitsToMeters(distance);
+
+        // compute real distance as float (avoid rounding for the threshold check)
+        const scaleFactor = this.getOverlayDistanceScale();
+        const realDistanceFloat = (distance / 3) * scaleFactor; // baseUnit = 3
+
+        // Don't show distance labels for very close resources (<= 2 meters)
+        if (realDistanceFloat <= 2) {
+            ctx.restore();
+            return;
+        }
+
+        // Rounded value for display
+        const realDistance = Math.round(realDistanceFloat);
+
         ctx.font = "bold 9px monospace";
-        const text = realDistance < 1000 ? `${Math.round(realDistance)}m` : `${(realDistance / 1000).toFixed(1)}km`;
+        const text = realDistance < 1000 ? `${realDistance}m` : `${(realDistance / 1000).toFixed(1)}km`;
 
         const textWidth = ctx.measureText(text).width;
         const padding = 3;
