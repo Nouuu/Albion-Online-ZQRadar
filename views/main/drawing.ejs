@@ -2,269 +2,132 @@
 <html>
 <head>
     <title>ZQRADAR</title>
-    <style>
-        body {
-            background-color: #121317;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-
-        /* Position the canvases, with the topCanvas above the gridCanvas */
-        .ttcan {
-            position: absolute;
-            top: 0;
-            left: 0;
-            margin: 10px;
-        }
-
-        #gridCanvas {
-            border: 2px solid #4a5568;
-        }
-
-        .button {
-            background: linear-gradient(135deg, #2d3748, #1a202c);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.2);
-            padding: 10px 16px;
-            cursor: pointer;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .button:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-            border-color: rgba(255,255,255,0.3);
-        }
-
-        .button:active {
-            transform: translateY(0);
-            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-        }
-
-        #clearTypeIDCache:hover {
-            background: linear-gradient(135deg, #b91c1c, #7f1d1d);
-        }
-
-        #showTypeIDCache:hover {
-            background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
-        }
-
-        #openOverlay:hover {
-            background: linear-gradient(135deg, #047857, #065f46);
-        }
-
-        #canvasContainer {
-            position: relative;
-        }
-
-        #thirdCanvas {
-            position: absolute;
-            top: 520px;
-            margin: 10px;
-            bottom: 0;
-            left: 0;
-            border: 2px solid #4a5568;
-            display: none;
-        }
-
-        /* 📊 Overlay Control Panel Styles */
-        .overlay-panel {
-            position: absolute;
-            background: rgba(0, 0, 0, 0.92);
-            padding: 18px;
-            border-radius: 10px;
-            color: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .overlay-panel-title {
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 14px;
-            color: #60a5fa;
-            letter-spacing: -0.3px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .overlay-checkbox-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .overlay-checkbox-label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: opacity 0.2s;
-        }
-
-        .overlay-checkbox-label:hover {
-            opacity: 0.8;
-        }
-
-        .overlay-checkbox-label input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-            accent-color: #60a5fa;
-        }
-
-        .overlay-checkbox-sub {
-            margin-left: 26px;
-            font-size: 12px;
-            opacity: 0.85;
-        }
-
-        .overlay-input-number {
-            width: 70px;
-            padding: 6px 8px;
-            border-radius: 4px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(255,255,255,0.1);
-            color: white;
-            font-size: 12px;
-            text-align: center;
-        }
-
-        .overlay-input-number:focus {
-            outline: none;
-            border-color: #60a5fa;
-            background: rgba(96,165,250,0.15);
-        }
-
-        .overlay-input-label {
-            font-size: 11px;
-            opacity: 0.7;
-            display: block;
-            margin-bottom: 6px;
-        }
-
-        .overlay-input-group {
-            margin-left: 26px;
-            margin-top: 6px;
-        }
-    </style>
+    <link rel="stylesheet" href="/scripts/styles/drawing.css">
 </head>
 <body>
-    <div id="canvasContainer">
-        <canvas class="ttcan" id="mapCanvas" width="500" height="500"></canvas>
-        <canvas class="ttcan" id="gridCanvas" width="500" height="500"></canvas>
-        <canvas class="ttcan" id="drawCanvas" width="500" height="500"></canvas>
-        <canvas class="ttcan" id="flashCanvas" width="500" height="500"></canvas>
-        <canvas class="ttcan" id="ourPlayerCanvas" width="500" height="500"></canvas>
-        <canvas id="thirdCanvas" width="500" height="500" ></canvas>
-
-        <!-- Boutons d'action avec meilleur espacement -->
-        <div style="position: absolute; top: 20px; left: 530px; display: flex; flex-direction: column; gap: 12px;">
-            <button class="button" id="button" style="width: 180px;">🧹 Clear</button>
-            <button class="button" id="logEnemiesList" style="width: 180px;">📋 Log Enemies List</button>
-            <button class="button" id="clearTypeIDCache" style="width: 180px; background-color: #dc2626;">🗑️ Clear TypeID Cache</button>
-            <button class="button" id="showTypeIDCache" style="width: 180px; background-color: #2563eb;">🔍 Show TypeID Cache</button>
-            <button class="button" id="openOverlay" style="width: 180px; background-color: #059669;">🎯 Open Overlay Mode</button>
-        </div>
-
-        <!-- 📊 Display Overlays Control Panel -->
-        <div style="position: absolute; top: 290px; left: 530px; background: rgba(0,0,0,0.92); padding: 16px; border-radius: 10px; color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; width: 210px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
-            <div style="font-size: 14px; font-weight: 700; margin-bottom: 12px; color: #60a5fa; letter-spacing: -0.3px;">📊 Display Overlays</div>
-
-            <!-- Enchantment -->
-            <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; font-size: 13px;">
-                <input type="checkbox" id="overlayEnchantment" style="width: 16px; height: 16px; cursor: pointer;">
-                <span>✨ Enchantments</span>
-            </label>
-
-            <!-- Resource Count -->
-            <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; font-size: 13px;">
-                <input type="checkbox" id="overlayResourceCount" style="width: 16px; height: 16px; cursor: pointer;">
-                <span>📦 Resource Count</span>
-            </label>
-
-            <!-- Distance -->
-            <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; font-size: 13px;">
-                <input type="checkbox" id="overlayDistance" style="width: 16px; height: 16px; cursor: pointer;">
-                <span>📍 Distance</span>
-            </label>
-
-            <!-- Clusters -->
-            <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; cursor: pointer; font-size: 13px;">
-                <input type="checkbox" id="overlayCluster" style="width: 16px; height: 16px; cursor: pointer;">
-                <span>🗂️ Clusters</span>
-            </label>
-            <div style="margin-left: 24px; margin-bottom: 4px;">
-                <label style="font-size: 11px; opacity: 0.7; display: block; margin-bottom: 4px;">Radius:</label>
-                <input type="number" id="overlayClusterRadius" min="10" max="100" step="5" value="30" style="width: 70px; padding: 4px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: white; font-size: 12px;">
-            </div>
-            <div style="margin-left: 24px; margin-bottom: 8px;">
-                <label style="font-size: 11px; opacity: 0.7; display: block; margin-bottom: 4px;">Min size:</label>
-                <input type="number" id="overlayClusterMinSize" min="1" max="20" step="1" value="2" style="width: 70px; padding: 4px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: white; font-size: 12px;">
+    <div class="main-container">
+        <!-- Canvas Section -->
+        <div class="canvas-section">
+            <div id="canvasContainer">
+                <canvas class="ttcan" id="mapCanvas" width="500" height="500"></canvas>
+                <canvas class="ttcan" id="gridCanvas" width="500" height="500"></canvas>
+                <canvas class="ttcan" id="drawCanvas" width="500" height="500"></canvas>
+                <canvas class="ttcan" id="flashCanvas" width="500" height="500"></canvas>
+                <canvas class="ttcan" id="ourPlayerCanvas" width="500" height="500"></canvas>
+                <canvas id="thirdCanvas" width="500" height="500"></canvas>
             </div>
         </div>
 
-        <!-- 📊 Statistiques Compactes -->
-        <div style="position: absolute; top: 540px; left: 10px; background: rgba(0,0,0,0.92); padding: 20px; border-radius: 12px; color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; width: 560px; box-shadow: 0 6px 16px rgba(0,0,0,0.6);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
-                <strong style="font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">📊 Statistiques Session</strong>
-                <button onclick="if(typeof harvestablesHandler!=='undefined')harvestablesHandler.resetStats();" style="background: #ef4444; color: white; border: none; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 700; transition: all 0.2s; box-shadow: 0 3px 6px rgba(0,0,0,0.3);" onmouseover="this.style.background='#dc2626';this.style.transform='scale(1.05)'" onmouseout="this.style.background='#ef4444';this.style.transform='scale(1)'">🔄 Reset</button>
+        <!-- Controls Section -->
+        <div class="controls-section">
+            <!-- Action Buttons -->
+            <div class="buttons-container">
+                <button class="button" id="button">🧹 Clear</button>
+                <button class="button" id="logEnemiesList">📋 Log Enemies List</button>
+                <button class="button button-danger" id="clearTypeIDCache">🗑️ Clear TypeID Cache</button>
+                <button class="button button-primary" id="showTypeIDCache">🔍 Show TypeID Cache</button>
+                <button class="button button-success" id="openOverlay">🎯 Open Overlay Mode</button>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 18px;">
-                <div style="background: linear-gradient(135deg, rgba(59,130,246,0.5), rgba(37,99,235,0.4)); padding: 14px; border-radius: 10px; text-align: center; border: 1px solid rgba(59,130,246,0.5); box-shadow: inset 0 1px 2px rgba(255,255,255,0.1);">
-                    <div style="font-size: 13px; opacity: 0.95; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">⏱️ Durée</div>
-                    <div id="statDuration" style="font-size: 24px; font-weight: 800; color: #60a5fa; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">0:00:00</div>
+
+            <!-- Display Overlays Control Panel -->
+            <div class="panel">
+                <div class="panel-title">📊 Display Overlays</div>
+
+                <!-- Enchantment -->
+                <label class="checkbox-label">
+                    <input type="checkbox" id="overlayEnchantment">
+                    <span>✨ Enchantments</span>
+                </label>
+
+                <!-- Resource Count -->
+                <label class="checkbox-label">
+                    <input type="checkbox" id="overlayResourceCount">
+                    <span>📦 Resource Count</span>
+                </label>
+
+                <!-- Distance -->
+                <label class="checkbox-label">
+                    <input type="checkbox" id="overlayDistance">
+                    <span>📍 Distance</span>
+                </label>
+
+                <!-- Clusters -->
+                <label class="checkbox-label">
+                    <input type="checkbox" id="overlayCluster">
+                    <span>🗂️ Clusters</span>
+                </label>
+                <div class="input-group">
+                    <label class="input-label">Radius:</label>
+                    <input type="number" class="input-number" id="overlayClusterRadius" min="10" max="100" step="5" value="30">
                 </div>
-                <div style="background: linear-gradient(135deg, rgba(34,197,94,0.5), rgba(22,163,74,0.4)); padding: 14px; border-radius: 10px; text-align: center; border: 1px solid rgba(34,197,94,0.5); box-shadow: inset 0 1px 2px rgba(255,255,255,0.1);">
-                    <div style="font-size: 13px; opacity: 0.95; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">✅ Détecté</div>
-                    <div id="statDetected" style="font-size: 24px; font-weight: 800; color: #4ade80; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">0</div>
-                </div>
-                <div style="background: linear-gradient(135deg, rgba(168,85,247,0.5), rgba(147,51,234,0.4)); padding: 14px; border-radius: 10px; text-align: center; border: 1px solid rgba(168,85,247,0.5); box-shadow: inset 0 1px 2px rgba(255,255,255,0.1);">
-                    <div style="font-size: 13px; opacity: 0.95; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">⛏️ Récolté</div>
-                    <div id="statHarvested" style="font-size: 24px; font-weight: 800; color: #c084fc; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">0</div>
+                <div class="input-group">
+                    <label class="input-label">Min size:</label>
+                    <input type="number" class="input-number" id="overlayClusterMinSize" min="1" max="20" step="1" value="2">
                 </div>
             </div>
-            <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
-                <div style="display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.18); padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                    <span style="font-size: 20px;">🌿</span><span id="statFiber" style="font-weight: 700; font-size: 18px;">0</span>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="stats-section">
+            <div class="stats-panel">
+                <div class="stats-header">
+                    <strong class="stats-title">📊 Statistiques Session</strong>
+                    <button class="reset-button" onclick="if(typeof harvestablesHandler!=='undefined')harvestablesHandler.resetStats();">🔄 Reset</button>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.18); padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                    <span style="font-size: 20px;">🦊</span><span id="statHide" style="font-weight: 700; font-size: 18px;">0</span>
+
+                <div class="stats-grid">
+                    <div class="stat-card stat-card-blue">
+                        <div class="stat-label">⏱️ Durée</div>
+                        <div id="statDuration" class="stat-value stat-value-blue">0:00:00</div>
+                    </div>
+                    <div class="stat-card stat-card-green">
+                        <div class="stat-label">✅ Détecté</div>
+                        <div id="statDetected" class="stat-value stat-value-green">0</div>
+                    </div>
+                    <div class="stat-card stat-card-purple">
+                        <div class="stat-label">⛏️ Récolté</div>
+                        <div id="statHarvested" class="stat-value stat-value-purple">0</div>
+                    </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.18); padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                    <span style="font-size: 20px;">🪵</span><span id="statWood" style="font-weight: 700; font-size: 18px;">0</span>
+
+                <div class="resource-badges">
+                    <div class="resource-badge">
+                        <span class="resource-icon">🌿</span>
+                        <span id="statFiber" class="resource-count">0</span>
+                    </div>
+                    <div class="resource-badge">
+                        <span class="resource-icon">🦊</span>
+                        <span id="statHide" class="resource-count">0</span>
+                    </div>
+                    <div class="resource-badge">
+                        <span class="resource-icon">🪵</span>
+                        <span id="statWood" class="resource-count">0</span>
+                    </div>
+                    <div class="resource-badge">
+                        <span class="resource-icon">⛏️</span>
+                        <span id="statOre" class="resource-count">0</span>
+                    </div>
+                    <div class="resource-badge">
+                        <span class="resource-icon">🪨</span>
+                        <span id="statRock" class="resource-count">0</span>
+                    </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.18); padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                    <span style="font-size: 20px;">⛏️</span><span id="statOre" style="font-weight: 700; font-size: 18px;">0</span>
+
+                <div class="tier-row">
+                    <span class="tier-item tier-t4">T4: <span id="statT4" class="tier-value">0</span></span>
+                    <span class="tier-item tier-t5">T5: <span id="statT5" class="tier-value">0</span></span>
+                    <span class="tier-item tier-t6">T6: <span id="statT6" class="tier-value">0</span></span>
+                    <span class="tier-item tier-t7">T7: <span id="statT7" class="tier-value">0</span></span>
+                    <span class="tier-item tier-t8">T8: <span id="statT8" class="tier-value">0</span></span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.18); padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                    <span style="font-size: 20px;">🪨</span><span id="statRock" style="font-weight: 700; font-size: 18px;">0</span>
+
+                <div class="enchant-row">
+                    <span class="enchant-item enchant-0">⚪ .0: <span id="statEnchant0" class="enchant-value">0</span></span>
+                    <span class="enchant-item enchant-1">🟢 .1: <span id="statEnchant1" class="enchant-value">0</span></span>
+                    <span class="enchant-item enchant-2">🔵 .2: <span id="statEnchant2" class="enchant-value">0</span></span>
+                    <span class="enchant-item enchant-3">🟣 .3: <span id="statEnchant3" class="enchant-value">0</span></span>
+                    <span class="enchant-item enchant-4">🟠 .4: <span id="statEnchant4" class="enchant-value">0</span></span>
                 </div>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; padding-top: 14px; border-top: 2px solid rgba(255,255,255,0.25);">
-                <span style="color: #90C090;">T4: <span id="statT4" style="font-weight: 800; font-size: 16px;">0</span></span>
-                <span style="color: #70B0E0;">T5: <span id="statT5" style="font-weight: 800; font-size: 16px;">0</span></span>
-                <span style="color: #E08050;">T6: <span id="statT6" style="font-weight: 800; font-size: 16px;">0</span></span>
-                <span style="color: #D060D0;">T7: <span id="statT7" style="font-weight: 800; font-size: 16px;">0</span></span>
-                <span style="color: #FF6060;">T8: <span id="statT8" style="font-weight: 800; font-size: 16px;">0</span></span>
-            </div>
-            <!-- 🌟 Enchantements Récoltés -->
-            <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; padding-top: 14px; border-top: 2px solid rgba(255,255,255,0.25); opacity: 0.95;">
-                <span style="color: #FFFFFF;">⚪ .0: <span id="statEnchant0" style="font-weight: 800; font-size: 16px;">0</span></span>
-                <span style="color: #1eff00;">🟢 .1: <span id="statEnchant1" style="font-weight: 800; font-size: 16px;">0</span></span>
-                <span style="color: #0070ff;">🔵 .2: <span id="statEnchant2" style="font-weight: 800; font-size: 16px;">0</span></span>
-                <span style="color: #a335ee;">🟣 .3: <span id="statEnchant3" style="font-weight: 800; font-size: 16px;">0</span></span>
-                <span style="color: #ff8000;">🟠 .4: <span id="statEnchant4" style="font-weight: 800; font-size: 16px;">0</span></span>
             </div>
         </div>
     </div>
@@ -282,141 +145,8 @@
     <script src="/scripts/Utils/DrawingUtils.js"></script>
     <script src="/scripts/Utils/DebugConfig.js"></script>
     <!--<script src="/scripts/Utils/Settings.js"></script>-->
-    
-    <script type="module" src="/scripts/Utils/Utils.js"></script> 
 
-    <script>
-        // 📊 Update statistics every second
-        setInterval(function() {
-            if (typeof harvestablesHandler !== 'undefined') {
-                const stats = harvestablesHandler.getStats();
-
-                // Format duration
-                const h = Math.floor(stats.sessionDuration / 3600);
-                const m = Math.floor((stats.sessionDuration % 3600) / 60);
-                const s = stats.sessionDuration % 60;
-                document.getElementById('statDuration').textContent = `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-
-                // Main counters
-                document.getElementById('statDetected').textContent = stats.totalDetected;
-                document.getElementById('statHarvested').textContent = stats.totalHarvested;
-
-                // By type (detected only for compact view)
-                document.getElementById('statFiber').textContent = stats.byType.Fiber.detected;
-                document.getElementById('statHide').textContent = stats.byType.Hide.detected;
-                document.getElementById('statWood').textContent = stats.byType.Log.detected;
-                document.getElementById('statOre').textContent = stats.byType.Ore.detected;
-                document.getElementById('statRock').textContent = stats.byType.Rock.detected;
-
-                // By tier (T4-T8 only for compact view)
-                document.getElementById('statT4').textContent = stats.byTier[4].detected;
-                document.getElementById('statT5').textContent = stats.byTier[5].detected;
-                document.getElementById('statT6').textContent = stats.byTier[6].detected;
-                document.getElementById('statT7').textContent = stats.byTier[7].detected;
-                document.getElementById('statT8').textContent = stats.byTier[8].detected;
-
-                // 🌟 Enchantments (harvested resources)
-                document.getElementById('statEnchant0').textContent = stats.byEnchantment.harvested[0] || 0;
-                document.getElementById('statEnchant1').textContent = stats.byEnchantment.harvested[1] || 0;
-                document.getElementById('statEnchant2').textContent = stats.byEnchantment.harvested[2] || 0;
-                document.getElementById('statEnchant3').textContent = stats.byEnchantment.harvested[3] || 0;
-                document.getElementById('statEnchant4').textContent = stats.byEnchantment.harvested[4] || 0;
-            }
-        }, 1000);
-
-        // Open overlay mode
-        document.getElementById('openOverlay').addEventListener('click', function() {
-            // Paramètres pour fenêtre sans bordures - TAILLE FIXE pour préserver les coordonnées
-            const features = [
-                'width=520',
-                'height=520',
-                'resizable=no',    // Désactivé pour éviter les problèmes de coordonnées
-                'toolbar=no',
-                'menubar=no',
-                'location=no',
-                'status=no',
-                'scrollbars=no',
-                'titlebar=no',
-                'directories=no',
-                'personalbar=no',
-                'chrome=no'
-            ].join(',');
-
-            window.open('/radar-overlay', 'RadarOverlay', features);
-        });
-
-        // 📊 Overlay Controls - Load from localStorage and setup listeners
-        function initOverlayControls() {
-            // Helper functions
-            const getBool = (key, defaultVal = true) => {
-                const val = localStorage.getItem(key);
-                return val === null ? defaultVal : val === 'true';
-            };
-            const setBool = (key, val) => localStorage.setItem(key, val);
-            const getNumber = (key, defaultVal) => parseInt(localStorage.getItem(key)) || defaultVal;
-
-            // Get checkbox elements
-            const enchantmentCheckbox = document.getElementById('overlayEnchantment');
-            const resourceCountCheckbox = document.getElementById('overlayResourceCount');
-            const distanceCheckbox = document.getElementById('overlayDistance');
-            const clusterCheckbox = document.getElementById('overlayCluster');
-            const clusterRadiusInput = document.getElementById('overlayClusterRadius');
-            const clusterMinSizeInput = document.getElementById('overlayClusterMinSize');
-
-            // Load initial values (defaults: enchantment=true, count=true, distance=false, cluster=false)
-            enchantmentCheckbox.checked = getBool('settingResourceEnchantOverlay', true);
-            resourceCountCheckbox.checked = getBool('settingResourceCount', true);
-            distanceCheckbox.checked = getBool('settingResourceDistance', false);
-            clusterCheckbox.checked = getBool('settingResourceClusters', false);
-            clusterRadiusInput.value = getNumber('settingClusterRadius', 30);
-            clusterMinSizeInput.value = getNumber('settingClusterMinSize', 2);
-
-            // Update settings object in real-time when checkboxes change
-            const updateSettings = () => {
-                if (typeof settings !== 'undefined') {
-                    settings.overlayEnchantment = enchantmentCheckbox.checked;
-                    settings.overlayResourceCount = resourceCountCheckbox.checked;
-                    settings.overlayDistance = distanceCheckbox.checked;
-                    settings.overlayCluster = clusterCheckbox.checked;
-                    settings.overlayClusterRadius = parseInt(clusterRadiusInput.value);
-                    settings.overlayClusterMinSize = parseInt(clusterMinSizeInput.value);
-                    settings.update(); // Reload settings from localStorage
-                }
-            };
-
-            // Add event listeners - save to localStorage and update settings
-            enchantmentCheckbox.addEventListener('change', (e) => {
-                setBool('settingResourceEnchantOverlay', e.target.checked);
-                updateSettings();
-            });
-
-            resourceCountCheckbox.addEventListener('change', (e) => {
-                setBool('settingResourceCount', e.target.checked);
-                updateSettings();
-            });
-
-            distanceCheckbox.addEventListener('change', (e) => {
-                setBool('settingResourceDistance', e.target.checked);
-                updateSettings();
-            });
-
-            clusterCheckbox.addEventListener('change', (e) => {
-                setBool('settingResourceClusters', e.target.checked);
-                updateSettings();
-            });
-
-            clusterRadiusInput.addEventListener('input', (e) => {
-                localStorage.setItem('settingClusterRadius', e.target.value);
-                updateSettings();
-            });
-            clusterMinSizeInput.addEventListener('input', (e) => {
-                localStorage.setItem('settingClusterMinSize', e.target.value);
-                updateSettings();
-            });
-        }
-
-        // Initialize overlay controls when page loads
-        initOverlayControls();
-    </script>
+    <script type="module" src="/scripts/Utils/Utils.js"></script>
+    <script src="/scripts/drawing-ui.js"></script>
 </body>
 </html>

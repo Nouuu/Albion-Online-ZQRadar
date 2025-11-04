@@ -127,8 +127,19 @@ function StartRadar()
 
   app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
-    //open(`http://localhost:${port}`);
-    require('child_process').exec(`start http://localhost:${port}`);
+    // Open the browser only once to avoid opening a new tab on every nodemon restart.
+    // We use a small lock file `.browser_opened` in appDir to remember that we've already opened it.
+    // You can force open with an env var FORCE_BROWSER_OPEN=1 or by passing --open as an argument.
+    try {
+      const browserFlagPath = path.join(appDir, '.browser_opened');
+      const forceOpen = process.env.FORCE_BROWSER_OPEN === '1' || process.argv.includes('--open');
+      if (forceOpen || !fs.existsSync(browserFlagPath)) {
+        require('child_process').exec(`start http://localhost:${port}`);
+        try { fs.writeFileSync(browserFlagPath, Date.now().toString(), { encoding: 'utf8' }); } catch (e) { /* non-fatal */ }
+      }
+    } catch (err) {
+      console.error('Error while trying to open the browser:', err);
+    }
   });
 
 
