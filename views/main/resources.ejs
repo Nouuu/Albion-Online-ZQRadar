@@ -897,10 +897,10 @@
 					<span id="enchant-living-text" class="dark:text-white ml-4">✨ Enchant Overlay (Living)</span>
 				</label>
 
-				<!-- TODO -->
-				<label class="flex items-center">
-                    <input disabled type="checkbox" id="settingLivingResourcesHP" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                    <span id="health-text" class="dark:text-white ml-2">Show Hp</span>
+				<!-- HP & Display Options -->
+                <label class="flex items-center">
+                    <input type="checkbox" id="settingLivingResourcesHealthBar" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                    <span class="dark:text-white ml-2">📊 Show Health Bar</span>
                 </label>
 
                 <label class="flex items-center">
@@ -1952,6 +1952,10 @@
 	settingLivingResourceEnchantOverlay.addEventListener("click", () => {
 		localStorage.setItem("settingLivingResourceEnchantOverlay", settingLivingResourceEnchantOverlay.checked);
 	});
+
+	let settingLivingResourcesHealthBar = document.getElementById("settingLivingResourcesHealthBar");
+	settingLivingResourcesHealthBar.checked = returnLocalBool("settingLivingResourcesHealthBar");
+	settingLivingResourcesHealthBar.addEventListener("click", () => {localStorage.setItem("settingLivingResourcesHealthBar", settingLivingResourcesHealthBar.checked);});
 
 	let settingLivingResourcesID = document.getElementById("settingLivingResourcesID");
 	settingLivingResourcesID.checked = returnLocalBool("settingLivingResourcesID");

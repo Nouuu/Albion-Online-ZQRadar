@@ -98,8 +98,8 @@
                     Debug
                 </h4>
                 <label class="flex items-center">
-                    <input type="checkbox" id="settingEnemiesHP" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                    <span id="health-text" class="dark:text-white ml-2">Show Hp</span>
+                    <input type="checkbox" id="settingEnemiesHealthBar" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                    <span class="dark:text-white ml-2">📊 Show Health Bar</span>
                 </label>
 
                 <label class="flex items-center">
@@ -275,9 +275,9 @@
     //#endregion
 
     //#region Debug
-    const settingEnemiesHP = document.getElementById("settingEnemiesHP");
-    settingEnemiesHP.checked = returnLocalBool("settingEnemiesHP");
-    settingEnemiesHP.addEventListener("click", () => {localStorage.setItem("settingEnemiesHP", settingEnemiesHP.checked);});
+    const settingEnemiesHealthBar = document.getElementById("settingEnemiesHealthBar");
+    settingEnemiesHealthBar.checked = returnLocalBool("settingEnemiesHealthBar");
+    settingEnemiesHealthBar.addEventListener("click", () => {localStorage.setItem("settingEnemiesHealthBar", settingEnemiesHealthBar.checked);});
 
     const settingEnemiesID = document.getElementById("settingEnemiesID");
     settingEnemiesID.checked = returnLocalBool("settingEnemiesID");

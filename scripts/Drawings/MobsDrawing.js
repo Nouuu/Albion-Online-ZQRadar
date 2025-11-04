@@ -51,7 +51,7 @@ export class MobsDrawing extends DrawingUtils
             let imageFolder = undefined;
 
             /* Set by default to enemy, since there are more, so we don't add at each case */
-            let drawHp = this.settings.enemiesHP;
+            let drawHealthBar = this.settings.enemiesHealthBar;
             let drawId = this.settings.enemiesID;
             let isLivingResource = false;
 
@@ -65,7 +65,7 @@ export class MobsDrawing extends DrawingUtils
                     imageFolder = "Resources"; // Change folder to living harvestables
                 }
 
-                drawHp = this.settings.livingResourcesHp;
+                drawHealthBar = this.settings.livingResourcesHealthBar;
                 drawId = this.settings.livingResourcesID;
             }
             else if (mobOne.type >= EnemyType.Enemy && mobOne.type <= EnemyType.Boss)
@@ -77,7 +77,6 @@ export class MobsDrawing extends DrawingUtils
                     imageFolder = "Resources"; // Change folder to enemies
                 }
 
-                drawHp = this.settings.enemiesHP;
                 drawId = this.settings.enemiesID;
             }
             else if (mobOne.type == EnemyType.Drone)
@@ -89,7 +88,6 @@ export class MobsDrawing extends DrawingUtils
                     imageFolder = "Resources"; // Change folder to enemies
                 }
 
-                drawHp = this.settings.enemiesHP;
                 drawId = this.settings.enemiesID;
             }
             else if (mobOne.type == EnemyType.MistBoss)
@@ -101,7 +99,6 @@ export class MobsDrawing extends DrawingUtils
                     imageFolder = "Resources"; // Change folder to enemies
                 }
 
-                drawHp = this.settings.enemiesHP;
                 drawId = this.settings.enemiesID;
             }
             else if (mobOne.type == EnemyType.Events)
@@ -113,7 +110,6 @@ export class MobsDrawing extends DrawingUtils
                     imageFolder = "Resources";
                 }
 
-                drawHp = this.settings.enemiesHP;
                 drawId = this.settings.enemiesID;
             }
 
@@ -145,7 +141,7 @@ export class MobsDrawing extends DrawingUtils
 
             // 📊 Display enemy information
 
-            if (drawHp)
+            if (drawHealthBar)
             {
                 // Draw health bar with gradient colors
                 const currentHP = mobOne.getCurrentHP();
@@ -155,10 +151,11 @@ export class MobsDrawing extends DrawingUtils
 
             if (drawId)
             {
-                // Display TypeID below the health bar
+                // Display TypeID below the health bar (or mob if no health bar)
                 const idText = `${mobOne.typeId}`;
                 const idWidth = ctx.measureText(idText).width;
-                this.drawTextItems(point.x - idWidth / 2, point.y + 34, idText, ctx, "10px", "#CCCCCC");
+                const yOffset = drawHealthBar ? 34 : 24; // Adjust position based on health bar presence
+                this.drawTextItems(point.x - idWidth / 2, point.y + yOffset, idText, ctx, "10px", "#CCCCCC");
             }
         }
 

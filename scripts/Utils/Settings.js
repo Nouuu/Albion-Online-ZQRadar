@@ -137,7 +137,6 @@ export class Settings
             'e4': [false, false, false, false, false, false, false, false],
         };
 
-        this.livingResourcesHP = false;
         this.livingResourcesID = false;
         this.logLivingResources = false;
         this.logLivingCreatures = false; // Enhanced CSV logging for living resources
@@ -190,7 +189,6 @@ export class Settings
         this.bossGriffin = false;
         //#endregion
 
-        this.enemiesHP = false;
         this.enemiesID = false;
         //#endregion
 
@@ -441,7 +439,7 @@ export class Settings
 
         //#endregion
 
-        this.livingResourcesHP = this.returnLocalBool("settingLivingResourcesHP");
+        this.livingResourcesHealthBar = this.returnLocalBool("settingLivingResourcesHealthBar");
         this.livingResourcesID = this.returnLocalBool("settingLivingResourcesID");
         this.logLivingResources = this.returnLocalBool("settingLogLivingResources");
         this.logLivingCreatures = this.returnLocalBool("settingLogLivingCreatures");
@@ -485,7 +483,7 @@ export class Settings
         this.showUnmanagedEnemies = this.returnLocalBool("settingShowUnmanagedEnemies");
         this.showEventEnemies = this.returnLocalBool("settingShowEventEnemies");
 
-        this.enemiesHP = this.returnLocalBool("settingEnemiesHP");
+        this.enemiesHealthBar = this.returnLocalBool("settingEnemiesHealthBar");
         this.enemiesID = this.returnLocalBool("settingEnemiesID");
         this.debugEnemies = this.returnLocalBool("settingDebugEnemies");
 
