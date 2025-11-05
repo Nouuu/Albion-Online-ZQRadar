@@ -398,6 +398,7 @@ class DrawingUtils {
             ctx.beginPath(); ctx.arc(cx, cy, (visualRadius - 6) * pulse, 0, 2 * Math.PI); ctx.stroke();
             ctx.restore();
         } catch (e) {
+            // ❌ ERROR (toujours loggé) - Erreur critique de fallback de rendu
             if (window.logger) {
                 window.logger.error('CLUSTER', 'DrawRingsFallbackFailed', e);
             }

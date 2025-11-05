@@ -79,7 +79,8 @@ class HarvestablesHandler
         this.pendingHarvestableId = harvestableId;
         this.isHarvesting = true;
 
-        if (this.settings && this.settings.logLivingResources && window.logger) {
+        // ℹ️ INFO (toujours loggé) - Début de récolte
+        if (window.logger) {
             window.logger.info('HARVEST', 'HarvestStart', {
                 harvestableId,
                 timestamp: new Date().toISOString()
@@ -89,7 +90,8 @@ class HarvestablesHandler
 
     // 🆕 Appelé par Utils.js lors de HarvestCancel
     onHarvestCancel() {
-        if (this.settings && this.settings.logLivingResources && window.logger) {
+        // ⚠️ WARN (toujours loggé) - Annulation de récolte
+        if (window.logger) {
             window.logger.warn('HARVEST', 'HarvestCancel', {
                 wasHarvesting: this.isHarvesting,
                 pendingId: this.pendingHarvestableId
@@ -134,7 +136,8 @@ class HarvestablesHandler
                 // 📋 Logger la découverte itemId pour référence future (une seule fois)
                 if (!this.discoveredItemIds.has(itemId)) {
                     this.discoveredItemIds.set(itemId, { type: harvestable.type, tier: harvestable.tier, charges: harvestable.charges });
-                    if (this.settings && this.settings.logLivingResources && window.logger) {
+                    // ℹ️ INFO (toujours loggé) - Découverte d'un nouvel itemId
+                    if (window.logger) {
                         window.logger.info('HARVEST', 'ItemIdDiscovery', {
                             itemId,
                             type: harvestable.type,
@@ -156,7 +159,8 @@ class HarvestablesHandler
                 this.updateStatsHarvested(harvestable.type, harvestable.tier, harvestable.charges, gained);
             } else {
                 // ⚠️ Resource NOT detected by radar (static harvestables: Wood, Ore, Rock)
-                if (this.settings && this.settings.logLivingResources && window.logger) {
+                // ⚠️ WARN (toujours loggé) - Ressource statique non détectée par le radar
+                if (window.logger) {
                     window.logger.warn('HARVEST', 'StaticResourceNotInList', {
                         gained,
                         itemId,
@@ -607,7 +611,8 @@ class HarvestablesHandler
                     const resourceInfo = this.getResourceInfoFromItemId(cacheEntry.itemId);
 
                     if (resourceInfo) {
-                        if (this.settings && this.settings.logLivingResources && window.logger) {
+                        // ℹ️ INFO (toujours loggé) - Tracking des ressources statiques
+                        if (window.logger) {
                             window.logger.info('HARVEST', 'TrackingStaticResources', {
                                 resources,
                                 type: resourceInfo.type,
@@ -619,7 +624,8 @@ class HarvestablesHandler
                         this.updateStatsHarvested(resourceInfo.type, resourceInfo.tier, resourceInfo.charges, resources);
                     } else {
                         // Fallback: juste incrémenter le total si on ne peut pas mapper l'itemId
-                        if (this.settings && this.settings.logLivingResources && window.logger) {
+                        // ⚠️ WARN (toujours loggé) - ItemId inconnu
+                        if (window.logger) {
                             window.logger.warn('HARVEST', 'UnknownItemId', {
                                 itemId: cacheEntry.itemId,
                                 note: 'Tracking total only'
@@ -633,7 +639,8 @@ class HarvestablesHandler
                 this.lastHarvestCache.delete(id);
             } else {
                 // Pas de cache du tout
-                if (this.settings && this.settings.logLivingResources && window.logger) {
+                // ⚠️ WARN (toujours loggé) - Pas de cache disponible
+                if (window.logger) {
                     window.logger.warn('HARVEST', 'NoCacheWarning', {
                         note: 'NO CACHE! Resource tracking may be incomplete'
                     });
@@ -801,6 +808,7 @@ class HarvestablesHandler
             return HarvestableType.Ore;
         }
         else {
+            // ⚠️ WARN (toujours loggé) - Type de ressource inconnu
             if (window.logger) {
                 window.logger.warn('HARVEST', 'UnknownTypeNumber', {
                     typeNumber,

@@ -104,14 +104,16 @@ class MobsHandler {
                 }
 
                 this.livingResourcesMetadata = allResources;
-                if (window.logger && this.settings && this.settings.debugEnemies) {
+                // ℹ️ INFO (toujours loggé) - Chargement de metadata
+                if (window.logger) {
                     window.logger.info('MOB', 'LoadMetadata', {
                         count: this.livingResourcesMetadata.length
                     });
                 }
             }
         } catch (e) {
-            if (window.logger && this.settings && this.settings.debugEnemies) {
+            // ❌ ERROR (toujours loggé) - Échec critique
+            if (window.logger) {
                 window.logger.error('MOB', 'LoadMetadataFailed', e);
             }
         }
@@ -153,8 +155,9 @@ class MobsHandler {
     printLoggingGuide() {
         if (!this.settings.logLivingCreatures) return;
 
+        // 🐛 DEBUG (filtré par debugEnemies) - Guide de collecte verbeux
         if (window.logger && this.settings && this.settings.debugEnemies) {
-            window.logger.info('MOB', 'CollectionGuide', {
+            window.logger.debug('MOB', 'CollectionGuide', {
                 title: 'LIVING RESOURCES COLLECTION GUIDE',
                 objective: 'Collecter les TypeIDs des créatures enchantées',
                 format: 'JSON structuré pour parsing automatique',
@@ -194,7 +197,8 @@ class MobsHandler {
                     this.staticResourceTypeIDs.set(numericTypeId, info);
                     loadedCount++;
                 }
-                if (window.logger && this.settings && this.settings.debugEnemies) {
+                // ℹ️ INFO (toujours loggé) - Chargement du cache
+                if (window.logger) {
                     window.logger.info('MOB', 'LoadCachedTypeIDs', {
                         loaded: loadedCount,
                         skipped: skippedCount
@@ -202,7 +206,8 @@ class MobsHandler {
                 }
             }
         } catch (e) {
-            if (window.logger && this.settings && this.settings.debugEnemies) {
+            // ❌ ERROR (toujours loggé) - Échec critique
+            if (window.logger) {
                 window.logger.error('MOB', 'LoadCacheFailed', e);
             }
         }
@@ -320,7 +325,8 @@ class MobsHandler {
                 .filter(([typeId]) => typeId !== 65535); // Skip unstable TypeID only
             localStorage.setItem('cachedStaticResourceTypeIDs', JSON.stringify(entries));
         } catch (e) {
-            if (window.logger && this.settings && this.settings.debugEnemies) {
+            // ❌ ERROR (toujours loggé) - Échec critique de sauvegarde
+            if (window.logger) {
                 window.logger.error('MOB', 'SaveCacheFailed', e);
             }
         }
@@ -332,11 +338,13 @@ class MobsHandler {
             localStorage.removeItem('cachedStaticResourceTypeIDs');
             this.staticResourceTypeIDs.clear();
             this._registrationLogState.clear();
-            if (window.logger && this.settings && this.settings.debugEnemies) {
+            // ℹ️ INFO (toujours loggé) - Action utilisateur importante
+            if (window.logger) {
                 window.logger.info('MOB', 'CacheCleared', { count });
             }
         } catch (e) {
-            if (window.logger && this.settings && this.settings.debugEnemies) {
+            // ❌ ERROR (toujours loggé) - Échec critique
+            if (window.logger) {
                 window.logger.error('MOB', 'ClearCacheFailed', e);
             }
             throw e;
@@ -344,6 +352,7 @@ class MobsHandler {
     }
 
     showCachedTypeIDs() {
+        // 🐛 DEBUG (filtré par debugEnemies) - Affichage verbeux pour debug
         if (window.logger && this.settings && this.settings.debugEnemies) {
             const sorted = Array.from(this.staticResourceTypeIDs.entries())
                 .sort((a, b) => a[0] - b[0]);
@@ -354,7 +363,7 @@ class MobsHandler {
                 tier: info.tier
             }));
 
-            window.logger.info('MOB', 'DisplayCachedTypeIDs', {
+            window.logger.debug('MOB', 'DisplayCachedTypeIDs', {
                 total: this.staticResourceTypeIDs.size,
                 entries
             });
@@ -513,7 +522,8 @@ class MobsHandler {
                 this.AddEnemy(mobId, typeId, posX, posY, healthNormalized, maxHealth, enchant, rarity);
             }
         } catch (e) {
-            if (window.logger && this.settings && this.settings.debugEnemies) {
+            // ❌ ERROR (toujours loggé) - Erreur critique lors de NewMobEvent
+            if (window.logger) {
                 window.logger.error('MOB', 'NewMobEventError', e);
             }
         }

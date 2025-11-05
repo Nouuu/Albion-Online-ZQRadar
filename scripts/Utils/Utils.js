@@ -534,6 +534,7 @@ function render()
             // keep clusters for later to draw info boxes above everything
             __clustersForInfo = clusters;
         } catch (e) {
+            // ❌ ERROR (toujours loggé) - Erreur critique de calcul de clusters
             if (window.logger) {
                 window.logger.error('CLUSTER', 'ComputeFailed', e);
             }
@@ -560,6 +561,7 @@ function render()
                     drawingUtils.drawClusterIndicatorFromCluster(context, cluster);
                 }
             } catch (e) {
+                // ❌ ERROR (toujours loggé) - Erreur critique de rendu de cluster
                 if (window.logger) {
                     window.logger.error('CLUSTER', 'DrawInfoBoxFailed', e);
                 }
