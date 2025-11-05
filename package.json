@@ -1,28 +1,73 @@
 {
   "name": "albion-zqradar",
   "version": "1.0.0",
-  "description": "",
+  "description": "ZQRadar - Real-time radar for Albion Online",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "check": "node build/check-system.js",
+    "check:runtime": "node -e \"try { const ok = require('./scripts/Utils/runtime-check').runRuntimeChecks(); process.exit(ok ? 0 : 1); } catch (e) { console.error(e); process.exit(1); }\"",
+    "prebuild": "npm run check",
+    "build": "pkg . --compress GZip",
+    "build:win": "pkg . --targets node18-win-x64 --compress GZip --output dist/ZQRadar.exe",
+    "build:linux": "pkg . --targets node18-linux-x64 --compress GZip --output dist/ZQRadar-linux",
+    "build:macos": "pkg . --targets node18-macos-x64 --compress GZip --output dist/ZQRadar-macos",
+    "build:all": "pkg . --targets node18-win-x64,node18-linux-x64,node18-macos-x64 --compress GZip",
+    "postbuild": "node build/post-build.js",
+    "optimize:images": "node build/optimize-images.js",
+    "clean": "node -e \"const fs=require('fs');const path=require('path');if(fs.existsSync('dist/images/.optimized')){console.log('Preserving optimized images');const items=fs.readdirSync('dist');items.forEach(i=>{if(i!=='images'){const p=path.join('dist',i);fs.rmSync(p,{recursive:true,force:true})}})}else{fs.rmSync('dist',{recursive:true,force:true})}\"",
+    "clean:all": "if exist dist rmdir /s /q dist && if exist build\\temp rmdir /s /q build\\temp && del /q *.log 2>nul",
+    "clean:images": "if exist dist\\images rmdir /s /q dist\\images && echo Optimized images deleted - next build will re-optimize",
+    "rebuild:native": "npm rebuild cap node-sass",
+    "package": "node build/create-release.js",
+    "release": "npm run build:win && npm run package",
+    "install:deps": "npm install && npm run rebuild:native"
+  },
+  "bin": "app.js",
+  "pkg": {
+    "assets": [
+      "node_modules/cap/build/**/*",
+      "node_modules/node-sass/vendor/**/*"
+    ],
+    "targets": [
+      "node18-win-x64",
+      "node18-linux-x64",
+      "node18-macos-x64"
+    ],
+    "outputPath": "dist",
+    "scripts": [
+      "scripts/**/*.js",
+      "server-scripts/**/*.js"
+    ]
   },
   "author": "Zeldruck",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": ">=18.18.2",
+    "npm": ">=9.0.0"
+  },
   "dependencies": {
-    "axios": "^1.6.8",
+    "axios": "^1.13.1",
     "buffercursor": "^0.0.12",
     "cap": "^0.2.1",
-    "ejs": "^3.1.9",
-    "express": "^4.18.2",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
     "moment": "^2.30.1",
-    "nan": "^2.18.0",
-    "node-gyp": "^10.0.1",
+    "nan": "^2.23.0",
+    "node-gyp": "^11.5.0",
     "node-sass": "^9.0.0",
-    "npm": "^10.2.3",
+    "npm": "^11.6.2",
     "path": "^0.12.7",
     "readline-sync": "^1.4.10",
     "winreg": "^1.2.5",
-    "ws": "^8.14.2"
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "archiver": "^7.0.1",
+    "nodemon": "^3.1.7",
+    "pkg": "^5.8.1",
+    "sharp": "^0.33.5"
   }
 }

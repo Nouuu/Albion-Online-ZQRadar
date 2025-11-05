@@ -41,6 +41,8 @@ export class MobsDrawing extends DrawingUtils
 
     invalidate(ctx, mobs, mists)
     {
+        // Note: cluster detection & drawing is handled centrally in Utils.render (merged static + living resources)
+
         for (const mobOne of mobs)
         {
             const point = this.transformPoint(mobOne.hX, mobOne.hY);
@@ -49,65 +51,112 @@ export class MobsDrawing extends DrawingUtils
             let imageFolder = undefined;
 
             /* Set by default to enemy, since there are more, so we don't add at each case */
-            let drawHp = this.settings.enemiesHP;
+            let drawHealthBar = this.settings.enemiesHealthBar;
             let drawId = this.settings.enemiesID;
+            let isLivingResource = false;
 
             if (mobOne.type == EnemyType.LivingSkinnable || mobOne.type == EnemyType.LivingHarvestable)
             {
-                imageName = mobOne.name + "_" + mobOne.tier + "_" + mobOne.enchantmentLevel;
-                imageFolder = "Resources"; // Change folder to living harvestables
+                isLivingResource = true;
+                // Only set imageName if mob has been identified (has name from mobinfo or cross-ref)
+                // Otherwise leave undefined and fallback circle will be drawn
+                if (mobOne.name && mobOne.tier > 0) {
+                    imageName = mobOne.name + "_" + mobOne.tier + "_" + mobOne.enchantmentLevel;
+                    imageFolder = "Resources"; // Change folder to living harvestables
+                }
 
-                drawHp = this.settings.livingResourcesHp;
+                drawHealthBar = this.settings.livingResourcesHealthBar;
                 drawId = this.settings.livingResourcesID;
             }
             else if (mobOne.type >= EnemyType.Enemy && mobOne.type <= EnemyType.Boss)
             {
-                imageName = mobOne.name;
-                imageFolder = "Resources"; // Change folder to enemies
+                // Only set imageName if mob has been identified (has name from mobinfo)
+                // Otherwise leave undefined and fallback blue circle will be drawn
+                if (mobOne.name) {
+                    imageName = mobOne.name;
+                    imageFolder = "Resources"; // Change folder to enemies
+                }
 
-                drawHp = this.settings.enemiesHP;
                 drawId = this.settings.enemiesID;
             }
             else if (mobOne.type == EnemyType.Drone)
             {
-                imageName = mobOne.name;
-                imageFolder = "Resources"; // Change folder to enemies
+                // Only set imageName if mob has been identified (has name from mobinfo)
+                // Otherwise leave undefined and fallback blue circle will be drawn
+                if (mobOne.name) {
+                    imageName = mobOne.name;
+                    imageFolder = "Resources"; // Change folder to enemies
+                }
 
-                drawHp = this.settings.enemiesHP;
                 drawId = this.settings.enemiesID;
             }
             else if (mobOne.type == EnemyType.MistBoss)
             {
-                imageName = mobOne.name;
-                imageFolder = "Resources"; // Change folder to enemies
+                // Only set imageName if mob has been identified (has name from mobinfo)
+                // Otherwise leave undefined and fallback blue circle will be drawn
+                if (mobOne.name) {
+                    imageName = mobOne.name;
+                    imageFolder = "Resources"; // Change folder to enemies
+                }
 
-                drawHp = this.settings.enemiesHP;
                 drawId = this.settings.enemiesID;
             }
             else if (mobOne.type == EnemyType.Events)
             {
-                imageName = mobOne.name;
-                imageFolder = "Resources";
+                // Only set imageName if mob has been identified (has name from mobinfo)
+                // Otherwise leave undefined and fallback blue circle will be drawn
+                if (mobOne.name) {
+                    imageName = mobOne.name;
+                    imageFolder = "Resources";
+                }
 
-                drawHp = this.settings.enemiesHP;
                 drawId = this.settings.enemiesID;
             }
 
             if (imageName !== undefined && imageFolder !== undefined)
                 this.DrawCustomImage(ctx, point.x, point.y, imageName, imageFolder, 40);
-            else
-                this.drawFilledCircle(ctx, point.x, point.y, 10, "#4169E1"); // Unmanaged ids
+            else {
+                // Color-coded circles by enemy type
+                const color = this.getEnemyColor(mobOne.type);
 
-            if (drawHp)
+                // 🐛 DEBUG: Log color assignment (only once per mob to avoid spam)
+                if (this.settings.debugEnemies && !mobOne._debugLogged) {
+                    console.log(`[DEBUG_DRAW] MOB ID=${mobOne.id} TypeID=${mobOne.typeId} | Type=${mobOne.type} | Color=${color}`);
+                    mobOne._debugLogged = true;
+                }
+
+                this.drawFilledCircle(ctx, point.x, point.y, 10, color);
+            }
+
+            // 📊 Enchantment indicator for living resources (if enabled)
+            if (isLivingResource && this.settings.overlayEnchantment && mobOne.enchantmentLevel > 0) {
+                this.drawEnchantmentIndicator(ctx, point.x, point.y, mobOne.enchantmentLevel);
+            }
+
+            // 📍 Distance indicator for living resources (if enabled) - use game-units (hX/hY)
+            if (isLivingResource && this.settings.overlayDistance) {
+                const distanceGameUnits = this.calculateDistance(mobOne.hX, mobOne.hY, 0, 0);
+                this.drawDistanceIndicator(ctx, point.x, point.y, distanceGameUnits);
+            }
+
+            // 📊 Display enemy information
+
+            if (drawHealthBar)
             {
-                // TODO
-                // Draw health bar?
-                const textWidth = ctx.measureText(mobOne.health).width;
-                this.drawTextItems(point.x - textWidth /2, point.y + 24, mobOne.health, ctx, "12px", "yellow");
+                // Draw health bar with gradient colors
+                const currentHP = mobOne.getCurrentHP();
+                const maxHP = mobOne.maxHealth;
+                this.drawHealthBar(ctx, point.x, point.y, currentHP, maxHP, 60, 10);
             }
 
             if (drawId)
-                this.drawText(point.x, point.y - 20, mobOne.typeId, ctx);
+            {
+                // Display TypeID below the health bar (or mob if no health bar)
+                const idText = `${mobOne.typeId}`;
+                const idWidth = ctx.measureText(idText).width;
+                const yOffset = drawHealthBar ? 34 : 24; // Adjust position based on health bar presence
+                this.drawTextItems(point.x - idWidth / 2, point.y + yOffset, idText, ctx, "10px", "#CCCCCC");
+            }
         }
 
         /* Mist portals */
@@ -124,6 +173,50 @@ export class MobsDrawing extends DrawingUtils
                 const point = this.transformPoint(mistsOne.hX, mistsOne.hY);
                 this.DrawCustomImage(ctx, point.x, point.y, "mist_" + mistsOne.enchant, "Resources", 30);
             }
+        }
+    }
+
+    /**
+     * Get color for enemy based on type
+     * @param {number} enemyType - EnemyType enum value
+     * @returns {string} Hex color code
+     */
+    getEnemyColor(enemyType) {
+        const EnemyType = {
+            LivingHarvestable: 0,
+            LivingSkinnable: 1,
+            Enemy: 2,           // Normal - Green
+            MediumEnemy: 3,     // Medium - Yellow
+            EnchantedEnemy: 4,  // Enchanted - Purple
+            MiniBoss: 5,        // MiniBoss - Orange
+            Boss: 6,            // Boss - Red
+            Drone: 7,           // Drone - Cyan
+            MistBoss: 8,        // MistBoss - Pink
+            Events: 9           // Events - White
+        };
+
+        switch (enemyType) {
+            case EnemyType.Enemy:           // Normal
+                return "#00FF00"; // Green 🟢
+            case EnemyType.MediumEnemy:     // Medium
+                return "#FFFF00"; // Yellow 🟡
+            case EnemyType.EnchantedEnemy:  // Enchanted
+                return "#9370DB"; // Purple 🟣
+            case EnemyType.MiniBoss:        // MiniBoss
+                return "#FF8C00"; // Orange 🟠
+            case EnemyType.Boss:            // Boss
+                return "#FF0000"; // Red 🔴
+            case EnemyType.Drone:           // Avalon Drone
+                return "#00FFFF"; // Cyan 🔵
+            case EnemyType.MistBoss:        // Mist Boss
+                return "#FF1493"; // Pink 🩷
+            case EnemyType.Events:          // Event enemies
+                return "#FFFFFF"; // White ⚪
+            case EnemyType.LivingHarvestable:
+            case EnemyType.LivingSkinnable:
+                return "#FFD700"; // Gold (living resources)
+            default:
+                return "#4169E1"; // Royal Blue (unmanaged/unknown)
         }
     }
 }

@@ -1,4 +1,3 @@
-
 import { PlayersDrawing } from '../Drawings/PlayersDrawing.js';
 import { HarvestablesDrawing } from '../Drawings/HarvestablesDrawing.js';
 import { MobsDrawing } from '../Drawings/MobsDrawing.js';
@@ -14,24 +13,24 @@ import { PlayersHandler } from '../Handlers/PlayersHandler.js';
 import { WispCageHandler } from '../Handlers/WispCageHandler.js';
 import { FishingHandler } from '../Handlers/FishingHandler.js';
 
+// Check if canvas elements exist (only on drawing page)
 var canvasMap = document.getElementById("mapCanvas");
-var contextMap = canvasMap.getContext("2d");
+var contextMap = canvasMap ? canvasMap.getContext("2d") : null;
 
 var canvasGrid = document.getElementById("gridCanvas");
-var contextGrid = canvasGrid.getContext("2d");
+var contextGrid = canvasGrid ? canvasGrid.getContext("2d") : null;
 
 var canvas = document.getElementById("drawCanvas");
-var context = canvas.getContext("2d");
+var context = canvas ? canvas.getContext("2d") : null;
 
 var canvasFlash = document.getElementById("flashCanvas");
-var contextFlash = canvas.getContext("2d");
+var contextFlash = canvasFlash ? canvasFlash.getContext("2d") : null;
 
 var canvasOurPlayer = document.getElementById("ourPlayerCanvas");
-var contextOurPlayer = canvasOurPlayer .getContext("2d");
-
+var contextOurPlayer = canvasOurPlayer ? canvasOurPlayer.getContext("2d") : null;
 
 var canvasItems = document.getElementById("thirdCanvas");
-var contextItems = canvasItems.getContext("2d");
+var contextItems = canvasItems ? canvasItems.getContext("2d") : null;
 
 import { Settings } from './Settings.js';
 const settings = new Settings();
@@ -47,6 +46,8 @@ var mobsInfo = new MobsInfo();
 itemsInfo.initItems();
 mobsInfo.initMobs();
 
+console.log(`[Utils] 📊 MobsInfo loaded: ${Object.keys(mobsInfo.moblist).length} TypeIDs (fusionné)`);
+
 var map = new MapH(-1);
 const mapsDrawing = new MapDrawing(settings);
 
@@ -54,9 +55,55 @@ const chestsHandler = new ChestsHandler();
 const mobsHandler = new MobsHandler(settings);
 mobsHandler.updateMobInfo(mobsInfo.moblist);
 
+// existing logEnemiesList button stays the same
+window.addEventListener('load', () => {
+    const logEnemiesList = document.getElementById('logEnemiesList');
+    if (logEnemiesList) logEnemiesList.addEventListener('click', () => console.log(mobsHandler.getMobList()));
 
-const harvestablesHandler = new HarvestablesHandler(settings);
+    // Clear TypeID Cache button
+    const clearTypeIDCache = document.getElementById('clearTypeIDCache');
+    if (clearTypeIDCache) clearTypeIDCache.addEventListener('click', () => {
+        try {
+            // Show what's in cache BEFORE clearing
+            const cached = localStorage.getItem('cachedStaticResourceTypeIDs');
+            if (cached) {
+                const entries = JSON.parse(cached);
+                console.log(`[clearTypeIDCache] 🗑️ Clearing ${entries.length} cached entries:`);
+                entries.forEach(([typeId, info]) => {
+                    console.log(`  - TypeID ${typeId}: ${info.type} T${info.tier}`);
+                });
+            } else {
+                console.log('[clearTypeIDCache] ℹ️ Cache is already empty');
+            }
+
+            // Clear in-memory cache in MobsHandler
+            mobsHandler.clearCachedTypeIDs();
+
+            // Confirm
+            const shouldReload = confirm('✅ TypeID Cache cleared (in-memory + localStorage)!\n\n🔄 Reload the page to start fresh?\n\n(Recommended: Yes)');
+            if (shouldReload) {
+                window.location.reload();
+            }
+        } catch (e) {
+            console.error('❌ Failed to clear TypeID cache:', e);
+            alert('❌ Failed to clear cache: ' + e.message);
+        }
+    });
+
+    // Show TypeID Cache button (debug)
+    const showTypeIDCache = document.getElementById('showTypeIDCache');
+    if (showTypeIDCache) showTypeIDCache.addEventListener('click', () => {
+        mobsHandler.showCachedTypeIDs();
+    });
+});
+
+
+const harvestablesHandler = new HarvestablesHandler(settings, mobsHandler); // 🔗 Pass MobsHandler reference
 const playersHandler = new PlayersHandler(settings);
+
+
+// 📊 Expose harvestablesHandler globally for statistics access
+window.harvestablesHandler = harvestablesHandler;
 
 const wispCageHandler = new WispCageHandler(settings);
 const wispCageDrawing = new WispCageDrawing(settings);
@@ -176,8 +223,54 @@ function onEvent(Parameters)
             harvestablesHandler.HarvestUpdateEvent(Parameters);
             break;
 
+        case EventCodes.HarvestStart:
+            if (Parameters[3]) {
+                harvestablesHandler.onHarvestStart(Parameters[3]);
+            }
+            break;
+
+        case EventCodes.HarvestCancel:
+            harvestablesHandler.onHarvestCancel();
+            break;
+
         case EventCodes.HarvestFinished:
             harvestablesHandler.harvestFinished(Parameters);
+            break;
+
+        // Inventory events
+        case EventCodes.InventoryPutItem:
+            // 📦 Inventory updates
+            break;
+
+        case EventCodes.InventoryDeleteItem:
+            // 🗑️ Item removed from inventory
+            break;
+
+        case EventCodes.InventoryState:
+            // 📋 Full inventory state
+            break;
+
+        case EventCodes.NewSimpleItem:
+            if (Parameters[1] && Parameters[2]) {
+                harvestablesHandler.onNewSimpleItem(Parameters[1], Parameters[2]);
+            }
+            break;
+
+        case EventCodes.NewEquipmentItem:
+            // ⚔️ Equipment updates
+            break;
+
+        case EventCodes.NewJournalItem:
+            // 📖 Journal updates
+            break;
+
+        case EventCodes.UpdateFame:
+            // 📊 Fame tracking (not used for resource counting - see NewSimpleItem instead)
+            // Parameters[2] = fame gained (varies with gear/food bonuses, but NOT premium)
+            break;
+
+        case EventCodes.UpdateMoney:
+            // 💰 Money updates
             break;
 
         case EventCodes.MobChangeState:
@@ -185,34 +278,32 @@ function onEvent(Parameters)
             break;
 
         case EventCodes.RegenerationHealthChanged:
+            // 🐛 DEBUG: Log health regeneration events
+            if (settings && settings.debugEnemies) {
+                const mobInfo = mobsHandler.debugLogMobById(Parameters[0]);
+                console.log(`[DEBUG_HP] Event 91 (RegenerationHealthChanged) | ID=${Parameters[0]} | ${mobInfo} | params[2]=${Parameters[2]} params[3]=${Parameters[3]} | ALL:`, Parameters);
+            }
             playersHandler.UpdatePlayerHealth(Parameters);
+            mobsHandler.updateMobHealthRegen(Parameters);  // Update mob HP
             break;
 
         case EventCodes.HealthUpdate:
+            // 🐛 DEBUG: Log health update events
+            if (settings && settings.debugEnemies) {
+                const mobInfo = mobsHandler.debugLogMobById(Parameters[0]);
+                console.log(`[DEBUG_HP] Event 6 (HealthUpdate) | ID=${Parameters[0]} | ${mobInfo} | params[3]=${Parameters[3]} | ALL:`, Parameters);
+            }
             playersHandler.UpdatePlayerLooseHealth(Parameters);
-            break;
-        
-        // TEST
-        case EventCodes.MountHealthUpdate:
-            console.log();
-            console.log("MountHealthUpdate");
-            console.log(Parameters);
+            mobsHandler.updateMobHealth(Parameters);  // Update mob HP
             break;
 
-        // TEST
-        case EventCodes.CharacterStats:
-            console.log();
-            console.log("CharacterStats");
-            console.log(Parameters);
+        case EventCodes.HealthUpdates:
+            // 🐛 DEBUG: Log bulk health updates (multiple entities at once)
+            if (settings && settings.debugEnemies) {
+                console.log(`[DEBUG_HP] Event 7 (HealthUpdates - BULK) | ALL:`, Parameters);
+            }
+            mobsHandler.updateMobHealthBulk(Parameters);
             break;
-
-        // TEST
-        case EventCodes.RegenerationHealthEnergyComboChanged:
-            console.log();
-            console.log("RegenerationHealthEnergyComboChanged");
-            console.log(Parameters);
-            break;
-
 
         case EventCodes.CharacterEquipmentChanged:
             playersHandler.updateItems(id, Parameters);
@@ -271,7 +362,7 @@ function onRequest(Parameters)
     {
         lpX = Parameters[1][0];
         lpY = Parameters[1][1];
-        console.log(lpX)
+        // console.log(lpX)
     }
 }
 
@@ -322,6 +413,38 @@ function render()
 
     mapsDrawing.Draw(contextMap, map);
 
+    // Unified cluster detection + drawing (merge static harvestables + living resources)
+    let __clustersForInfo = null;
+    if (settings.overlayCluster) {
+        try {
+            // Prepare merged list: static harvestables + living resources from mobs
+            const staticList = harvestablesHandler.harvestableList || [];
+            const livingList = (mobsHandler && mobsHandler.mobsList) ?
+                mobsHandler.mobsList.filter(mob => mob.type === EnemyType.LivingHarvestable || mob.type === EnemyType.LivingSkinnable)
+                : [];
+
+            // Merge arrays (no deep copy needed) - detectClusters expects objects with hX/hY/tier/name/type/size
+            const merged = staticList.concat(livingList);
+
+            const clusters = drawingUtils.detectClusters(merged, settings.overlayClusterRadius, settings.overlayClusterMinSize);
+
+            // Draw only rings now (behind resources)
+            for (const cluster of clusters) {
+                if (drawingUtils && typeof drawingUtils.drawClusterRingsFromCluster === 'function') {
+                    drawingUtils.drawClusterRingsFromCluster(context, cluster);
+                } else if (drawingUtils && typeof drawingUtils.drawClusterIndicatorFromCluster === 'function') {
+                    // fallback to legacy method
+                    drawingUtils.drawClusterIndicatorFromCluster(context, cluster);
+                }
+            }
+
+            // keep clusters for later to draw info boxes above everything
+            __clustersForInfo = clusters;
+        } catch (e) {
+            console.error('[Cluster] Failed to compute/draw clusters:', e);
+        }
+    }
+
     harvestablesDrawing.invalidate(context, harvestablesHandler.harvestableList);
 
     mobsDrawing.invalidate(context, mobsHandler.mobsList, mobsHandler.mistList);
@@ -330,6 +453,22 @@ function render()
     fishingDrawing.Draw(context, fishingHandler.fishes);
     dungeonsDrawing.Draw(context, dungeonsHandler.dungeonList);
     playersDrawing.invalidate(context, playersHandler.playersInRange);
+
+    // Draw cluster info boxes on top of all elements if any
+    if (__clustersForInfo && __clustersForInfo.length) {
+        for (const cluster of __clustersForInfo) {
+            try {
+                if (drawingUtils && typeof drawingUtils.drawClusterInfoBox === 'function') {
+                    drawingUtils.drawClusterInfoBox(context, cluster);
+                } else if (drawingUtils && typeof drawingUtils.drawClusterIndicatorFromCluster === 'function') {
+                    // fallback: draw both (legacy)
+                    drawingUtils.drawClusterIndicatorFromCluster(context, cluster);
+                }
+            } catch (e) {
+                console.error('[Cluster] Failed to draw cluster info box:', e);
+            }
+        }
+    }
 
     // Flash
     if (settings.settingFlash && flashTime >= 0)

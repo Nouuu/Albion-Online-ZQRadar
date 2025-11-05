@@ -7,6 +7,37 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
+# Session logs
+LOGS.json
+
+# Temporary diagnostic files
+diff_*.txt
+TYPEIDS_SUSPECTS.json
+
+# Temporary documentation files (use DEV_NOTES.md and TODO.md only)
+WORKING_*.md
+*_FIX.md
+*_ANALYSIS.md
+*_CLEANUP.md
+*_SESSION.md
+*_FINAL.md
+*_TYPEIDS.md
+tools/
+.claude
+
+# Temporary Python scripts (tools/)
+tools/*.py
+tools/extract_*.py
+tools/scrape_*.py
+tools/fetch_*.py
+tools/analyze_*.py
+tools/debug_*.py
+tools/generate_*.py
+
+# Large downloaded JSON files (tools/)
+tools/*.json
+!tools/TYPEIDS_STATUS.json
+
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
@@ -37,6 +68,7 @@ bower_components
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
+build/temp
 
 # Dependency directories
 node_modules/
@@ -90,6 +122,17 @@ out
 # Nuxt.js build / generate output
 .nuxt
 dist
+
+# Build artifacts and releases
+dist/
+*.exe
+*.zip
+*.7z
+*.tar.gz
+ip.txt
+
+# Build optimization marker (local only)
+.optimized
 
 # Gatsby files
 .cache/

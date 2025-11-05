@@ -15,7 +15,7 @@ export class HarvestablesDrawing extends DrawingUtils  {
             const hY = harvestableOne.posY - lpY;
 
        
-            if (harvestableOne.hY == 0 && harvestableOne.hX == 0) {
+            if (harvestableOne.hY === 0 && harvestableOne.hX === 0) {
                 harvestableOne.hX = hX;
                 harvestableOne.hY = hY;
 
@@ -30,15 +30,17 @@ export class HarvestablesDrawing extends DrawingUtils  {
 
     invalidate(ctx, harvestables)
     {
+        // Clusters are detected and drawn centrally in Utils.render when overlayCluster is enabled
+        // (to merge static harvestables and living resources into the same clustering pass)
+
         for (const harvestableOne of harvestables)
         {
             if (harvestableOne.size <= 0) continue;
 
             const type = harvestableOne.type;
-
             let draw = undefined;
 
-            
+            // Map resource type to image name
             if (type >= 0 && type <= 5)
             {
                 draw = "Logs_" + harvestableOne.tier + "_" + harvestableOne.charges;
@@ -47,7 +49,7 @@ export class HarvestablesDrawing extends DrawingUtils  {
             {
                 draw = "rock_" + harvestableOne.tier + "_" + harvestableOne.charges;
             }
-            if (type >= 11 && type <= 15)
+            else if (type >= 11 && type <= 15)
             {
                 draw = "fiber_" + harvestableOne.tier + "_" + harvestableOne.charges;
             }
@@ -63,41 +65,35 @@ export class HarvestablesDrawing extends DrawingUtils  {
             if (draw === undefined)
                 continue;
 
-
             const point = this.transformPoint(harvestableOne.hX, harvestableOne.hY);
 
-            // TODO
-            // Change Resources to Animals/LHarvestables (living harvestables)
+            // Draw resource icon
             this.DrawCustomImage(ctx, point.x, point.y, draw, "Resources", 50);
 
+            // Debug: TypeID display
             if (this.settings.livingResourcesID)
                 this.drawText(point.x, point.y + 20, type.toString(), ctx);
 
-            let tier = "I";
-            switch (harvestableOne.tier)
-            {
-                case 1: tier = "I"; break;
-                case 2: tier = "II"; break;
-                case 3: tier = "III"; break;
-                case 4: tier = "IV"; break;
-                case 5: tier = "V"; break;
-                case 6: tier = "VI"; break;
-                case 6: tier = "VII"; break;
-                case 6: tier = "VIII"; break;
-
-                default:
-                    tier = "";
-                    break;
+            // 📊 Enchantment indicator (if enabled)
+            if (this.settings.overlayEnchantment && harvestableOne.charges > 0) {
+                this.drawEnchantmentIndicator(ctx, point.x, point.y, harvestableOne.charges);
             }
 
-            this.drawText(point.x - 10, point.y - 10, tier.toString(), ctx, 9, "monospace", "#585858", 10);
-
-            if (this.settings.resourceSize)
-            {
-                harvestableOne.size = parseInt(harvestableOne.size);
-                this.drawText(point.x + 13, point.y + 15, harvestableOne.size, ctx, 8);
+            // 📍 Distance indicator (if enabled) - use game-units (hX/hY) so metrics match clusters
+            if (this.settings.overlayDistance) {
+                const distanceGameUnits = this.calculateDistance(harvestableOne.hX, harvestableOne.hY, 0, 0);
+                this.drawDistanceIndicator(ctx, point.x, point.y, distanceGameUnits);
             }
-            
+
+            // 📊 Resource count badge (if enabled)
+            if (this.settings.overlayResourceCount)
+            {
+                const realResources = this.calculateRealResources(
+                    parseInt(harvestableOne.size),
+                    harvestableOne.tier
+                );
+                this.drawResourceCountBadge(ctx, point.x, point.y, realResources);
+            }
         }
-    }  
+    }
 }
