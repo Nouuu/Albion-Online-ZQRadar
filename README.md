@@ -78,18 +78,22 @@ npm run dev
 ### Building Windows Executable
 
 ```bash
-# With Makefile (WSL/Git Bash)
-make build          # Build ZQRadar.exe
-make release        # Build + create release ZIP
+# RECOMMANDÉ - Utiliser npm scripts (multiplateforme)
+npm run build:win     # Build Windows exe
+npm run build:all     # Toutes plateformes
+npm run release       # Build + create release ZIP
 
-# Without Make (Windows CMD)
-build.bat build
-build.bat release
+# ALTERNATIF - Scripts directs
+# Windows (CMD/PowerShell)
+build.bat build       # Build Windows exe
+build.bat release     # Build + release
 
-# With npm
-npm run build:win
-npm run release
+# Unix/Linux/macOS (Makefile)
+make build            # Build Windows exe
+make release          # Build + release
 ```
+
+See [BUILD.md](BUILD.md) for detailed build instructions and all available commands.
 
 See [BUILD.md](BUILD.md) for detailed build instructions and all available commands
 8. You should see this:
@@ -125,6 +129,23 @@ Example:
 \
 If you have downloaded the Map Pack, you should have `Albion-Online-ZQRadar/images/Maps/*.png`.
 
+## 📚 Documentation
+
+**For Developers:**
+- **[SETUP.md](SETUP.md)** - Complete setup guide after cloning the repository
+- **[BUILD.md](BUILD.md)** - Build instructions and packaging
+- **[docs/](docs/)** - Complete project documentation
+  - `docs/ai/` - Guides for AI agents (if working with AI assistants)
+  - `docs/dev/` - Developer guides
+  - `docs/work/` - Python utilities documentation
+  - `docs/technical/` - Technical documentation (logging, settings, enchantments)
+  - `docs/project/` - Project management (TODO, changelog)
+
+**Quick Links:**
+- [Installation & Setup](SETUP.md)
+- [Build Guide](BUILD.md)
+- [Documentation Index](docs/README.md)
+- [Organization History](CHANGELOG_ORGANIZATION.md)
 
 ## Credits
 [@Zeldruck](https://github.com/Zeldruck)

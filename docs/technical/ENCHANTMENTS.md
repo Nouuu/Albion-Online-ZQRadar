@@ -21,18 +21,70 @@ How does the radar display the correct enchantment when `params[33]` is always 0
 **You killed a Hide T5.1:**
 
 ```javascript
-[DEBUG_PARAMS] TypeID 427 | params[19]=257 params[33]=0
-[LIVING_JSON] {"typeId":427,"resource":{"type":"Hide","tier":5,"enchant":0}}  ← Wrong logging
+[DEBUG_PARAMS]
+TypeID
+427 | params[19] = 257
+params[33] = 0
+    [LIVING_JSON]
+{
+    "typeId"
+:
+    427, "resource"
+:
+    {
+        "type"
+    :
+        "Hide", "tier"
+    :
+        5, "enchant"
+    :
+        0
+    }
+}  ← Wrong
+logging
 
 // But HarvestablesHandler was right:
-[DEBUG Hide T4+ UPDATE] TypeID=427, tier=5, enchant=1  ← Radar correct!
+    [DEBUG
+Hide
+T4 + UPDATE
+]
+TypeID = 427, tier = 5, enchant = 1  ← Radar
+correct
+!
 ```
 
 **Revelation:**
+
 - **Hide T5.0**: TypeID **427**, rarity=112 → enchant=0
 - **Hide T5.1**: TypeID **427**, rarity=257 → enchant=1
 
 **The TypeID is IDENTICAL! Enchantment is calculated from rarity!**
+
+---
+
+## 🔬 Session de Debug (2025-11-03)
+
+**Méthode utilisée pour découvrir le système :**
+
+Un log de debug temporaire a été ajouté dans `MobsHandler.js` :
+
+```javascript
+[DEBUG_PARAMS]
+TypeID
+530 | params[19] = 92
+params[33] = 0
+params[8] = undefined
+params[9] = undefined
+params[252] = undefined
+```
+
+**Paramètres surveillés :**
+
+- `params[19]` = rarity (contient l'enchantement encodé) ✅
+- `params[33]` = enchant supposé (toujours 0) ❌
+- `params[8]`, `params[9]`, `params[252]` = autres candidats testés
+
+**Résultat :** L'enchantement est calculé à partir de `rarity` (params[19]), pas un champ séparé.
 
 ---
 
@@ -41,6 +93,7 @@ How does the radar display the correct enchantment when `params[33]` is always 0
 ### What was already correct
 
 `HarvestablesHandler.js` already calculated enchantment from rarity:
+
 ```javascript
 // Line ~140
 const enchant = this.calculateEnchantmentFromRarity(rarity, tier);
@@ -49,6 +102,7 @@ const enchant = this.calculateEnchantmentFromRarity(rarity, tier);
 ### What was incorrect
 
 `MobsHandler.js` logged `params[33]` directly instead of calculating:
+
 ```javascript
 // BEFORE (wrong)
 logData.resource.enchant = enchant;  // = params[33] = 0 ❌
@@ -63,34 +117,39 @@ logData.resource.enchant = realEnchant;  // Calculated from rarity ✓
 
 ### Base Rarity per Tier
 
-| Tier | Base Rarity | Status |
-|------|-------------|--------|
-| T3   | 78          | ✅ Field confirmed |
-| T4   | 92          | ✅ Field confirmed |
-| T5   | 112         | ✅ Field confirmed |
+| Tier | Base Rarity | Status                  |
+|------|-------------|-------------------------|
+| T3   | 78          | ✅ Field confirmed       |
+| T4   | 92          | ✅ Field confirmed       |
+| T5   | 112         | ✅ Field confirmed       |
 | T6   | 132         | ⚠️ Estimated (+20/tier) |
-| T7   | 152         | ⚠️ Estimated |
-| T8   | 172         | ⚠️ Estimated |
+| T7   | 152         | ⚠️ Estimated            |
+| T8   | 172         | ⚠️ Estimated            |
 
 ### Enchantment Calculation
 
 ```javascript
 diff = rarity - baseRarity
 
-if (diff < 20)   → enchant = 0  // Normal
-if (diff < 65)   → enchant = 1  // +~45
-if (diff < 110)  → enchant = 2  // +~90
-if (diff < 155)  → enchant = 3  // +~145
-if (diff >= 155) → enchant = 4  // +~155+
+if (diff < 20)   →
+enchant = 0  // Normal
+if (diff < 65)   →
+enchant = 1  // +~45
+if (diff < 110)  →
+enchant = 2  // +~90
+if (diff < 155)  →
+enchant = 3  // +~145
+if (diff >= 155) →
+enchant = 4  // +~155+
 ```
 
 ### Field Validated Examples
 
-| Resource  | TypeID | Rarity | Base | Diff | Enchant | ✓ |
-|-----------|--------|--------|------|------|---------|---|
-| Hide T5.1 | 427    | 257    | 112  | 145  | 1       | ✅ |
-| Fiber T4.0| 530    | 92     | 92   | 0    | 0       | ✅ |
-| Hide T4.0 | 425    | 137    | 92   | 45   | 1?      | ⚠️ |
+| Resource   | TypeID | Rarity | Base | Diff | Enchant | ✓  |
+|------------|--------|--------|------|------|---------|----|
+| Hide T5.1  | 427    | 257    | 112  | 145  | 1       | ✅  |
+| Fiber T4.0 | 530    | 92     | 92   | 0    | 0       | ✅  |
+| Hide T4.0  | 425    | 137    | 92   | 45   | 1?      | ⚠️ |
 
 ---
 
@@ -101,7 +160,8 @@ if (diff >= 155) → enchant = 4  // +~155+
 **File:** `scripts/Handlers/MobsHandler.js`
 
 ```javascript
-getBaseRarity(tier) {
+getBaseRarity(tier)
+{
     const baseRarities = {
         1: 0, 2: 0,
         3: 78,   // Field validated
@@ -143,8 +203,23 @@ console.log(`... T${tier}.${realEnchant} ...`);  // Correct display
 ### 3. Debug parameters added
 
 **For future investigation:**
+
 ```javascript
-[DEBUG_PARAMS] TypeID ${typeId} | params[19]=${rarity} params[33]=${enchant}
+[DEBUG_PARAMS]
+TypeID
+$
+{
+    typeId
+}
+|
+params[19] = $
+{
+    rarity
+}
+params[33] = $
+{
+    enchant
+}
 ```
 
 ---
@@ -154,23 +229,24 @@ console.log(`... T${tier}.${realEnchant} ...`);  // Correct display
 ### ✅ Positive
 
 1. **No need to collect enchanted TypeIDs**
-   - TypeID 427 = Hide T5 for .0, .1, .2, .3, .4
-   - TypeID 530 = Fiber T4 for all enchantments
-   - MobsInfo.js already complete!
+    - TypeID 427 = Hide T5 for .0, .1, .2, .3, .4
+    - TypeID 530 = Fiber T4 for all enchantments
+    - MobsInfo.js already complete!
 
 2. **System functional for all enchantments**
-   - Formula calculates automatically
-   - Radar displays correctly
-   - Logs now consistent
+    - Formula calculates automatically
+    - Radar displays correctly
+    - Logs now consistent
 
 3. **Simplified architecture**
-   - No database to enrich
-   - No manual collection
-   - Maintainable code
+    - No database to enrich
+    - No manual collection
+    - Maintainable code
 
 ### ⚠️ To Validate
 
 **Next field session (1-2h):**
+
 - [ ] Test Hide/Fiber .2, .3, .4
 - [ ] Validate T6, T7, T8
 - [ ] Refine thresholds (20, 65, 110, 155)
@@ -200,23 +276,26 @@ console.log(`... T${tier}.${realEnchant} ...`);  // Correct display
 ## 🚀 Next Actions
 
 ### Immediate
+
 1. ✅ **Test new logging**
-   - Enable "Log Living Creatures"
-   - Kill an enchanted creature
-   - Verify log displays correct enchantment
+    - Enable "Log Living Creatures"
+    - Kill an enchanted creature
+    - Verify log displays correct enchantment
 
 ### Short Term (this week)
+
 1. **Validation field session (1-2h)**
-   - Test .2, .3, .4
-   - Different tiers T4-T8
-   - Hide AND Fiber
-   - Refine formula if needed
+    - Test .2, .3, .4
+    - Different tiers T4-T8
+    - Hide AND Fiber
+    - Refine formula if needed
 
 2. **Clean obsolete documentation**
-   - Archive or delete collection guides
-   - Update README if needed
+    - Archive or delete collection guides
+    - Update README if needed
 
 ### Medium Term
+
 1. Long session (2h+) with complete validation
 2. Analyze EventNormalizer necessity
 3. Decision based on system stability
@@ -228,6 +307,7 @@ console.log(`... T${tier}.${realEnchant} ...`);  // Correct display
 **The living resources enchantment detection system is OPERATIONAL!**
 
 **What we learned:**
+
 - ✅ Identical TypeID for all enchantments
 - ✅ Enchantment calculated from rarity
 - ✅ params[33] never used for living resources
@@ -235,6 +315,7 @@ console.log(`... T${tier}.${realEnchant} ...`);  // Correct display
 - ✅ MobsHandler corrected
 
 **Result:**
+
 - No more manual collection needed
 - System works for .0 to .4
 - Simple and maintainable architecture
