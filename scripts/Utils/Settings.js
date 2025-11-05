@@ -182,6 +182,11 @@ export class Settings
         this.showUnmanagedEnemies = false;
         this.showEventEnemies = false;
 
+        this.enemiesHealthBar = false;
+        this.enemiesID = false;
+        this.debugEnemies = false;
+        this.debugRawPackets = false; // 📦 Debug très verbeux - tous les paquets bruts
+
         //#region Mists
         this.bossCrystalSpider = false;
         this.bossFairyDragon = false;
@@ -481,6 +486,7 @@ export class Settings
 
         this.avaloneDrones = this.returnLocalBool("settingAvaloneDrones");
         this.showUnmanagedEnemies = this.returnLocalBool("settingShowUnmanagedEnemies");
+        this.debugRawPackets = this.returnLocalBool("settingDebugRawPackets");
         this.showEventEnemies = this.returnLocalBool("settingShowEventEnemies");
 
         this.enemiesHealthBar = this.returnLocalBool("settingEnemiesHealthBar");

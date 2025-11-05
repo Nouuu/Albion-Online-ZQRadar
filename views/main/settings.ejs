@@ -390,8 +390,14 @@
               <input type="checkbox" id="settingDebugEnemies" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
               <span class="text-gray-600 dark:text-gray-300">🐛 Debug Enemies (verbose)</span>
             </label>
+            <label class="flex items-center space-x-2 mt-2">
+              <input type="checkbox" id="settingDebugRawPackets" class="h-5 w-5 text-orange-600 border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500">
+              <span class="text-gray-600 dark:text-gray-300">📦 Debug RAW Packets (JSONL)</span>
+            </label>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">
               Enable logging to browser console (F12)
+              <br>
+              <span class="text-orange-600 dark:text-orange-400">⚠️ RAW Packets: VERY VERBOSE! Logs every packet. Use only for deep debugging.</span>
             </p>
           </div>
 
@@ -673,6 +679,19 @@
       }
     });
 
+    // 📦 Debug RAW Packets
+    const settingDebugRawPacketsCheckbox = document.getElementById("settingDebugRawPackets");
+    if (settingDebugRawPacketsCheckbox) {
+      settingDebugRawPacketsCheckbox.addEventListener("change", function (event) {
+        saveToLocalStorage("settingDebugRawPackets", event.target.checked);
+        if (event.target.checked) {
+          console.log("📦 Debug RAW Packets ENABLED - ⚠️ VERY VERBOSE!");
+        } else {
+          console.log("📦 Debug RAW Packets DISABLED");
+        }
+      });
+    }
+
     const downloadBtn = document.getElementById('downloadLogsBtn');
     if (downloadBtn) {
       downloadBtn.addEventListener('click', function() {
@@ -707,5 +726,5 @@
     settingLogLivingCreaturesCheckbox.checked = getFromLocalStorage("settingLogLivingCreatures") === "true";
     settingLogLivingResourcesCheckbox.checked = getFromLocalStorage("settingLogLivingResources") === "true";
     settingDebugEnemiesCheckbox.checked = getFromLocalStorage("settingDebugEnemies") === "true";
+    settingDebugRawPacketsCheckbox.checked = getFromLocalStorage("settingDebugRawPackets") === "true";
   </script>
-

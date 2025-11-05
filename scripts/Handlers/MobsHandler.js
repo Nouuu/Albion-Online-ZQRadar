@@ -439,15 +439,33 @@ class MobsHandler {
         try { name = parameters[32] || parameters[31] || null; } catch (e) { name = null; }
 
         // 🐛 DEBUG: Log raw parameters from server
-        if (this.settings && this.settings.debugEnemies) {
-            console.log(`[DEBUG_ENEMY] RAW PARAMS | ID=${id} TypeID=${typeId} | params[2]=${parameters[2]} (normalized) params[13]=${parameters[13]} (maxHP) params[19]=${parameters[19]} (rarity) params[33]=${parameters[33]} | name=${name}`);
+        if (this.settings && this.settings.debugEnemies && window.logger) {
+            window.logger.debug('MOB', 'NewMobEvent_RAW', {
+                id, typeId,
+                params: {
+                    health_normalized: parameters[2],
+                    maxHP: parameters[13],
+                    rarity: parameters[19],
+                    enchant: parameters[33],
+                    name
+                }
+            });
         }
 
         // 🔍 DEBUG: Log ALL parameters for living resources to find enchantment
-        if (this.settings && this.settings.logLivingCreatures) {
+        if (this.settings && this.settings.logLivingCreatures && window.logger) {
             const knownInfo = this.mobinfo[typeId];
             if (knownInfo && (knownInfo[1] === 0 || knownInfo[1] === 1)) { // Living resources
-                console.log(`[DEBUG_PARAMS] TypeID ${typeId} | params[19]=${parameters[19]} params[33]=${parameters[33]} params[8]=${parameters[8]} params[9]=${parameters[9]} params[252]=${parameters[252]}`);
+                window.logger.debug('LIVING_CREATURE', 'NewLivingCreature', {
+                    typeId,
+                    allParams: {
+                        p19_rarity: parameters[19],
+                        p33_enchant: parameters[33],
+                        p8: parameters[8],
+                        p9: parameters[9],
+                        p252: parameters[252]
+                    }
+                });
             }
         }
 

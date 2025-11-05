@@ -196,6 +196,15 @@ function onEvent(Parameters)
     const id = parseInt(Parameters[0]);
     const eventCode = Parameters[252];
 
+    // 📦 DEBUG RAW: Log tous les paquets bruts (très verbeux, pour debug profond uniquement)
+    if (settings && settings.debugRawPackets && window.logger) {
+        window.logger.debug('PACKET_RAW', `Event_${eventCode}`, {
+            id,
+            eventCode,
+            allParameters: Parameters
+        });
+    }
+
     switch (eventCode)
     {
         // DEBUG
@@ -309,9 +318,16 @@ function onEvent(Parameters)
 
         case EventCodes.RegenerationHealthChanged:
             // 🐛 DEBUG: Log health regeneration events
-            if (settings && settings.debugEnemies) {
+            if (settings && settings.debugEnemies && window.logger) {
                 const mobInfo = mobsHandler.debugLogMobById(Parameters[0]);
-                console.log(`[DEBUG_HP] Event 91 (RegenerationHealthChanged) | ID=${Parameters[0]} | ${mobInfo} | params[2]=${Parameters[2]} params[3]=${Parameters[3]} | ALL:`, Parameters);
+                window.logger.debug('MOB_HEALTH', 'RegenerationHealthChanged', {
+                    eventCode: 91,
+                    id: Parameters[0],
+                    mobInfo,
+                    params2: Parameters[2],
+                    params3: Parameters[3],
+                    allParameters: Parameters
+                });
             }
             playersHandler.UpdatePlayerHealth(Parameters);
             mobsHandler.updateMobHealthRegen(Parameters);  // Update mob HP
@@ -319,9 +335,15 @@ function onEvent(Parameters)
 
         case EventCodes.HealthUpdate:
             // 🐛 DEBUG: Log health update events
-            if (settings && settings.debugEnemies) {
+            if (settings && settings.debugEnemies && window.logger) {
                 const mobInfo = mobsHandler.debugLogMobById(Parameters[0]);
-                console.log(`[DEBUG_HP] Event 6 (HealthUpdate) | ID=${Parameters[0]} | ${mobInfo} | params[3]=${Parameters[3]} | ALL:`, Parameters);
+                window.logger.debug('MOB_HEALTH', 'HealthUpdate', {
+                    eventCode: 6,
+                    id: Parameters[0],
+                    mobInfo,
+                    params3: Parameters[3],
+                    allParameters: Parameters
+                });
             }
             playersHandler.UpdatePlayerLooseHealth(Parameters);
             mobsHandler.updateMobHealth(Parameters);  // Update mob HP
@@ -329,8 +351,11 @@ function onEvent(Parameters)
 
         case EventCodes.HealthUpdates:
             // 🐛 DEBUG: Log bulk health updates (multiple entities at once)
-            if (settings && settings.debugEnemies) {
-                console.log(`[DEBUG_HP] Event 7 (HealthUpdates - BULK) | ALL:`, Parameters);
+            if (settings && settings.debugEnemies && window.logger) {
+                window.logger.debug('MOB_HEALTH', 'HealthUpdates_BULK', {
+                    eventCode: 7,
+                    allParameters: Parameters
+                });
             }
             mobsHandler.updateMobHealthBulk(Parameters);
             break;
