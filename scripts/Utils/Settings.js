@@ -185,7 +185,12 @@ export class Settings
         this.enemiesHealthBar = false;
         this.enemiesID = false;
         this.debugEnemies = false;
-        this.debugRawPackets = false; // 📦 Debug très verbeux - tous les paquets bruts
+        
+        // 🐛 Debug & Logging settings
+        this.logToConsole = true; // Default: enabled
+        this.logToServer = false; // Default: disabled (requires WebSocket)
+        this.debugRawPacketsConsole = false; // Default: disabled (très verbeux)
+        this.debugRawPacketsServer = false; // Default: disabled (très verbeux)
 
         //#region Mists
         this.bossCrystalSpider = false;
@@ -368,9 +373,13 @@ export class Settings
         }
     }
 
-    returnLocalBool(item)
+    returnLocalBool(item, defaultValue = false)
     {
-        return localStorage.getItem(item) == "true";
+        const value = localStorage.getItem(item);
+        if (value === null) {
+            return defaultValue; // Retourner la valeur par défaut si non défini
+        }
+        return value == "true";
     }
 
     update()
@@ -486,14 +495,18 @@ export class Settings
 
         this.avaloneDrones = this.returnLocalBool("settingAvaloneDrones");
         this.showUnmanagedEnemies = this.returnLocalBool("settingShowUnmanagedEnemies");
-        this.debugRawPackets = this.returnLocalBool("settingDebugRawPackets");
         this.showEventEnemies = this.returnLocalBool("settingShowEventEnemies");
 
         this.enemiesHealthBar = this.returnLocalBool("settingEnemiesHealthBar");
         this.enemiesID = this.returnLocalBool("settingEnemiesID");
         this.debugEnemies = this.returnLocalBool("settingDebugEnemies");
-
+        
         // 🐛 Debug & Logging settings (dynamic update)
+        this.logToConsole = this.returnLocalBool("settingLogToConsole", true); // Default: true
+        this.logToServer = this.returnLocalBool("settingLogToServer"); // Default: false
+        this.debugRawPacketsServer = this.returnLocalBool("settingDebugRawPacketsServer"); // Default: false
+
+
         this.logLivingCreatures = this.returnLocalBool("settingLogLivingCreatures");
         this.logLivingResources = this.returnLocalBool("settingLogLivingResources");
         this.livingResourcesHealthBar = this.returnLocalBool("settingLivingResourcesHealthBar");

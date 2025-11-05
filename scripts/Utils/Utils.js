@@ -197,7 +197,8 @@ function onEvent(Parameters)
     const eventCode = Parameters[252];
 
     // 📦 DEBUG RAW: Log tous les paquets bruts (très verbeux, pour debug profond uniquement)
-    if (settings && settings.debugRawPackets && window.logger) {
+    // Note: debugRawPacketsConsole contrôle l'affichage console, debugRawPacketsServer contrôle l'envoi au serveur
+    if (settings && (settings.debugRawPacketsConsole || settings.debugRawPacketsServer) && window.logger) {
         window.logger.debug('PACKET_RAW', `Event_${eventCode}`, {
             id,
             eventCode,
