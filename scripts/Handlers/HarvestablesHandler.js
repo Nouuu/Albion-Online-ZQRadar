@@ -448,7 +448,6 @@ class HarvestablesHandler
 
             // 📊 Update statistics
             this.updateStats(type, tier, charges, false);
-            //console.log("New Harvestable: " + h.toString());
         }
         else // update
         {

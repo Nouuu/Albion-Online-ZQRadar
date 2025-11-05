@@ -110,10 +110,6 @@ export class PlayersHandler {
             });
         }
 
-        /*console.log()
-        console.log("New Player")
-        console.log(Parameters);*/
-
         if (!this.settings.settingDot)
             return -1;
 
@@ -250,87 +246,9 @@ export class PlayersHandler {
     {
         for (const player of this.playersInRange)
         {
-            console.log("Start")
-
             if (player.id === id)
             {
-                console.log(parameters)
                 const data = parameters[1]["data"];
-
-                /*for (let i = 0; i < data.length; i++)
-                {
-                    if (i+4 >= data.length) break;
-
-                    const x = [data[i], data[i+1], data[i+2], data[i+3]];
-
-                    let buffer = new ArrayBuffer(4);
-                    let f32 = new Float32Array(buffer);
-                    let ui8 = new Uint8Array(buffer);
-
-                    x.forEach(function (b, i) {
-                        ui8[i] = b;
-                    });
-
-                    const xPos = f32[0] * parameters[4];
-                    const yPos = f32[0] * parameters[5];
-                    console.log('%d - x: %f.2 - y: %f.2', i, xPos, yPos)
-                }*/
-
-                /*for (let i = 0; i < data.length; i++)
-                {
-                    for (let j = 1; j < data.length; j++)
-                    {
-                        if (j == i) continue;
-
-                        const x = [data[9], data[10], data[i], data[j]];
-    
-                        let buffer = new ArrayBuffer(4);
-                        let f32 = new Float32Array(buffer);
-                        let ui8 = new Uint8Array(buffer);
-    
-                        x.forEach(function (b, i) {
-                            ui8[i] = b;
-                        });
-    
-                        const xPos = f32[0];
-
-                        if (xPos > 0 || xPos < -500) continue;
-
-                        console.log('%d;%d - x: %d', i, j, xPos);
-                    }
-                }
-
-                console.log("End")*/
-
-                /*const x = [data[9], data[10], data[11], data[12]];
-                const y = [data[13], data[14], data[15], data[16]];
-
-                let buffer = new ArrayBuffer(4);
-                let f32 = new Float32Array(buffer);
-                let ui8 = new Uint8Array(buffer);
-
-                x.forEach(function (b, i) {
-                    ui8[i] = b;
-                });
-
-                const xPos = f32[0];
-
-
-                buffer = new ArrayBuffer(4);
-                f32 = new Float32Array(buffer);
-                ui8 = new Uint8Array(buffer);
-
-                y.forEach(function (b, i) {
-                    ui8[i] = b;
-                });
-
-                const yPos = f32[0];*/
-
-
-                //console.log('x: %f.2, y: %f.2', xPos, yPos);
-
-                /*player.posX = xPos;
-                player.posY = yPos;*/
             }
         }
     }
@@ -360,9 +278,6 @@ export class PlayersHandler {
 
         if (!uPlayer) return;
 
-        /*console.log();
-        console.log("RegenerationHealthChanged");
-        console.log(Parameters);*/
 
         uPlayer.currentHealth = Parameters[2];
         uPlayer.initialHealth = Parameters[3];
@@ -375,10 +290,6 @@ export class PlayersHandler {
         if (!uPlayer) return;
 
         uPlayer.currentHealth = Parameters[3];
-
-        console.log();
-        console.log("Health update");
-        console.log(Parameters);
     }
 
     Clear()

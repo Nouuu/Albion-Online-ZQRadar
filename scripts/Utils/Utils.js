@@ -474,10 +474,6 @@ function onResponse(Parameters)
     if (Parameters[253] == 35)
     {
         map.id = Parameters[0];
-        
-        /*console.log()
-        console.log("Cluster change")
-        console.log(Parameters)*/
     }
     // All data on the player joining the map (us)
     else if (Parameters[253] == 2)
@@ -489,18 +485,12 @@ function onResponse(Parameters)
         // And clear everything too 
         map.isBZ = Parameters[103] == 2;
 
-        /*console.log()
-        console.log("Join")
-        console.log(Parameters)*/
-
         ClearHandlers();
     }
-    // GetCharacterStats  
+    // GetCharacterStats response (event 137)
     else if (Parameters[253] == 137)
     {
-        console.log()
-        console.log("GetCharacterStats")
-        console.log(Parameters)
+        // Character stats received
     }
 };
 
