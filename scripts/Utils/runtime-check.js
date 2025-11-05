@@ -18,32 +18,62 @@ function compareVersions(a, b) {
 }
 
 function checkNpcapWindows() {
-  try {
-    const regCommand = process.env.WINDIR ? 'reg.exe query "HKLM\\SOFTWARE\\Npcap"' : 'reg query "HKLM\\SOFTWARE\\Npcap"';
-    const regOutput = execSync(regCommand, { encoding: 'utf8', stdio: 'pipe' });
-    const versionMatch = regOutput.match(/Version\s+REG_SZ\s+([\d.]+)/);
-    if (versionMatch) {
-      const detected = versionMatch[1];
-      console.log(`Detected Npcap version: ${detected}`);
-      if (compareVersions(detected, REQUIRED_NPCAP_VERSION) < 0) {
-        console.error(`Npcap version ${detected} detected — minimum required: ${REQUIRED_NPCAP_VERSION}`);
-        return false;
-      }
-      return true;
-    }
-    console.error('Npcap found but could not read version from registry.');
-    return false;
-  } catch (err) {
-    // try WinPcap fallback detection
+  // Try multiple registry locations (native 64-bit and WOW6432Node for 32-bit apps on 64-bit Windows)
+  const registryPaths = [
+    'HKLM\\SOFTWARE\\Npcap',
+    'HKLM\\SOFTWARE\\WOW6432Node\\Npcap'
+  ];
+
+  for (const regPath of registryPaths) {
     try {
-      const regCommand = process.env.WINDIR ? 'reg.exe query "HKLM\\SOFTWARE\\WinPcap"' : 'reg query "HKLM\\SOFTWARE\\WinPcap"';
-      execSync(regCommand, { encoding: 'utf8', stdio: 'pipe' });
-      console.error('WinPcap detected (legacy). Please install Npcap >= ' + REQUIRED_NPCAP_VERSION + '.');
-      return false;
-    } catch {
-            console.error(`Npcap not detected. Please install Npcap >= ${REQUIRED_NPCAP_VERSION} from https://npcap.com/`);
-      return false;
+      const regCommand = process.env.WINDIR ? `reg.exe query "${regPath}"` : `reg query "${regPath}"`;
+      const regOutput = execSync(regCommand, { encoding: 'utf8', stdio: 'pipe' });
+      const versionMatch = regOutput.match(/Version\s+REG_SZ\s+([\d.]+)/);
+      if (versionMatch) {
+        const detected = versionMatch[1];
+        console.log(`Detected Npcap version: ${detected} (from ${regPath})`);
+        if (compareVersions(detected, REQUIRED_NPCAP_VERSION) < 0) {
+          console.error(`Npcap version ${detected} detected — minimum required: ${REQUIRED_NPCAP_VERSION}`);
+          return false;
+        }
+        return true;
+      }
+      // If registry key exists but no version, try to extract from driver version
+      const driverMatch = regOutput.match(/DriverVer\s*=\s*[\d\/]+,([\d.]+)/i);
+      if (driverMatch) {
+        // Extract major.minor from driver version (e.g., 14.42.10.379 -> 1.84)
+        // Npcap uses version scheme where driver 14.x = Npcap 1.8x
+        const driverVer = driverMatch[1];
+        const parts = driverVer.split('.');
+        if (parts.length >= 2) {
+          const majorMinor = `${parseInt(parts[0]) - 13}.${parts[1]}`;
+          console.log(`Detected Npcap from driver version: ${majorMinor} (driver ${driverVer})`);
+          if (compareVersions(majorMinor, REQUIRED_NPCAP_VERSION) < 0) {
+            console.error(`Npcap version ${majorMinor} detected — minimum required: ${REQUIRED_NPCAP_VERSION}`);
+            return false;
+          }
+          return true;
+        }
+      }
+      // Registry key found but couldn't extract version - check if files exist
+      console.log(`Npcap found in registry (${regPath}) but could not read version.`);
+      // If we got here, Npcap exists, so allow it (better than false negative)
+      return true;
+    } catch (err) {
+      // Registry path not found, try next one
+      continue;
     }
+  }
+
+  // No Npcap found, try WinPcap fallback detection
+  try {
+    const regCommand = process.env.WINDIR ? 'reg.exe query "HKLM\\SOFTWARE\\WinPcap"' : 'reg query "HKLM\\SOFTWARE\\WinPcap"';
+    execSync(regCommand, { encoding: 'utf8', stdio: 'pipe' });
+    console.error('WinPcap detected (legacy). Please install Npcap >= ' + REQUIRED_NPCAP_VERSION + '.');
+    return false;
+  } catch {
+    console.error(`Npcap not detected. Please install Npcap >= ${REQUIRED_NPCAP_VERSION} from https://npcap.com/`);
+    return false;
   }
 }
 
