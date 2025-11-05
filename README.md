@@ -79,14 +79,16 @@ npm run dev
 
 ```bash
 # With Makefile (WSL/Git Bash)
+cd build
 make build          # Build ZQRadar.exe
 make release        # Build + create release ZIP
 
 # Without Make (Windows CMD)
+cd build
 build.bat build
 build.bat release
 
-# With npm
+# With npm (from root)
 npm run build:win
 npm run release
 ```
@@ -125,6 +127,23 @@ Example:
 \
 If you have downloaded the Map Pack, you should have `Albion-Online-ZQRadar/images/Maps/*.png`.
 
+## 📚 Documentation
+
+**For Developers:**
+- **[SETUP.md](SETUP.md)** - Complete setup guide after cloning the repository
+- **[BUILD.md](BUILD.md)** - Build instructions and packaging
+- **[docs/](docs/)** - Complete project documentation
+  - `docs/ai/` - Guides for AI agents (if working with AI assistants)
+  - `docs/dev/` - Developer guides
+  - `docs/work/` - Python utilities documentation
+  - `docs/technical/` - Technical documentation (logging, settings, enchantments)
+  - `docs/project/` - Project management (TODO, changelog)
+
+**Quick Links:**
+- [Installation & Setup](SETUP.md)
+- [Build Guide](BUILD.md)
+- [Documentation Index](docs/README.md)
+- [Organization History](CHANGELOG_ORGANIZATION.md)
 
 ## Credits
 [@Zeldruck](https://github.com/Zeldruck)

@@ -2,7 +2,8 @@
 
 ## 🎯 Objectif
 
-Collecter les TypeIDs des créatures enchantées (Hide/Fiber T4-T8 .1/.2/.3) en utilisant le nouveau système de logging enrichi.
+Collecter les TypeIDs des créatures enchantées (Hide/Fiber T4-T8 .1/.2/.3) en utilisant le nouveau système de logging
+enrichi.
 
 ---
 
@@ -38,11 +39,13 @@ Avant de commencer, vider le cache localStorage :
 Vous verrez 2 types de logs :
 
 **1. JSON (pour parsing automatique) :**
+
 ```
 [LIVING_JSON] {"timestamp":"2025-11-03T...","typeId":425,"resource":...}
 ```
 
 **2. Lisible (pour vous) :**
+
 ```
 🟢 ✓ TypeID 425 | hide T4.0 | HP: 1323 (expected ~1323, diff: 0) → Boar
 │
@@ -67,24 +70,29 @@ Vous verrez 2 types de logs :
 ### Pour Hide (Animaux)
 
 #### T4 Enchantés (.1 .2 .3)
+
 - **Bridgewatch** - Nord-Ouest (zones rouges)
 - **Caerleon** - Steppes autour (zones T4-T5)
 
 #### T5 Enchantés (.1 .2 .3)
+
 - **Forest** - Zones rouges T5
 - **Swamp** - Zones rouges T5
 
 #### T6+ Enchantés
+
 - **Black Zone** - Routes principales
 - **Avalon Roads** - Chemins aléatoires
 
 ### Pour Fiber (Plantes vivantes)
 
 #### T4-T5
+
 - **Highland** - Zones T4-T5 (Keeper)
 - **Forest** - Bordures de zones
 
 #### T6+
+
 - **Black Zone** - Zones contestées
 - **Hideouts** - Autour des zones de farm
 
@@ -128,10 +136,12 @@ Zone: Bridgewatch T4 Red (animaux enchantés)
 ### 1. Sauvegarder les logs
 
 **Méthode 1 : Copier manuellement**
+
 - Clic droit dans la console → "Save as..."
 - Sauvegarder en `logs-session-YYYY-MM-DD.txt`
 
 **Méthode 2 : Filtrer et copier**
+
 ```javascript
 // Coller dans la console pour extraire tous les logs LIVING_JSON
 let logs = [];
@@ -145,6 +155,7 @@ console.log(`✅ ${logs.length} logs copiés dans le presse-papier!`);
 ```
 
 **Méthode 3 : Filtrer directement dans la console**
+
 1. Cliquer sur l'icône "Filter" (entonnoir) en haut de la console
 2. Taper: `LIVING_JSON`
 3. Clic droit → "Save as..." → Sauvegarder le fichier filtré
@@ -159,6 +170,7 @@ python parse-living-logs.py logs-session-2025-11-03.txt
 ```
 
 **Sortie attendue :**
+
 ```
 📊 LIVING RESOURCES COLLECTION REPORT
 ═══════════════════════════════════════════════════════════
@@ -197,6 +209,7 @@ hide:
 ### 3. Envoyer les résultats
 
 Partager :
+
 - Fichier de logs brut (`logs-session-XXX.txt`)
 - Sortie du script Python
 - Screenshots si possible (validation visuelle)
@@ -208,6 +221,7 @@ Partager :
 ### Problème : Pas de logs
 
 **Solution :**
+
 1. Vérifier que "Log Living Creatures" est coché
 2. Recharger la page (F5)
 3. Vérifier que la console est ouverte
@@ -217,6 +231,7 @@ Partager :
 **Cause :** Métadonnées non chargées
 
 **Solution :**
+
 1. Vérifier que `/tools/output/living-resources-enhanced.json` existe
 2. Recharger la page (F5)
 3. Vérifier les erreurs de chargement dans la console
@@ -226,6 +241,7 @@ Partager :
 **Cause :** Vous tuez toujours les mêmes créatures .0
 
 **Solution :**
+
 - Aller dans des zones **enchantées** (rouges/noires)
 - Vérifier que l'enchantement change (.1, .2, .3)
 - Regarder le cadavre après kill (enchantement visible)
@@ -234,6 +250,7 @@ Partager :
 
 **Solution :**
 Filtrer dans la console :
+
 ```
 Clic sur "Filter" → Taper "LIVING_JSON"
 ```
@@ -274,6 +291,7 @@ Clic sur "Filter" → Taper "LIVING_JSON"
 ### Identifier rapidement l'enchantement
 
 Après un kill, regarder le cadavre :
+
 - **Pas de glow** = .0 (normal)
 - **Glow vert** = .1
 - **Glow bleu** = .2

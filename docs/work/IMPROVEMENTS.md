@@ -10,19 +10,47 @@
 ### 1. 📊 Logging Enrichi (MobsHandler.js)
 
 **Avant :**
+
 ```javascript
 // Logs CSV basiques
 console.log(`[LIVING_CSV] timestamp,typeId,tier,name,...`);
 ```
 
 **Après :**
+
 ```javascript
 // Double format : JSON parsable + Lisible humain
-[LIVING_JSON] {"timestamp":"...","typeId":425,"resource":{"type":"hide","tier":4},...}
-🟢 ✓ TypeID 425 | hide T4.0 | HP: 1323 (expected ~1323, diff: 0) → Boar
+[LIVING_JSON]
+{
+    "timestamp"
+:
+    "...", "typeId"
+:
+    425, "resource"
+:
+    {
+        "type"
+    :
+        "hide", "tier"
+    :
+        4
+    }
+,...
+}
+🟢 ✓ TypeID
+425 | hide
+T4
+.0 | HP
+:
+1323(expected
+~1323, diff
+:
+0
+) → Boar
 ```
 
 **Nouvelles fonctionnalités :**
+
 - ✅ Validation HP automatique (comparaison avec métadonnées)
 - ✅ Identification de l'animal (Boar, Wolf, Fox, etc.)
 - ✅ État vivant/mort (🟢/🔴)
@@ -34,6 +62,7 @@ console.log(`[LIVING_CSV] timestamp,typeId,tier,name,...`);
 **Fichier :** `tools/COLLECTION_GUIDE.md`
 
 **Contenu :**
+
 - Guide étape par étape (préparation → collecte → parsing)
 - Zones recommandées par tier
 - Symboles et interprétation des logs
@@ -45,12 +74,14 @@ console.log(`[LIVING_CSV] timestamp,typeId,tier,name,...`);
 **Fichier :** `tools/parse-living-logs.py`
 
 **Fonctionnalités :**
+
 - Parse les logs JSON automatiquement
 - Génère rapport de collecte (TypeIDs uniques, validation HP)
 - Analyse de couverture (enchantements manquants)
 - **Sortie prête à copier** : Entrées MobsInfo.js formatées
 
 **Exemple d'utilisation :**
+
 ```bash
 python parse-living-logs.py logs-session-2025-11-03.txt
 ```
@@ -58,6 +89,7 @@ python parse-living-logs.py logs-session-2025-11-03.txt
 ### 4. 📚 Documentation Consolidée
 
 **Fichiers créés/mis à jour :**
+
 - ✅ `tools/README.md` - Documentation complète des outils
 - ✅ `tools/COLLECTION_GUIDE.md` - Guide détaillé de collecte
 - ✅ `tools/QUICK_START.md` - Démarrage rapide (nouveau!)
@@ -68,12 +100,14 @@ python parse-living-logs.py logs-session-2025-11-03.txt
 **Fichier :** `tools/output/living-resources-enhanced.json`
 
 **225 créatures avec métadonnées :**
+
 - HP par créature
 - Prefab (nom interne)
 - Faction
 - Animal (nom lisible)
 
 **Utilisation :**
+
 ```javascript
 // Chargé automatiquement au démarrage
 const metadata = this.findCreatureMetadata(tier, resourceType, hp);
@@ -85,13 +119,17 @@ const metadata = this.findCreatureMetadata(tier, resourceType, hp);
 ## 🎨 Exemple de Logs Avant/Après
 
 ### Avant (CSV basique)
+
 ```
 [LIVING_CSV] 2025-11-03T11:13:16Z,425,4,hide,Skinnable,0,1323,ALIVE,58459
 ```
 
 ### Après (Enrichi)
+
 ```json
-[LIVING_JSON] {
+[
+  LIVING_JSON
+] {
   "timestamp": "2025-11-03T11:13:16.054Z",
   "typeId": 425,
   "resource": {
@@ -118,6 +156,7 @@ const metadata = this.findCreatureMetadata(tier, resourceType, hp);
 ```
 
 **+ Log lisible :**
+
 ```
 🟢 ✓ TypeID 425 | hide T4.0 | HP: 1323 (expected ~1323, diff: 0) → Boar
 ```
@@ -167,12 +206,14 @@ const metadata = this.findCreatureMetadata(tier, resourceType, hp);
 ## 📊 Impact Attendu
 
 ### Avant les améliorations
+
 - ❌ Logs bruts difficiles à lire
 - ❌ Parsing manuel requis
 - ❌ Pas de validation en temps réel
 - ❌ Incertitude sur les créatures
 
 ### Après les améliorations
+
 - ✅ Logs JSON + lisibles
 - ✅ Parsing automatique (Python)
 - ✅ Validation HP immédiate
@@ -185,11 +226,13 @@ const metadata = this.findCreatureMetadata(tier, resourceType, hp);
 ## 🎯 Prochaines Étapes
 
 ### Court terme (cette semaine)
+
 1. ✅ Session de collecte (1-2h) - **PRÊT**
 2. ⏳ Parsing et validation des logs
 3. ⏳ Enrichissement MobsInfo.js
 
 ### Moyen terme
+
 1. Couverture T4-T8 complète
 2. Fiber/Hide/Wood/Ore/Rock
 3. Validation terrain extensive
@@ -214,11 +257,13 @@ TODO.md                             ← État du projet
 ## 🐛 Aucune Régression
 
 **Système de détection existant :**
+
 - ✅ Aucune modification de la logique de détection
 - ✅ Seuls les logs ont été améliorés
 - ✅ Fonctionnalités existantes préservées
 
 **Tests recommandés :**
+
 1. Vérifier que le radar fonctionne normalement (sans logging)
 2. Activer logging et vérifier l'absence de lag
 3. Tester dans différentes zones (T3, T4, T5)
@@ -228,12 +273,14 @@ TODO.md                             ← État du projet
 ## 📞 Support
 
 **Documentation complète :**
+
 - [QUICK_START.md](tools/QUICK_START.md) - Démarrage immédiat
 - [COLLECTION_GUIDE.md](tools/COLLECTION_GUIDE.md) - Guide détaillé
 - [README.md](tools/README.md) - Documentation outils
 - [DEV_NOTES.md](DEV_NOTES.md) - Investigation technique
 
 **Questions ?**
+
 - Vérifier [COLLECTION_GUIDE.md § Troubleshooting](tools/COLLECTION_GUIDE.md#-troubleshooting)
 - Consulter [DEV_NOTES.md § Investigation TypeIDs](DEV_NOTES.md#-investigation-typeids---ao-bin-dumps-2025-11-03)
 

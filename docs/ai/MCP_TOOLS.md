@@ -350,56 +350,7 @@ aim_delete_relations({
 
 ---
 
-## 3. Memory Bank
-
-**Pourquoi:** Documentation structurée par projet  
-**Quand:** Alternative à Serena memories, plus orientée "notes permanentes"
-
-### Gestion
-
-```javascript
-// Lister les projets
-mcp_memory - bank_list_projects()
-
-// Lister les fichiers d'un projet
-mcp_memory - bank_list_project_files({
-    projectName: "ZQRadar"
-})
-```
-
-### Lecture/Écriture
-
-```javascript
-// Créer une note
-mcp_memory - bank_memory_bank_write({
-    projectName: "ZQRadar",
-    fileName: "packet-structure.md",
-    content: `# Structure des Paquets Albion
-
-## Opération 21 - Harvestable
-- Offset 0: Type ID (4 bytes)
-- Offset 4: Position X (float)
-...
-`
-})
-
-// Lire une note
-mcp_memory - bank_memory_bank_read({
-    projectName: "ZQRadar",
-    fileName: "packet-structure.md"
-})
-
-// Mettre à jour une note existante
-mcp_memory - bank_memory_bank_update({
-    projectName: "ZQRadar",
-    fileName: "packet-structure.md",
-    content: "# Contenu mis à jour..."
-})
-```
-
----
-
-## 4. Git
+## 3. Git
 
 **Pourquoi:** Gestion de version, historique, branches  
 **Quand:** Commits, analyse de l'historique, création de branches

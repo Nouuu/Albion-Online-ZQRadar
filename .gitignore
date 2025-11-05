@@ -35,6 +35,11 @@ WORKING_*.md
 *_NOTES.md
 *_TODO.md
 MIGRATION_DOCS.md
+REORGANIZATION_*.md
+WORK_*.md
+ proPASSE_*.md
+PROJECT_SUMMARY.md
+CHANGELOG_ORGANIZATION.md
 
 # Anciens fichiers de logging (consolidés dans docs/technical/LOGGING.md)
 LOGGING_GUIDE.md
