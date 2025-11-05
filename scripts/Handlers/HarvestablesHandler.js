@@ -103,6 +103,16 @@ class HarvestablesHandler
     // ✅ SOLUTION SIMPLIFIÉE: On track uniquement les ressources déjà dans harvestableList (détectées par le radar)
     // Parameters[2] = quantité totale dans l'inventaire
     onNewSimpleItem(itemId, newQuantity) {
+        // 🐛 DEBUG: Log détaillé de la découverte d'ItemID
+        if (this.settings.logLivingResources && window.logger) {
+            window.logger.debug('HARVEST', 'NewSimpleItem_DETAIL', {
+                itemId,
+                quantity: newQuantity,
+                harvestableId: this.pendingHarvestableId,
+                timestamp: new Date().toISOString()
+            });
+        }
+
         const oldQuantity = this.lastInventoryQuantities.get(itemId) || 0;
         const gained = newQuantity - oldQuantity;
 
@@ -555,6 +565,25 @@ class HarvestablesHandler
 
     HarvestUpdateEvent(Parameters)
     {
+        // 🐛 DEBUG ULTRA-DÉTAILLÉ: Log ALL parameters pour identifier patterns
+        if (this.settings.logLivingResources && window.logger) {
+            const allParams = {};
+            for (let key in Parameters) {
+                if (Parameters.hasOwnProperty(key)) {
+                    allParams[`param[${key}]`] = Parameters[key];
+                }
+            }
+
+            window.logger.debug('HARVEST', 'HarvestUpdateEvent_ALL_PARAMS', {
+                harvestableId: Parameters[0],
+                charges: Parameters[1],
+                typeId: Parameters[5],
+                tier: Parameters[6],
+                allParameters: allParams,
+                parameterCount: Object.keys(Parameters).length
+            });
+        }
+
         const id = Parameters[0];
 
         if (Parameters[1] === undefined)
@@ -640,6 +669,7 @@ class HarvestablesHandler
     // Good
     newHarvestableObject(id, Parameters) // Update
     {
+
         const type = Parameters[5];  // typeNumber (0-27)
         const mobileTypeId = Parameters[6];  // 🔗 Mobile TypeID (421, 422, 527, etc.)
         const tier = Parameters[7];

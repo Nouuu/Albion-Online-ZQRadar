@@ -59,6 +59,23 @@ class DungeonsHandler
 
     dungeonEvent(parameters)
     {
+        // 🐛 DEBUG ULTRA-DÉTAILLÉ: Log ALL parameters pour identifier patterns
+        if (window.settings && window.settings.debugDungeons && window.logger) {
+            const allParams = {};
+            for (let key in parameters) {
+                if (parameters.hasOwnProperty(key)) {
+                    allParams[`param[${key}]`] = parameters[key];
+                }
+            }
+
+            window.logger.debug('DUNGEON', 'NewDungeonEvent_ALL_PARAMS', {
+                dungeonId: parameters[0],
+                position: parameters[7],
+                allParameters: allParams,
+                parameterCount: Object.keys(parameters).length
+            });
+        }
+
         const id = parameters[0];
         const position = parameters[1];
         const name = parameters[3];

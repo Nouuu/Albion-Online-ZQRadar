@@ -1,21 +1,19 @@
 const EnemyType =
-{
-    LivingHarvestable: 0,
-    LivingSkinnable: 1,
-    Enemy: 2,
-    MediumEnemy: 3,
-    EnchantedEnemy: 4,
-    MiniBoss: 5,
-    Boss: 6,
-    Drone: 7,
-    MistBoss: 8,
-    Events: 9,
-};
-
-class Mob
-{
-    constructor(id, typeId, posX, posY, health, maxHealth, enchantmentLevel, rarity)
     {
+        LivingHarvestable: 0,
+        LivingSkinnable: 1,
+        Enemy: 2,
+        MediumEnemy: 3,
+        EnchantedEnemy: 4,
+        MiniBoss: 5,
+        Boss: 6,
+        Drone: 7,
+        MistBoss: 8,
+        Events: 9,
+    };
+
+class Mob {
+    constructor(id, typeId, posX, posY, health, maxHealth, enchantmentLevel, rarity) {
         this.id = id;
         this.typeId = typeId;
         this.posX = posX;
@@ -49,10 +47,8 @@ class Mob
     }
 }
 
-class Mist
-{
-    constructor(id, posX, posY, name, enchant)
-    {
+class Mist {
+    constructor(id, posX, posY, name, enchant) {
         this.id = id;
         this.posX = posX;
         this.posY = posY;
@@ -61,12 +57,9 @@ class Mist
         this.hX = 0;
         this.hY = 0;
 
-        if (name.toLowerCase().includes("solo"))
-        {
+        if (name.toLowerCase().includes("solo")) {
             this.type = 0;
-        }
-        else
-        {
+        } else {
             this.type = 1;
         }
     }
@@ -125,8 +118,8 @@ class MobsHandler {
         const candidates = this.livingResourcesMetadata.filter(m =>
             m.tier === tier &&
             (resourceType === 'hide' ? m.faction?.includes('HIDE') || m.faction?.includes('COUGAR') || m.faction?.includes('WOLF') || m.faction?.includes('BOAR') || m.faction?.includes('BEAR') || m.faction?.includes('FOX') :
-             resourceType === 'fiber' ? m.faction?.includes('BEEKEEPER') :
-             false)
+                resourceType === 'fiber' ? m.faction?.includes('BEEKEEPER') :
+                    false)
         );
 
         // Find best match by HP (closest match)
@@ -419,60 +412,90 @@ class MobsHandler {
     }
 
     updateMobInfo(newData) {
-        try { this.mobinfo = Object.assign({}, newData); } catch (e) { this.mobinfo = {}; }
+        try {
+            this.mobinfo = Object.assign({}, newData);
+        } catch (e) {
+            this.mobinfo = {};
+        }
     }
 
     NewMobEvent(parameters) {
-        const id = this.normalizeNumber(parameters[0], 0);
-        const typeId = this.normalizeNumber(parameters[1], 0);
-        if (typeId === 0) return;
+        try {
+            const mobId = parseInt(parameters[0]);
+            const typeId = parseInt(parameters[1]);
 
-        const loc = parameters[7] || [0, 0];
-        const posX = this.normalizeNumber(loc[0], 0);
-        const posY = this.normalizeNumber(loc[1], 0);
-        const healthNormalized = this.normalizeNumber(parameters[2], 255);  // Current HP (0-255)
-        const maxHealth = this.normalizeNumber(parameters[13], 0);          // Max HP (real value)
-        const enchant = this.normalizeNumber(parameters[33], 0) || 0;
-        const rarity = this.normalizeNumber(parameters[19], null);
-
-        let name;
-        try { name = parameters[32] || parameters[31] || null; } catch (e) { name = null; }
-
-        // 🐛 DEBUG: Log raw parameters from server
-        if (this.settings && this.settings.debugEnemies && window.logger) {
-            window.logger.debug('MOB', 'NewMobEvent_RAW', {
-                id, typeId,
-                params: {
-                    health_normalized: parameters[2],
-                    maxHP: parameters[13],
-                    rarity: parameters[19],
-                    enchant: parameters[33],
-                    name
+            // 🐛 DEBUG ULTRA-DÉTAILLÉ: Log ALL parameters pour identifier patterns
+            if (this.settings.debugEnemies && window.logger) {
+                const allParams = {};
+                for (let key in parameters) {
+                    if (parameters.hasOwnProperty(key)) {
+                        allParams[`param[${key}]`] = parameters[key];
+                    }
                 }
-            });
-        }
 
-        // 🔍 DEBUG: Log ALL parameters for living resources to find enchantment
-        if (this.settings && this.settings.logLivingCreatures && window.logger) {
-            const knownInfo = this.mobinfo[typeId];
-            if (knownInfo && (knownInfo[1] === 0 || knownInfo[1] === 1)) { // Living resources
-                window.logger.debug('LIVING_CREATURE', 'NewLivingCreature', {
+                window.logger.debug('MOB', 'NewMobEvent_ALL_PARAMS', {
+                    mobId,
                     typeId,
-                    allParams: {
-                        p19_rarity: parameters[19],
-                        p33_enchant: parameters[33],
-                        p8: parameters[8],
-                        p9: parameters[9],
-                        p252: parameters[252]
+                    posX: parameters[8],
+                    posY: parameters[9],
+                    allParameters: allParams,
+                    parameterCount: Object.keys(parameters).length
+                });
+            }
+
+            const loc = parameters[7] || [0, 0];
+            const posX = this.normalizeNumber(loc[0], 0);
+            const posY = this.normalizeNumber(loc[1], 0);
+            const healthNormalized = this.normalizeNumber(parameters[2], 255);  // Current HP (0-255)
+            const maxHealth = this.normalizeNumber(parameters[13], 0);          // Max HP (real value)
+            const enchant = this.normalizeNumber(parameters[33], 0) || 0;
+            const rarity = this.normalizeNumber(parameters[19], null);
+
+            let name;
+            try {
+                name = parameters[32] || parameters[31] || null;
+            } catch (e) {
+                name = null;
+            }
+
+            // 🐛 DEBUG: Log raw parameters from server
+            if (this.settings && this.settings.debugEnemies && window.logger) {
+                window.logger.debug('MOB', 'NewMobEvent_RAW', {
+                    mobId, typeId,
+                    params: {
+                        health_normalized: parameters[2],
+                        maxHP: parameters[13],
+                        rarity: parameters[19],
+                        enchant: parameters[33],
+                        name
                     }
                 });
             }
-        }
 
-        if (name) {
-            this.AddMist(id, posX, posY, name, enchant);
-        } else {
-            this.AddEnemy(id, typeId, posX, posY, healthNormalized, maxHealth, enchant, rarity);
+            // 🔍 DEBUG: Log ALL parameters for living resources to find enchantment
+            if (this.settings && this.settings.logLivingCreatures && window.logger) {
+                const knownInfo = this.mobinfo[typeId];
+                if (knownInfo && (knownInfo[1] === 0 || knownInfo[1] === 1)) { // Living resources
+                    window.logger.debug('LIVING_CREATURE', 'NewLivingCreature', {
+                        typeId,
+                        allParams: {
+                            p19_rarity: parameters[19],
+                            p33_enchant: parameters[33],
+                            p8: parameters[8],
+                            p9: parameters[9],
+                            p252: parameters[252]
+                        }
+                    });
+                }
+            }
+
+            if (name) {
+                this.AddMist(mobId, posX, posY, name, enchant);
+            } else {
+                this.AddEnemy(mobId, typeId, posX, posY, healthNormalized, maxHealth, enchant, rarity);
+            }
+        } catch (e) {
+            console.error('[MobsHandler] NewMobEvent error:', e);
         }
     }
 
@@ -509,8 +532,7 @@ class MobsHandler {
         // Classification: mobinfo > staticInfo
         if (hasKnownInfo && (knownInfo[1] === EnemyType.LivingHarvestable || knownInfo[1] === EnemyType.LivingSkinnable)) {
             mob.type = knownInfo[1];
-        }
-        else if (staticInfo && normHealth > 0) {
+        } else if (staticInfo && normHealth > 0) {
             mob.type = EnemyType.LivingHarvestable;
             if (!mob.tier || mob.tier === 0) mob.tier = staticInfo.tier;
             if (!mob.name) mob.name = staticInfo.type;
@@ -615,14 +637,19 @@ class MobsHandler {
 
     updateMobPosition(id, posX, posY) {
         const m = this.mobsList.find(x => x.id === id);
-        if (m) { m.posX = posX; m.posY = posY; }
+        if (m) {
+            m.posX = posX;
+            m.posY = posY;
+        }
     }
 
     updateEnchantEvent(parameters) {
         const mobId = parameters[0];
         const enchantmentLevel = parameters[1];
         const found = this.mobsList.find(m => m.id === mobId) || this.harvestablesNotGood.find(m => m.id === mobId);
-        if (found) { found.enchantmentLevel = enchantmentLevel; }
+        if (found) {
+            found.enchantmentLevel = enchantmentLevel;
+        }
     }
 
     // 🐛 DEBUG: Find and log mob info by ID (for HP tracking)
@@ -681,21 +708,34 @@ class MobsHandler {
      * @param {number} parameters[3] - Max HP (normalized 0-255)
      */
     updateMobHealthRegen(parameters) {
-        const mobId = parameters[0];
-        const currentHPNormalized = parameters[2];
-        const maxHPNormalized = parameters[3];
+        const mobId = parseInt(parameters[0]);
 
-        // Find mob in list
-        const mob = this.mobsList.find(m => m.id === mobId);
-        if (!mob) return; // Not a mob (probably player)
+        // 🐛 DEBUG: Log RegenerationHealthChanged avec analyse HP
+        if (this.settings.debugEnemies && window.logger) {
+            const mob = this.mobsList.find(m => m.id === mobId);
+            const allParams = {};
+            for (let key in parameters) {
+                if (parameters.hasOwnProperty(key)) {
+                    allParams[`param[${key}]`] = parameters[key];
+                }
+            }
 
-        // 🐛 DEBUG: Log health regen
-        if (this.settings && this.settings.debugEnemies) {
-            console.log(`[MobsHandler] 💚 HP Regen | ID=${mobId} | HP=${currentHPNormalized}/${maxHPNormalized} (normalized)`);
+            window.logger.debug('MOB_HEALTH', 'RegenerationHealthChanged_DETAIL', {
+                mobId,
+                eventCode: 91,
+                mobFound: !!mob,
+                mobTypeId: mob ? mob.typeId : null,
+                mobName: mob ? mob.name : null,
+                params2_currentHP: parameters[2],
+                params3_maxHP: parameters[3],
+                hpPercentage: parameters[3] ? Math.round((parameters[2] / parameters[3]) * 100) + '%' : 'N/A',
+                allParameters: allParams,
+                parameterCount: Object.keys(parameters).length
+            });
         }
 
         // Update normalized health directly
-        mob.health = currentHPNormalized;
+        mob.health = parameters[2];
     }
 
     /**
@@ -747,12 +787,17 @@ class MobsHandler {
 
     updateMistPosition(id, posX, posY) {
         const mist = this.mistList.find(m => m.id === id);
-        if (mist) { mist.posX = posX; mist.posY = posY; }
+        if (mist) {
+            mist.posX = posX;
+            mist.posY = posY;
+        }
     }
 
     updateMistEnchantmentLevel(id, enchantmentLevel) {
         const mist = this.mistList.find(m => m.id === id);
-        if (mist) { mist.enchant = enchantmentLevel; }
+        if (mist) {
+            mist.enchant = enchantmentLevel;
+        }
     }
 
     Clear() {
@@ -794,4 +839,3 @@ class MobsHandler {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = MobsHandler;
 }
-

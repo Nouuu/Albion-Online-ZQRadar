@@ -30,7 +30,25 @@ class ChestsHandler {
       
     }
 
-    addChestEvent(Parameters) {
+    addChestEvent(Parameters)
+    {
+        // 🐛 DEBUG ULTRA-DÉTAILLÉ: Log ALL parameters pour identifier patterns
+        if (window.settings && window.settings.debugChests && window.logger) {
+            const allParams = {};
+            for (let key in Parameters) {
+                if (Parameters.hasOwnProperty(key)) {
+                    allParams[`param[${key}]`] = Parameters[key];
+                }
+            }
+
+            window.logger.debug('CHEST', 'NewChestEvent_ALL_PARAMS', {
+                chestId: Parameters[0],
+                position: Parameters[7],
+                allParameters: allParams,
+                parameterCount: Object.keys(Parameters).length
+            });
+        }
+
         const chestId = Parameters[0];
         const chestsPosition = Parameters[1];
         let chestName = Parameters[3];

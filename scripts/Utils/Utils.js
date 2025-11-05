@@ -190,6 +190,32 @@ socket.addEventListener('message', (event) => {
   }
 });
 
+// Helper function pour obtenir le nom de l'événement (pour debug)
+function getEventName(eventCode) {
+    const eventNames = {
+        1: 'Leave',
+        2: 'Join',
+        3: 'CharacterEquipmentChanged',
+        6: 'HealthUpdate',
+        7: 'HealthUpdates',
+        15: 'Damage',
+        21: 'Move',
+        35: 'ClusterChange',
+        71: 'NewMob',
+        72: 'MobChangeState',
+        91: 'RegenerationHealthChanged',
+        101: 'NewHarvestableObject',
+        102: 'NewSimpleHarvestableObjectList',
+        103: 'HarvestStart',
+        104: 'HarvestCancel',
+        105: 'HarvestFinished',
+        137: 'GetCharacterStats',
+        201: 'NewSimpleItem',
+        202: 'NewEquipmentItem',
+        // Ajoutez d'autres au fur et à mesure de la découverte
+    };
+    return eventNames[eventCode] || `Unknown_${eventCode}`;
+}
 
 function onEvent(Parameters)
 {
@@ -203,6 +229,25 @@ function onEvent(Parameters)
             id,
             eventCode,
             allParameters: Parameters
+        });
+    }
+
+    // 🔍 DEBUG ALL EVENTS: Log événement avec détails si debug activé
+    // Permet d'identifier les patterns et correspondances paramètres <-> événements
+    if (settings && settings.debugEnemies && window.logger && eventCode !== 91) { // Skip RegenerationHealthChanged car trop verbeux
+        const paramDetails = {};
+        for (let key in Parameters) {
+            if (Parameters.hasOwnProperty(key) && key !== '252' && key !== '0') { // Skip eventCode et id déjà loggés
+                paramDetails[`param[${key}]`] = Parameters[key];
+            }
+        }
+
+        window.logger.debug('EVENT_DETAIL', `Event_${eventCode}_ID_${id}`, {
+            id,
+            eventCode,
+            eventName: getEventName(eventCode),
+            parameterCount: Object.keys(Parameters).length,
+            parameters: paramDetails
         });
     }
 
@@ -410,6 +455,7 @@ function onEvent(Parameters)
             console.log(Parameters);*/
     }
 };
+
 
 function onRequest(Parameters)
 { 

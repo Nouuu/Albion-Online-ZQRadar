@@ -185,7 +185,10 @@ export class Settings
         this.enemiesHealthBar = false;
         this.enemiesID = false;
         this.debugEnemies = false;
-        
+        this.debugPlayers = false;
+        this.debugChests = false;
+        this.debugDungeons = false;
+
         // 🐛 Debug & Logging settings
         this.logToConsole = true; // Default: enabled
         this.logToServer = false; // Default: disabled (requires WebSocket)
@@ -500,10 +503,14 @@ export class Settings
         this.enemiesHealthBar = this.returnLocalBool("settingEnemiesHealthBar");
         this.enemiesID = this.returnLocalBool("settingEnemiesID");
         this.debugEnemies = this.returnLocalBool("settingDebugEnemies");
-        
+        this.debugPlayers = this.returnLocalBool("settingDebugPlayers");
+        this.debugChests = this.returnLocalBool("settingDebugChests");
+        this.debugDungeons = this.returnLocalBool("settingDebugDungeons");
+
         // 🐛 Debug & Logging settings (dynamic update)
         this.logToConsole = this.returnLocalBool("settingLogToConsole", true); // Default: true
         this.logToServer = this.returnLocalBool("settingLogToServer"); // Default: false
+        this.debugRawPacketsConsole = this.returnLocalBool("settingDebugRawPacketsConsole"); // Default: false
         this.debugRawPacketsServer = this.returnLocalBool("settingDebugRawPacketsServer"); // Default: false
 
 
