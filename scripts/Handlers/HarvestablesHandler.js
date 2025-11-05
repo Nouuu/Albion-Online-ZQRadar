@@ -79,7 +79,7 @@ class HarvestablesHandler
         this.pendingHarvestableId = harvestableId;
         this.isHarvesting = true;
 
-        if (window.debugLogs) {
+        if (this.settings && this.settings.logLivingResources) {
             console.log(`🌱 [HarvestablesHandler] HarvestStart`, {
                 harvestableId,
                 timestamp: new Date().toISOString()
@@ -89,7 +89,7 @@ class HarvestablesHandler
 
     // 🆕 Appelé par Utils.js lors de HarvestCancel
     onHarvestCancel() {
-        if (window.debugLogs) {
+        if (this.settings && this.settings.logLivingResources) {
             console.log('❌ [HarvestablesHandler] HarvestCancel - Reset flags');
         }
         this.pendingHarvestableId = null;
@@ -121,7 +121,7 @@ class HarvestablesHandler
                 // 📋 Logger la découverte itemId pour référence future (une seule fois)
                 if (!this.discoveredItemIds.has(itemId)) {
                     this.discoveredItemIds.set(itemId, { type: harvestable.type, tier: harvestable.tier, charges: harvestable.charges });
-                    if (window.debugLogs) {
+                    if (this.settings && this.settings.logLivingResources) {
                         console.log(`🆕 [ItemId Discovery]`, itemId, '=', harvestable.type, `T${harvestable.tier}.${harvestable.charges}`);
                     }
                 }
@@ -138,7 +138,7 @@ class HarvestablesHandler
                 this.updateStatsHarvested(harvestable.type, harvestable.tier, harvestable.charges, gained);
             } else {
                 // ⚠️ Resource NOT detected by radar (static harvestables: Wood, Ore, Rock)
-                if (window.debugLogs) {
+                if (this.settings && this.settings.logLivingResources) {
                     console.warn(`⚠️ [NewSimpleItem] +${gained} resources but harvestable NOT in list (static resource?). ItemId: ${itemId}`);
                 }
 
@@ -525,7 +525,7 @@ class HarvestablesHandler
 
                 // CAS 1: trackedByNewSimpleItem = true → Déjà tracké par NewSimpleItem (living resources)
                 if (cacheEntry.trackedByNewSimpleItem) {
-                    if (window.debugLogs) {
+                    if (this.settings && this.settings.logLivingResources) {
                         console.log('⏭️ [HarvestUpdateEvent] Already tracked by NewSimpleItem - SKIP');
                     }
                 }
@@ -535,14 +535,14 @@ class HarvestablesHandler
                     const resourceInfo = this.getResourceInfoFromItemId(cacheEntry.itemId);
 
                     if (resourceInfo) {
-                        if (window.debugLogs) {
+                        if (this.settings && this.settings.logLivingResources) {
                             console.log(`✅ [HarvestUpdateEvent] Tracking ${resources} static resources:`, resourceInfo.type, `T${resourceInfo.tier}.${resourceInfo.charges}`);
                         }
                         // Tracker avec les vraies infos type/tier
                         this.updateStatsHarvested(resourceInfo.type, resourceInfo.tier, resourceInfo.charges, resources);
                     } else {
                         // Fallback: juste incrémenter le total si on ne peut pas mapper l'itemId
-                        if (window.debugLogs) {
+                        if (this.settings && this.settings.logLivingResources) {
                             console.warn(`⚠️ [HarvestUpdateEvent] Unknown itemId ${cacheEntry.itemId} - tracking total only`);
                         }
                         this.stats.totalHarvested += resources;
@@ -553,7 +553,7 @@ class HarvestablesHandler
                 this.lastHarvestCache.delete(id);
             } else {
                 // Pas de cache du tout
-                if (window.debugLogs) {
+                if (this.settings && this.settings.logLivingResources) {
                     console.warn('⚠️ [HarvestUpdateEvent] NO CACHE! Resource tracking may be incomplete');
                 }
             }
@@ -572,7 +572,7 @@ class HarvestablesHandler
         // On met à jour uniquement si la valeur a augmenté (régénération)
         const newSize = Parameters[1];
         if (newSize > harvestable.size) {
-            if (window.debugLogs) {
+            if (this.settings && this.settings.logLivingResources) {
                 console.log(`🔄 [Regen] ${harvestable.size} → ${newSize}`);
             }
             harvestable.size = newSize;

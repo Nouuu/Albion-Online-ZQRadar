@@ -102,8 +102,9 @@ const harvestablesHandler = new HarvestablesHandler(settings, mobsHandler); // �
 const playersHandler = new PlayersHandler(settings);
 
 
-// 📊 Expose harvestablesHandler globally for statistics access
+// 📊 Expose handlers globally for statistics and debug access
 window.harvestablesHandler = harvestablesHandler;
+window.mobsHandler = mobsHandler;
 
 const wispCageHandler = new WispCageHandler(settings);
 const wispCageDrawing = new WispCageDrawing(settings);

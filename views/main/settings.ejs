@@ -365,6 +365,81 @@
       </div>
     </div>
 
+    <!-- Debug & Logging Card -->
+    <div class="flex items-start p-4 bg-white rounded-lg shadow-xs dark:bg-gray-800">
+      <div class="w-full">
+        <h2 class="mb-4 text-2xl font-semibold text-gray-600 dark:text-gray-300">
+          🐛 Debug & Logging
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <!-- Global Logging Toggles -->
+          <div class="p-4 border border-gray-300 dark:border-gray-600 rounded-lg">
+            <h3 class="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-3">
+              📊 Global Logging Toggles
+            </h3>
+            <label class="flex items-center space-x-2 mb-2">
+              <input type="checkbox" id="settingLogLivingCreatures" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+              <span class="text-gray-600 dark:text-gray-300">📊 Living Creatures (mobs)</span>
+            </label>
+            <label class="flex items-center space-x-2 mb-2">
+              <input type="checkbox" id="settingLogLivingResources" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+              <span class="text-gray-600 dark:text-gray-300">🔍 Living Resources (CSV)</span>
+            </label>
+            <label class="flex items-center space-x-2">
+              <input type="checkbox" id="settingDebugEnemies" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+              <span class="text-gray-600 dark:text-gray-300">🐛 Debug Enemies (verbose)</span>
+            </label>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">
+              Enable logging to browser console (F12)
+            </p>
+          </div>
+
+          <!-- Visual Overlays Info -->
+          <div class="p-4 border border-gray-300 dark:border-gray-600 rounded-lg">
+            <h3 class="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-3">
+              🎨 Visual Overlays
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">
+              Visual debug options are available on their respective pages:
+            </p>
+            <ul class="text-sm text-gray-600 dark:text-gray-300 space-y-2">
+              <li>• <a href="/enemies" class="text-purple-600 dark:text-purple-400 hover:underline font-medium">Enemies Page</a> - Health bars, IDs, enemy list</li>
+              <li>• <a href="/resources" class="text-purple-600 dark:text-purple-400 hover:underline font-medium">Resources Page</a> - Living resource overlays, cache, stats</li>
+            </ul>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">
+              These controls need to be on their pages to access the radar handlers
+            </p>
+          </div>
+
+          <!-- Export Data -->
+          <div class="p-4 border border-gray-300 dark:border-gray-600 rounded-lg">
+            <h3 class="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-3">
+              📥 Export Debug Data
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">
+              Export all settings and debug data for troubleshooting
+            </p>
+            <button
+              id="downloadLogsBtn"
+              class="w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors duration-200"
+            >
+              💾 Download Debug Logs (JSON)
+            </button>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Includes session info, all settings, and localStorage data
+            </p>
+          </div>
+        </div>
+
+        <div class="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
+          <p class="text-sm text-yellow-800 dark:text-yellow-200">
+            ⚠️ <strong>Note:</strong> Debug features may impact performance. Logs are written to browser console (F12).
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- Action Buttons Card -->
     <div class="flex items-start p-4 bg-white rounded-lg shadow-xs dark:bg-gray-800">
       <div class="w-full">
@@ -530,6 +605,81 @@
       saveToLocalStorage("settingClusterMinSize", event.target.value);
     });
 
+    // Debug settings
+    const settingLogLivingCreaturesCheckbox = document.getElementById("settingLogLivingCreatures");
+    const settingLogLivingResourcesCheckbox = document.getElementById("settingLogLivingResources");
+    const settingDebugEnemiesCheckbox = document.getElementById("settingDebugEnemies");
+
+    // Function to download debug logs
+    function downloadDebugLogs() {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const debugData = {
+        timestamp: timestamp,
+        session: {
+          userAgent: navigator.userAgent,
+          screenResolution: `${window.screen.width}x${window.screen.height}`,
+          language: navigator.language
+        },
+        settings: {
+          logLivingCreatures: localStorage.getItem("settingLogLivingCreatures") === "true",
+          logLivingResources: localStorage.getItem("settingLogLivingResources") === "true",
+          debugEnemies: localStorage.getItem("settingDebugEnemies") === "true"
+        },
+        localStorage: Object.keys(localStorage).reduce((acc, key) => {
+          if (key.startsWith('setting')) {
+            acc[key] = localStorage.getItem(key);
+          }
+          return acc;
+        }, {})
+      };
+
+      const blob = new Blob([JSON.stringify(debugData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `zqradar-debug-${timestamp}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      console.log('📥 Debug logs downloaded:', debugData);
+    }
+
+    settingLogLivingCreaturesCheckbox.addEventListener("change", function (event) {
+      saveToLocalStorage("settingLogLivingCreatures", event.target.checked);
+      if (event.target.checked) {
+        console.log("📊 Living Creatures Enhanced Logging ENABLED");
+      } else {
+        console.log("📊 Living Creatures Enhanced Logging DISABLED");
+      }
+    });
+
+    settingLogLivingResourcesCheckbox.addEventListener("change", function (event) {
+      saveToLocalStorage("settingLogLivingResources", event.target.checked);
+      if (event.target.checked) {
+        console.log("🔍 Living Resources Logging ENABLED");
+      } else {
+        console.log("🔍 Living Resources Logging DISABLED");
+      }
+    });
+
+    settingDebugEnemiesCheckbox.addEventListener("change", function (event) {
+      saveToLocalStorage("settingDebugEnemies", event.target.checked);
+      if (event.target.checked) {
+        console.log("🐛 Debug Enemies ENABLED");
+      } else {
+        console.log("🐛 Debug Enemies DISABLED");
+      }
+    });
+
+    const downloadBtn = document.getElementById('downloadLogsBtn');
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', function() {
+        downloadDebugLogs();
+      });
+    }
+
     // Initialize all input fields and checkboxes with values from local storage (if available)
     mainWindowMarginXInput.value = getFromLocalStorage("mainWindowMarginX") || "";
     mainWindowMarginYInput.value = getFromLocalStorage("mainWindowMarginY") || "";
@@ -552,5 +702,10 @@
     settingResourceClustersCheckbox.checked = getFromLocalStorage("settingResourceClusters") === null ? false : getFromLocalStorage("settingResourceClusters") === "true";
     settingClusterRadiusInput.value = getFromLocalStorage("settingClusterRadius") || "30";
     settingClusterMinSizeInput.value = getFromLocalStorage("settingClusterMinSize") || "2";
+
+    // Initialize debug settings
+    settingLogLivingCreaturesCheckbox.checked = getFromLocalStorage("settingLogLivingCreatures") === "true";
+    settingLogLivingResourcesCheckbox.checked = getFromLocalStorage("settingLogLivingResources") === "true";
+    settingDebugEnemiesCheckbox.checked = getFromLocalStorage("settingDebugEnemies") === "true";
   </script>
 
