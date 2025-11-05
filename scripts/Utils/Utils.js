@@ -33,10 +33,12 @@ var canvasItems = document.getElementById("thirdCanvas");
 var contextItems = canvasItems ? canvasItems.getContext("2d") : null;
 
 import { Settings } from './Settings.js';
-import { Logger } from './Logger.js';
+
+console.log('🔧 [Utils.js] Module loaded');
 
 const settings = new Settings();
-let logger = null; // Will be initialized when WebSocket connects
+
+console.log('🔧 [Utils.js] Settings initialized (logger is managed by LoggerClient.js)');
 
 // 🔄 Dynamic Settings Update: Listen for localStorage changes
 // This allows settings to update in real-time without page reload
@@ -159,13 +161,9 @@ drawingUtils.InitOurPlayerCanvas(canvasOurPlayer, contextOurPlayer);
 
 const socket = new WebSocket('ws://localhost:5002');
       
-socket.addEventListener('open', (event) => {
-  console.log('Connected to the WebSocket server.');
-
-  // 📊 Initialize Logger client
-  logger = new Logger(socket);
-  window.logger = logger; // Expose globally for debugging
-
+socket.addEventListener('open', () => {
+  console.log('📡 [Utils] WebSocket connected to server');
+  console.log('📊 [Utils] Logger is managed globally by LoggerClient.js');
 });
 
 socket.addEventListener('message', (event) => {
