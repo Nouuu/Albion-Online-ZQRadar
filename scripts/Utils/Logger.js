@@ -1,121 +1,109 @@
-/**
- * 📋 Logger Client - Simple & TDAH-friendly
- * Envoie les logs au serveur via WebSocket
- */
-
+// Logger.js - Client-side logger avec buffer et flush automatique
 export class Logger {
-    constructor(config = {}) {
-        this.config = {
-            bufferSize: config.bufferSize || 50,
-            flushInterval: config.flushInterval || 5000,
-            logToServer: config.logToServer !== false,
-            logToConsole: config.logToConsole || false
-        };
-
+    constructor(wsClient) {
+        this.wsClient = wsClient;
         this.buffer = [];
-        this.sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        this.websocket = null;
-        this.flushTimer = null;
-        this.startFlushTimer();
+        this.sessionId = this.generateSessionId();
+        this.maxBufferSize = 50;
+        this.flushInterval = 5000; // 5 secondes
+
+        this.startFlushInterval();
+        console.log(`📊 [Logger] Initialized with sessionId: ${this.sessionId}`);
     }
 
-    connectWebSocket(ws) {
-        this.websocket = ws;
+    generateSessionId() {
+        return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
 
-    log(level, category, event, data = {}) {
+    startFlushInterval() {
+        this.flushTimer = setInterval(() => {
+            this.flush();
+        }, this.flushInterval);
+    }
+
+    /**
+     * Log an entry
+     * @param {string} level - DEBUG, INFO, WARN, ERROR, CRITICAL
+     * @param {string} category - HARVESTABLE, MOB, PLAYER, etc.
+     * @param {string} event - Event name
+     * @param {Object} data - Event data
+     * @param {Object} context - Additional context
+     */
+    log(level, category, event, data, context = {}) {
         const logEntry = {
             timestamp: new Date().toISOString(),
             level,
             category,
             event,
             data,
-            sessionId: this.sessionId
+            context: {
+                ...context,
+                sessionId: this.sessionId
+            }
         };
-
-        if (this.config.logToConsole) {
-            console.log(`[${level}][${category}] ${event}:`, data);
-        }
 
         this.buffer.push(logEntry);
 
-        if (this.buffer.length >= this.config.bufferSize) {
+        // Flush si le buffer est plein
+        if (this.buffer.length >= this.maxBufferSize) {
             this.flush();
         }
     }
 
-    debug(category, event, data) { this.log('DEBUG', category, event, data); }
-    info(category, event, data) { this.log('INFO', category, event, data); }
-    warn(category, event, data) { this.log('WARN', category, event, data); }
-    error(category, event, data) { this.log('ERROR', category, event, data); }
+    /**
+     * Convenience methods
+     */
+    debug(category, event, data, context) {
+        this.log('DEBUG', category, event, data, context);
+    }
 
+    info(category, event, data, context) {
+        this.log('INFO', category, event, data, context);
+    }
+
+    warn(category, event, data, context) {
+        this.log('WARN', category, event, data, context);
+    }
+
+    error(category, event, data, context) {
+        this.log('ERROR', category, event, data, context);
+    }
+
+    critical(category, event, data, context) {
+        this.log('CRITICAL', category, event, data, context);
+    }
+
+    /**
+     * Flush buffer to server
+     */
     flush() {
         if (this.buffer.length === 0) return;
-        if (!this.config.logToServer) {
-            this.buffer = [];
-            return;
-        }
 
-        const logsToSend = [...this.buffer];
-        this.buffer = [];
-
-        if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
+        if (this.wsClient && this.wsClient.readyState === WebSocket.OPEN) {
             try {
-                this.websocket.send(JSON.stringify({
+                this.wsClient.send(JSON.stringify({
                     type: 'logs',
-                    payload: logsToSend
+                    logs: this.buffer
                 }));
-            } catch (e) {
-                console.error('[Logger] Failed to send logs:', e);
+                console.log(`📤 [Logger] Flushed ${this.buffer.length} logs to server`);
+                this.buffer = [];
+            } catch (error) {
+                console.error('❌ [Logger] Error flushing logs:', error);
             }
+        } else {
+            console.warn('⚠️ [Logger] WebSocket not ready, keeping logs in buffer');
         }
     }
 
-    startFlushTimer() {
-        if (this.flushTimer) clearInterval(this.flushTimer);
-        this.flushTimer = setInterval(() => this.flush(), this.config.flushInterval);
-    }
-
+    /**
+     * Cleanup
+     */
     destroy() {
-        if (this.flushTimer) clearInterval(this.flushTimer);
-        this.flush();
-    }
-
-    setConfig(updates) {
-        this.config = { ...this.config, ...updates };
-        if (updates.flushInterval) this.startFlushTimer();
-    }
-
-    getStats() {
-        return {
-            sessionId: this.sessionId,
-            bufferSize: this.buffer.length,
-            config: this.config
-        };
+        if (this.flushTimer) {
+            clearInterval(this.flushTimer);
+        }
+        this.flush(); // Flush final
+        console.log('📊 [Logger] Destroyed');
     }
 }
-
-// Instance globale (singleton)
-let loggerInstance = null;
-
-export function initLogger(config = {}) {
-    if (loggerInstance) {
-        loggerInstance.setConfig(config);
-        return loggerInstance;
-    }
-    loggerInstance = new Logger(config);
-    if (typeof window !== 'undefined') {
-        window.__logger = loggerInstance;
-    }
-    return loggerInstance;
-}
-
-export function getLogger() {
-    if (!loggerInstance) {
-        return initLogger();
-    }
-    return loggerInstance;
-}
-
-export default { Logger, initLogger, getLogger };
 

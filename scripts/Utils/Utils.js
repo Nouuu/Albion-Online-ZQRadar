@@ -33,7 +33,10 @@ var canvasItems = document.getElementById("thirdCanvas");
 var contextItems = canvasItems ? canvasItems.getContext("2d") : null;
 
 import { Settings } from './Settings.js';
+import { Logger } from './Logger.js';
+
 const settings = new Settings();
+let logger = null; // Will be initialized when WebSocket connects
 
 // 🔄 Dynamic Settings Update: Listen for localStorage changes
 // This allows settings to update in real-time without page reload
@@ -158,6 +161,10 @@ const socket = new WebSocket('ws://localhost:5002');
       
 socket.addEventListener('open', (event) => {
   console.log('Connected to the WebSocket server.');
+
+  // 📊 Initialize Logger client
+  logger = new Logger(socket);
+  window.logger = logger; // Expose globally for debugging
 
 });
 

@@ -23,6 +23,7 @@ try {
 }
 
 const { getAdapterIp } = require('./server-scripts/adapter-selector');
+const LoggerServer = require('./server-scripts/LoggerServer');
 
 const EventCodes = require('./scripts/Utils/EventCodesApp.js')
 
@@ -136,7 +137,7 @@ function StartRadar()
   app.use('/images/Resources', express.static(path.join(appDir, 'images', 'Resources')));
   app.use('/images/Maps', express.static(path.join(appDir, 'images', 'Maps')));
   app.use('/images/Items', express.static(path.join(appDir, 'images', 'Items')));
-  app.use('/images/Flags', express.static(path.join(appDir, 'images', 'Flags')));
+  app.use('/images/Flags', express.static(path.join(appDir, 'imageps', 'Flags')));
   app.use('/sounds', express.static(path.join(appDir, 'sounds')));
   app.use('/config', express.static(path.join(appDir, 'config')));
   app.use('/server-scripts', express.static(path.join(appDir, 'server-scripts')));
@@ -204,6 +205,10 @@ function StartRadar()
   var buffer = Buffer.alloc(4096);
   const manager = new PhotonParser();
   var linkType = c.open(device, filter, bufSize, buffer);
+  // 📊 Initialize Logger Server
+  const logger = new LoggerServer('./logs');
+  console.log('📊 [App] Logger initialized');
+
 
   c.setMinBytes && c.setMinBytes(0);
 
@@ -273,6 +278,50 @@ function StartRadar()
       });
     });
   });
+
+  // 📊 WebSocket connection handler for client logs
+  server.on('connection', (ws) => {
+    console.log('📡 [App] Client connected to WebSocket');
+
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message);
+        
+        // Handle logs from client
+        if (data.type === 'logs' && Array.isArray(data.logs)) {
+          logger.writeLogs(data.logs);
+        }
+      } catch (error) {
+        console.error('❌ [App] Error processing WebSocket message:', error);
+      }
+    });
+
+    ws.on('close', () => {
+      console.log('📡 [App] Client disconnected from WebSocket');
+    });
+  });
+  // 📊 WebSocket connection handler for client logs
+  server.on('connection', (ws) => {
+    console.log('📡 [App] Client connected to WebSocket');
+
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message);
+
+        // Handle logs from client
+        if (data.type === 'logs' && Array.isArray(data.logs)) {
+          logger.writeLogs(data.logs);
+        }
+      } catch (error) {
+        console.error('❌ [App] Error processing WebSocket message:', error);
+      }
+    });
+
+    ws.on('close', () => {
+      console.log('📡 [App] Client disconnected from WebSocket');
+    });
+  });
+
 
   server.on('close', () => {
     console.log('closed')
