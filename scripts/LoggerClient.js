@@ -3,6 +3,9 @@
 
 console.log('🔧 [LoggerClient] Script loaded, waiting for DOM ready...');
 
+// Logger constants are loaded from LoggerConstants.js (loaded before this file)
+// Available as: window.CATEGORIES, window.EVENTS, window.CATEGORY_SETTINGS_MAP
+
 let globalLogger = null;
 
 // Initialize WebSocket and Logger when DOM is ready
@@ -57,7 +60,42 @@ document.addEventListener('DOMContentLoaded', function() {
             }, this.flushInterval);
         }
 
+        /**
+         * Centralized filtering: checks if a log should be displayed
+         * INFO/WARN/ERROR/CRITICAL are always logged
+         * DEBUG logs are filtered based on category → setting mapping
+         */
+        shouldLog(category, level) {
+            // INFO/WARN/ERROR/CRITICAL always logged
+            if (level !== 'DEBUG') {
+                return true;
+            }
+
+            // DEBUG logs filtered by settings
+            const settingKey = window.CATEGORY_SETTINGS_MAP?.[category];
+
+            // No setting = always log (e.g., WEBSOCKET, CACHE, etc.)
+            if (!settingKey) {
+                return true;
+            }
+
+            // Special handling for RAW packets
+            if (settingKey === 'debugRawPackets') {
+                const consoleEnabled = localStorage.getItem('settingDebugRawPacketsConsole') === 'true';
+                const serverEnabled = localStorage.getItem('settingDebugRawPacketsServer') === 'true';
+                return consoleEnabled || serverEnabled;
+            }
+
+            // Check the corresponding debug setting
+            const localStorageKey = 'setting' + settingKey.charAt(0).toUpperCase() + settingKey.slice(1);
+            return localStorage.getItem(localStorageKey) === 'true';
+        }
+
         log(level, category, event, data, context = {}) {
+            // ⚡ Centralized filtering - exit early if not needed
+            if (!this.shouldLog(category, level)) {
+                return;
+            }
             const logEntry = {
                 timestamp: new Date().toISOString(),
                 level,

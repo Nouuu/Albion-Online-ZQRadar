@@ -3,6 +3,9 @@ export class MapDrawing extends DrawingUtils
     constructor(Settings)
     {
         super(Settings);
+        const { CATEGORIES, EVENTS } = window;
+        this.CATEGORIES = CATEGORIES;
+        this.EVENTS = EVENTS;
     }
     
     interpolate(curr_map, lpX, lpY , t)
@@ -58,14 +61,10 @@ export class MapDrawing extends DrawingUtils
         {
             this.settings.preloadImageAndAddToList(src, "Maps")
             .then(() => {
-                if (window.logger) {
-                    window.logger.info('MAP', 'MapLoaded', { src: src });
-                }
+                window.logger?.info(this.CATEGORIES.MAP, this.EVENTS.MapLoaded, { src: src });
             })
             .catch((error) => {
-                if (window.logger) {
-                    window.logger.warn('MAP', 'MapLoadFailed', { src: src, error: error?.message });
-                }
+                window.logger?.warn(this.CATEGORIES.MAP, this.EVENTS.MapLoadFailed, { src: src, error: error?.message });
             });
         }
     }

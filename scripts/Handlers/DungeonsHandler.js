@@ -53,6 +53,11 @@ class DungeonsHandler
 {
     constructor(Settings)
     {
+        // Import constants once in constructor
+        const { CATEGORIES, EVENTS } = window;
+        this.CATEGORIES = CATEGORIES;
+        this.EVENTS = EVENTS;
+        
         this.dungeonList = [];
         this.settings = Settings;
     }
@@ -60,21 +65,19 @@ class DungeonsHandler
     dungeonEvent(parameters)
     {
         // 🐛 DEBUG ULTRA-DÉTAILLÉ: Log ALL parameters pour identifier patterns
-        if (this.settings && this.settings.debugDungeons && window.logger) {
-            const allParams = {};
-            for (let key in parameters) {
-                if (parameters.hasOwnProperty(key)) {
-                    allParams[`param[${key}]`] = parameters[key];
-                }
+        const allParams = {};
+        for (let key in parameters) {
+            if (parameters.hasOwnProperty(key)) {
+                allParams[`param[${key}]`] = parameters[key];
             }
-
-            window.logger.debug('DUNGEON', 'NewDungeonEvent_ALL_PARAMS', {
-                dungeonId: parameters[0],
-                position: parameters[7],
-                allParameters: allParams,
-                parameterCount: Object.keys(parameters).length
-            });
         }
+
+        window.logger?.debug(this.CATEGORIES.DUNGEON, this.EVENTS.NewDungeonEvent_ALL_PARAMS, {
+            dungeonId: parameters[0],
+            position: parameters[7],
+            allParameters: allParams,
+            parameterCount: Object.keys(parameters).length
+        });
 
         const id = parameters[0];
         const position = parameters[1];

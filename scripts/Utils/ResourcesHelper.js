@@ -248,50 +248,38 @@ function clearTypeIDCache() {
 		const cached = localStorage.getItem('cachedStaticResourceTypeIDs');
 		if (cached) {
 			const entries = JSON.parse(cached);
-			if (window.logger) {
-				window.logger.info('CACHE', 'ClearTypeIDCache', {
-					entriesCount: entries.length,
-					entries: entries.map(([typeId, info]) => ({
-						typeId: typeId,
-						type: info.type,
-						tier: info.tier
-					}))
-				});
-			}
+			window.logger?.info(window.CATEGORIES.CACHE, window.EVENTS.ClearTypeIDCache, {
+				entriesCount: entries.length,
+				entries: entries.map(([typeId, info]) => ({
+					typeId: typeId,
+					type: info.type,
+					tier: info.tier
+				}))
+			});
 		} else {
-			if (window.logger) {
-				window.logger.info('CACHE', 'CacheAlreadyEmpty', {});
-			}
+			window.logger?.info(window.CATEGORIES.CACHE, window.EVENTS.CacheAlreadyEmpty, {});
 		}
 
 		// Clear localStorage
 		localStorage.removeItem('cachedStaticResourceTypeIDs');
-		if (window.logger) {
-			window.logger.info('CACHE', 'TypeIDCacheCleared', {});
-		}
+		window.logger?.info(window.CATEGORIES.CACHE, window.EVENTS.TypeIDCacheCleared, {});
 
 		// Confirm and reload to clear in-memory cache too
 		const shouldReload = confirm('✅ TypeID Cache cleared!\n\n⚠️ The radar page needs to reload to clear the in-memory cache.\n\nReload now?');
 		if (shouldReload) {
 			// Find and reload the radar window if open
 			if (window.opener && !window.opener.closed) {
-				if (window.logger) {
-					window.logger.info('CACHE', 'ReloadingOpenerWindow', {});
-				}
+				window.logger?.info(window.CATEGORIES.CACHE, window.EVENTS.ReloadingOpenerWindow, {});
 				window.opener.location.reload();
 			}
 			// Also reload this settings page
-			if (window.logger) {
-				window.logger.info('CACHE', 'ReloadingSettingsPage', {});
-			}
+			window.logger?.info(window.CATEGORIES.CACHE, window.EVENTS.ReloadingSettingsPage, {});
 			window.location.reload();
 		} else {
 			alert('⚠️ Cache cleared from localStorage, but you need to reload the radar page manually for full effect.');
 		}
 	} catch (e) {
-		if (window.logger) {
-			window.logger.error('CACHE', 'ClearCacheFailed', { error: e.message });
-		}
+		window.logger?.error(window.CATEGORIES.CACHE, window.EVENTS.ClearCacheFailed, { error: e.message });
 		alert('❌ Failed to clear cache: ' + e.message);
 	}
 }

@@ -9,12 +9,10 @@ itemsInfo.initItems().then(() => {
     var players = [];
 
     const socket = new WebSocket('ws://localhost:5002');
+    const { CATEGORIES, EVENTS } = window;
         
     socket.addEventListener('open', (event) => {
-    if (window.logger) {
-        window.logger.info('WEBSOCKET', 'Connected', { page: 'ItemsPage' });
-    }
-
+        window.logger?.info(CATEGORIES.WEBSOCKET, EVENTS.Connected, { page: 'ItemsPage' });
     });
 
     socket.addEventListener('message', (event) => {
@@ -72,11 +70,9 @@ itemsInfo.initItems().then(() => {
 
     function RemovePlayer(parameters)
     {
-        if (window.logger) {
-            const player = players.find(p => p.id == parameters[0]);
-            if (player) {
-                window.logger.debug('PLAYER', 'PlayerDebugInfo', player);
-            }
+        const player = players.find(p => p.id == parameters[0]);
+        if (player) {
+            window.logger?.debug(CATEGORIES.PLAYER, EVENTS.PlayerDebugInfo, player);
         }
 
         players = players.filter(player => player.id != parameters[0]);
@@ -215,14 +211,10 @@ itemsInfo.initItems().then(() => {
         {
             settings.preloadImageAndAddToList(src, folder)
             .then(() => {
-                if (window.logger) {
-                    window.logger.info('ITEM', 'ItemLoaded', { src: src, folder: folder });
-                }
+                window.logger?.info(CATEGORIES.ITEM, EVENTS.ItemLoaded, { src: src, folder: folder });
             })
             .catch((error) => {
-                if (window.logger) {
-                    window.logger.warn('ITEM', 'ItemLoadFailed', { src: src, folder: folder, error: error?.message });
-                }
+                window.logger?.warn(CATEGORIES.ITEM, EVENTS.ItemLoadFailed, { src: src, folder: folder, error: error?.message });
             });
         }
     }

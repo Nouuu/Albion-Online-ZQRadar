@@ -38,15 +38,14 @@ console.log('🔧 [Utils.js] Module loaded');
 
 const settings = new Settings();
 
-console.log('🔧 [Utils.js] Settings initialized (logger is managed by LoggerClient.js)');
+const { CATEGORIES, EVENTS } = window;
 
+console.log('🔧 [Utils.js] Settings initialized (logger is managed by LoggerClient.js)');
 // 🔄 Dynamic Settings Update: Listen for localStorage changes
 // This allows settings to update in real-time without page reload
 window.addEventListener('storage', (event) => {
     if (event.key && event.key.startsWith('setting')) {
-        if (window.logger) {
-            window.logger.info('SETTINGS', 'DynamicUpdate', { key: event.key, value: event.newValue });
-        }
+        window.logger?.info(CATEGORIES.SETTINGS, EVENTS.DynamicUpdate, { key: event.key, value: event.newValue });
         settings.update();
     }
 });
@@ -61,9 +60,7 @@ localStorage.setItem = function(key, value) {
     originalSetItem.apply(this, arguments);
 
     if (key.startsWith('setting')) {
-        if (window.logger) {
-            window.logger.info('SETTINGS', 'SamePageUpdate', { key: key, value: value });
-        }
+        window.logger?.info(CATEGORIES.SETTINGS, EVENTS.SamePageUpdate, { key: key, value: value });
         settings.update();
     }
 };
@@ -79,11 +76,6 @@ var mobsInfo = new MobsInfo();
 itemsInfo.initItems();
 mobsInfo.initMobs();
 
-if (window.logger) {
-    window.logger.info('MOBS', 'MobsInfoLoaded', { 
-        typeIDCount: Object.keys(mobsInfo.moblist).length 
-    });
-}
 
 var map = new MapH(-1);
 const mapsDrawing = new MapDrawing(settings);
@@ -97,10 +89,8 @@ window.addEventListener('load', () => {
     const logEnemiesList = document.getElementById('logEnemiesList');
     if (logEnemiesList) {
         logEnemiesList.addEventListener('click', () => {
-            if (window.logger) {
-                const mobList = mobsHandler.getMobList();
-                window.logger.debug('DEBUG', 'EnemiesList', { mobList: mobList });
-            }
+            const mobList = mobsHandler.getMobList();
+            window.logger?.debug(CATEGORIES.DEBUG, EVENTS.EnemiesList, { mobList: mobList });
         });
     }
 
@@ -112,20 +102,16 @@ window.addEventListener('load', () => {
             const cached = localStorage.getItem('cachedStaticResourceTypeIDs');
             if (cached) {
                 const entries = JSON.parse(cached);
-                if (window.logger) {
-                    window.logger.info('CACHE', 'ClearingTypeIDCache', {
-                        entriesCount: entries.length,
-                        entries: entries.map(([typeId, info]) => ({
-                            typeId: typeId,
-                            type: info.type,
-                            tier: info.tier
-                        }))
-                    });
-                }
+                window.logger?.info(CATEGORIES.CACHE, EVENTS.ClearingTypeIDCache, {
+                    entriesCount: entries.length,
+                    entries: entries.map(([typeId, info]) => ({
+                        typeId: typeId,
+                        type: info.type,
+                        tier: info.tier
+                    }))
+                });
             } else {
-                if (window.logger) {
-                    window.logger.info('CACHE', 'CacheAlreadyEmpty', {});
-                }
+                window.logger?.info(CATEGORIES.CACHE, EVENTS.CacheAlreadyEmpty, {});
             }
 
             // Clear in-memory cache in MobsHandler
@@ -137,9 +123,7 @@ window.addEventListener('load', () => {
                 window.location.reload();
             }
         } catch (e) {
-            if (window.logger) {
-                window.logger.error('CACHE', 'ClearCacheFailed', { error: e.message });
-            }
+            window.logger?.error(CATEGORIES.CACHE, EVENTS.ClearCacheFailed, { error: e.message });
             alert('❌ Failed to clear cache: ' + e.message);
         }
     });
@@ -185,11 +169,10 @@ drawingUtils.InitOurPlayerCanvas(canvasOurPlayer, contextOurPlayer);
 
 
 const socket = new WebSocket('ws://localhost:5002');
-      
+
+
 socket.addEventListener('open', () => {
-  if (window.logger) {
-    window.logger.info('WEBSOCKET', 'Connected', { page: 'Utils' });
-  }
+  window.logger?.info(CATEGORIES.WEBSOCKET, EVENTS.Connected, { page: 'Utils' });
 });
 
 socket.addEventListener('message', (event) => {
@@ -250,17 +233,15 @@ function onEvent(Parameters)
 
     // 📦 DEBUG RAW: Log tous les paquets bruts (très verbeux, pour debug profond uniquement)
     // Note: debugRawPacketsConsole contrôle l'affichage console, debugRawPacketsServer contrôle l'envoi au serveur
-    if (settings && (settings.debugRawPacketsConsole || settings.debugRawPacketsServer) && window.logger) {
-        window.logger.debug('PACKET_RAW', `Event_${eventCode}`, {
-            id,
-            eventCode,
-            allParameters: Parameters
-        });
-    }
+    window.logger?.debug(CATEGORIES.PACKET_RAW, `Event_${eventCode}`, {
+        id,
+        eventCode,
+        allParameters: Parameters
+    });
 
     // 🔍 DEBUG ALL EVENTS: Log événement avec détails si debug activé
     // Permet d'identifier les patterns et correspondances paramètres <-> événements
-    if (settings && settings.debugEnemies && window.logger && eventCode !== 91) { // Skip RegenerationHealthChanged car trop verbeux
+    if (eventCode !== 91) { // Skip RegenerationHealthChanged car trop verbeux
         const paramDetails = {};
         for (let key in Parameters) {
             if (Parameters.hasOwnProperty(key) && key !== '252' && key !== '0') { // Skip eventCode et id déjà loggés
@@ -268,7 +249,7 @@ function onEvent(Parameters)
             }
         }
 
-        window.logger.debug('EVENT_DETAIL', `Event_${eventCode}_ID_${id}`, {
+        window.logger?.debug(CATEGORIES.EVENT_DETAIL, `Event_${eventCode}_ID_${id}`, {
             id,
             eventCode,
             eventName: getEventName(eventCode),
@@ -390,9 +371,9 @@ function onEvent(Parameters)
 
         case EventCodes.RegenerationHealthChanged:
             // 🐛 DEBUG: Log health regeneration events
-            if (settings && settings.debugEnemies && window.logger) {
+            {
                 const mobInfo = mobsHandler.debugLogMobById(Parameters[0]);
-                window.logger.debug('MOB_HEALTH', 'RegenerationHealthChanged', {
+                window.logger?.debug(CATEGORIES.MOB_HEALTH, EVENTS.RegenerationHealthChanged, {
                     eventCode: 91,
                     id: Parameters[0],
                     mobInfo,
@@ -407,9 +388,9 @@ function onEvent(Parameters)
 
         case EventCodes.HealthUpdate:
             // 🐛 DEBUG: Log health update events
-            if (settings && settings.debugEnemies && window.logger) {
+            {
                 const mobInfo = mobsHandler.debugLogMobById(Parameters[0]);
-                window.logger.debug('MOB_HEALTH', 'HealthUpdate', {
+                window.logger?.debug(CATEGORIES.MOB_HEALTH, EVENTS.HealthUpdate, {
                     eventCode: 6,
                     id: Parameters[0],
                     mobInfo,
@@ -423,8 +404,8 @@ function onEvent(Parameters)
 
         case EventCodes.HealthUpdates:
             // 🐛 DEBUG: Log bulk health updates (multiple entities at once)
-            if (settings && settings.debugEnemies && window.logger) {
-                window.logger.debug('MOB_HEALTH', 'HealthUpdates_BULK', {
+            {
+                window.logger?.debug(CATEGORIES.MOB_HEALTH, EVENTS.BulkHPUpdate, {
                     eventCode: 7,
                     allParameters: Parameters
                 });
@@ -472,8 +453,8 @@ function onEvent(Parameters)
 
         case 590:
             // Key sync event (debug)
-            if (settings && settings.debugRawPacketsConsole && window.logger) {
-                window.logger.debug('PACKET_RAW', 'KeySync', { Parameters });
+            {
+                window.logger?.debug(CATEGORIES.PACKET_RAW, EVENTS.KeySync, { Parameters });
             }
             break;
 
@@ -561,9 +542,7 @@ function render()
             __clustersForInfo = clusters;
         } catch (e) {
             // ❌ ERROR (toujours loggé) - Erreur critique de calcul de clusters
-            if (window.logger) {
-                window.logger.error('CLUSTER', 'ComputeFailed', e);
-            }
+            window.logger?.error(CATEGORIES.CLUSTER, EVENTS.ComputeFailed, e);
         }
     }
 
@@ -588,9 +567,7 @@ function render()
                 }
             } catch (e) {
                 // ❌ ERROR (toujours loggé) - Erreur critique de rendu de cluster
-                if (window.logger) {
-                    window.logger.error('CLUSTER', 'DrawInfoBoxFailed', e);
-                }
+                window.logger?.error(CATEGORIES.CLUSTER, EVENTS.DrawInfoBoxFailed, e);
             }
         }
     }

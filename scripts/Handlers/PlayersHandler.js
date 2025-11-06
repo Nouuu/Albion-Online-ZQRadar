@@ -23,6 +23,11 @@ class Player {
 
 export class PlayersHandler {
     constructor(settings) {
+        // Import constants once in constructor
+        const { CATEGORIES, EVENTS } = window;
+        this.CATEGORIES = CATEGORIES;
+        this.EVENTS = EVENTS;
+        
         this.playersInRange = [];
         this.localPlayer = new Player();
         this.invalidate = false;
@@ -90,25 +95,23 @@ export class PlayersHandler {
     handleNewPlayerEvent(Parameters, isBZ)
     {
         // 🐛 DEBUG ULTRA-DÉTAILLÉ: Log ALL parameters pour identifier patterns
-        if (this.settings.debugPlayers && window.logger) {
-            const allParams = {};
-            for (let key in Parameters) {
-                if (Parameters.hasOwnProperty(key)) {
-                    allParams[`param[${key}]`] = Parameters[key];
-                }
+        const allParams = {};
+        for (let key in Parameters) {
+            if (Parameters.hasOwnProperty(key)) {
+                allParams[`param[${key}]`] = Parameters[key];
             }
-
-            window.logger.debug('PLAYER', 'NewPlayerEvent_ALL_PARAMS', {
-                playerId: Parameters[0],
-                nickname: Parameters[1],
-                guildName: Parameters[8],
-                alliance: Parameters[49],
-                health: Parameters[22],
-                flagId: Parameters[53],
-                allParameters: allParams,
-                parameterCount: Object.keys(Parameters).length
-            });
         }
+
+        window.logger?.debug(this.CATEGORIES.PLAYER, this.EVENTS.NewPlayerEvent_ALL_PARAMS, {
+            playerId: Parameters[0],
+            nickname: Parameters[1],
+            guildName: Parameters[8],
+            alliance: Parameters[49],
+            health: Parameters[22],
+            flagId: Parameters[53],
+            allParameters: allParams,
+            parameterCount: Object.keys(Parameters).length
+        });
 
         if (!this.settings.settingDot)
             return -1;
@@ -256,23 +259,21 @@ export class PlayersHandler {
     UpdatePlayerHealth(Parameters)
     {
         // 🐛 DEBUG: Log player health updates
-        if (this.settings.debugPlayers && window.logger) {
-            const allParams = {};
-            for (let key in Parameters) {
-                if (Parameters.hasOwnProperty(key)) {
-                    allParams[`param[${key}]`] = Parameters[key];
-                }
+        const allParams = {};
+        for (let key in Parameters) {
+            if (Parameters.hasOwnProperty(key)) {
+                allParams[`param[${key}]`] = Parameters[key];
             }
-
-            window.logger.debug('PLAYER_HEALTH', 'PlayerHealthUpdate_DETAIL', {
-                playerId: Parameters[0],
-                params2_currentHP: Parameters[2],
-                params3_maxHP: Parameters[3],
-                hpPercentage: Parameters[3] ? Math.round((Parameters[2] / Parameters[3]) * 100) + '%' : 'N/A',
-                allParameters: allParams,
-                parameterCount: Object.keys(Parameters).length
-            });
         }
+
+        window.logger?.debug(this.CATEGORIES.PLAYER_HEALTH, this.EVENTS.PlayerHealthUpdate_DETAIL, {
+            playerId: Parameters[0],
+            params2_currentHP: Parameters[2],
+            params3_maxHP: Parameters[3],
+            hpPercentage: Parameters[3] ? Math.round((Parameters[2] / Parameters[3]) * 100) + '%' : 'N/A',
+            allParameters: allParams,
+            parameterCount: Object.keys(Parameters).length
+        });
 
         var uPlayer = this.playersInRange.find(player => player.id === Parameters[0]);
 

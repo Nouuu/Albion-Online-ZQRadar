@@ -1,5 +1,9 @@
 class DrawingUtils {
     constructor(settings) {
+        const { CATEGORIES, EVENTS } = window;
+        this.CATEGORIES = CATEGORIES;
+        this.EVENTS = EVENTS;
+        
         this.settings = settings || {};
         this.fontSize = "12px";
         this.fontFamily = "Arial";
@@ -73,14 +77,10 @@ class DrawingUtils {
         } else if (this.settings && typeof this.settings.preloadImageAndAddToList === 'function') {
             this.settings.preloadImageAndAddToList(src, folder)
                 .then(() => {
-                    if (window.logger) {
-                        window.logger.info('ITEM', 'ItemLoaded', { src: src, folder: folder });
-                    }
+                    window.logger?.info(this.CATEGORIES.ITEM, this.EVENTS.ItemLoaded, { src: src, folder: folder });
                 })
                 .catch((error) => {
-                    if (window.logger) {
-                        window.logger.warn('ITEM', 'ItemLoadFailed', { src: src, folder: folder, error: error?.message });
-                    }
+                    window.logger?.warn(this.CATEGORIES.ITEM, this.EVENTS.ItemLoadFailed, { src: src, folder: folder, error: error?.message });
                 });
         }
     }
@@ -407,9 +407,7 @@ class DrawingUtils {
             ctx.restore();
         } catch (e) {
             // ❌ ERROR (toujours loggé) - Erreur critique de fallback de rendu
-            if (window.logger) {
-                window.logger.error('CLUSTER', 'DrawRingsFallbackFailed', e);
-            }
+            window.logger?.error(this.CATEGORIES.CLUSTER, this.EVENTS.DrawRingsFallbackFailed, e);
         }
     }
 

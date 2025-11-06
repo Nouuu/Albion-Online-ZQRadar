@@ -18,6 +18,10 @@ export class FishingHandler
 {
     constructor(settings)
     {
+        const { CATEGORIES, EVENTS } = window;
+        this.CATEGORIES = CATEGORIES;
+        this.EVENTS = EVENTS;
+        
         this.settings = settings;
         this.fishes = [];
     }
@@ -68,11 +72,9 @@ export class FishingHandler
         if (!this.settings.showFish) return;
 
         // 🐛 DEBUG: Log fishing end event
-        if (this.settings.debugFishing && window.logger) {
-            window.logger.debug('FISHING', 'FishingEnd', {
-                parameters: Parameters
-            });
-        }
+        window.logger?.debug(this.CATEGORIES.FISHING, this.EVENTS.FishingEnd, {
+            parameters: Parameters
+        });
 
         const id = Parameters[0];
 
