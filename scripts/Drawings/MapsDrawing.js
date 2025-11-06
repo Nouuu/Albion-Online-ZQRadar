@@ -57,8 +57,16 @@ export class MapDrawing extends DrawingUtils
         else
         {
             this.settings.preloadImageAndAddToList(src, "Maps")
-            .then(() => console.log('Map loaded'))
-            .catch(() => console.log('Map not loaded'));
+            .then(() => {
+                if (window.logger) {
+                    window.logger.info('MAP', 'MapLoaded', { src: src });
+                }
+            })
+            .catch((error) => {
+                if (window.logger) {
+                    window.logger.warn('MAP', 'MapLoadFailed', { src: src, error: error?.message });
+                }
+            });
         }
     }
 }

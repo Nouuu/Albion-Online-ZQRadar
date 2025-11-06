@@ -248,34 +248,50 @@ function clearTypeIDCache() {
 		const cached = localStorage.getItem('cachedStaticResourceTypeIDs');
 		if (cached) {
 			const entries = JSON.parse(cached);
-			console.log(`[clearTypeIDCache] 🗑️ Clearing ${entries.length} cached entries:`);
-			entries.forEach(([typeId, info]) => {
-				console.log(`  - TypeID ${typeId}: ${info.type} T${info.tier}`);
-			});
+			if (window.logger) {
+				window.logger.info('CACHE', 'ClearTypeIDCache', {
+					entriesCount: entries.length,
+					entries: entries.map(([typeId, info]) => ({
+						typeId: typeId,
+						type: info.type,
+						tier: info.tier
+					}))
+				});
+			}
 		} else {
-			console.log('[clearTypeIDCache] ℹ️ Cache is already empty');
+			if (window.logger) {
+				window.logger.info('CACHE', 'CacheAlreadyEmpty', {});
+			}
 		}
 
 		// Clear localStorage
 		localStorage.removeItem('cachedStaticResourceTypeIDs');
-		console.log('✅ TypeID Cache cleared from localStorage');
+		if (window.logger) {
+			window.logger.info('CACHE', 'TypeIDCacheCleared', {});
+		}
 
 		// Confirm and reload to clear in-memory cache too
 		const shouldReload = confirm('✅ TypeID Cache cleared!\n\n⚠️ The radar page needs to reload to clear the in-memory cache.\n\nReload now?');
 		if (shouldReload) {
 			// Find and reload the radar window if open
 			if (window.opener && !window.opener.closed) {
-				console.log('🔄 Reloading opener window (radar)...');
+				if (window.logger) {
+					window.logger.info('CACHE', 'ReloadingOpenerWindow', {});
+				}
 				window.opener.location.reload();
 			}
 			// Also reload this settings page
-			console.log('🔄 Reloading settings page...');
+			if (window.logger) {
+				window.logger.info('CACHE', 'ReloadingSettingsPage', {});
+			}
 			window.location.reload();
 		} else {
 			alert('⚠️ Cache cleared from localStorage, but you need to reload the radar page manually for full effect.');
 		}
 	} catch (e) {
-		console.error('❌ Failed to clear TypeID cache:', e);
+		if (window.logger) {
+			window.logger.error('CACHE', 'ClearCacheFailed', { error: e.message });
+		}
 		alert('❌ Failed to clear cache: ' + e.message);
 	}
 }

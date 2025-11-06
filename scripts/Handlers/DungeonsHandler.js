@@ -60,7 +60,7 @@ class DungeonsHandler
     dungeonEvent(parameters)
     {
         // 🐛 DEBUG ULTRA-DÉTAILLÉ: Log ALL parameters pour identifier patterns
-        if (window.settings && window.settings.debugDungeons && window.logger) {
+        if (this.settings && this.settings.debugDungeons && window.logger) {
             const allParams = {};
             for (let key in parameters) {
                 if (parameters.hasOwnProperty(key)) {

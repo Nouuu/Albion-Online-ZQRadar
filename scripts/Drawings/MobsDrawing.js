@@ -121,7 +121,14 @@ export class MobsDrawing extends DrawingUtils
 
                 // 🐛 DEBUG: Log color assignment (only once per mob to avoid spam)
                 if (this.settings.debugEnemies && !mobOne._debugLogged) {
-                    console.log(`[DEBUG_DRAW] MOB ID=${mobOne.id} TypeID=${mobOne.typeId} | Type=${mobOne.type} | Color=${color}`);
+                    if (window.logger) {
+                        window.logger.debug('MOB_DRAW', 'MobDrawDetails', {
+                            id: mobOne.id,
+                            typeId: mobOne.typeId,
+                            type: mobOne.type,
+                            color: color
+                        });
+                    }
                     mobOne._debugLogged = true;
                 }
 

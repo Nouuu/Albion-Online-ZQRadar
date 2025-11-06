@@ -72,8 +72,16 @@ class DrawingUtils {
             ctx.drawImage(preloadedImage, x - size / 2, y - size / 2, size, size);
         } else if (this.settings && typeof this.settings.preloadImageAndAddToList === 'function') {
             this.settings.preloadImageAndAddToList(src, folder)
-                .then(() => console.log('Item loaded'))
-                .catch(() => console.log('Item not loaded'));
+                .then(() => {
+                    if (window.logger) {
+                        window.logger.info('ITEM', 'ItemLoaded', { src: src, folder: folder });
+                    }
+                })
+                .catch((error) => {
+                    if (window.logger) {
+                        window.logger.warn('ITEM', 'ItemLoadFailed', { src: src, folder: folder, error: error?.message });
+                    }
+                });
         }
     }
 

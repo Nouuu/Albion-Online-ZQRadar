@@ -391,7 +391,7 @@ class HarvestablesHandler
 
         // 🐛 DEBUG: Log Hide T4+ enchanted resources
         const stringType = this.GetStringType(type);
-        if (stringType === HarvestableType.Hide && tier >= 4 && charges > 0 && window.logger) {
+        if (this.settings && this.settings.debugHarvestables && stringType === HarvestableType.Hide && tier >= 4 && charges > 0 && window.logger) {
             window.logger.debug('HARVEST_HIDE_T4', 'Detection', {
                 id,
                 mobileTypeId,
@@ -411,7 +411,7 @@ class HarvestablesHandler
 
             case HarvestableType.Hide:
                 // 🐛 DEBUG: Log settings check for Hide T4+
-                if (tier >= 4 && charges > 0 && window.logger) {
+                if (this.settings && this.settings.debugHarvestables && tier >= 4 && charges > 0 && window.logger) {
                     const settingKey = `e${charges}`;
                     const settingIndex = tier - 1;
                     const settingValue = this.settings.harvestingStaticHide[settingKey] ? this.settings.harvestingStaticHide[settingKey][settingIndex] : undefined;
@@ -487,7 +487,7 @@ class HarvestablesHandler
 
         // 🐛 DEBUG: Log Hide T4+ enchanted resources
         const stringType = this.GetStringType(type);
-        if (stringType === HarvestableType.Hide && tier >= 4 && charges > 0 && window.logger) {
+        if (this.settings && this.settings.debugHarvestables && stringType === HarvestableType.Hide && tier >= 4 && charges > 0 && window.logger) {
             window.logger.debug('HARVEST_HIDE_T4', 'Update', {
                 id,
                 mobileTypeId,
@@ -507,7 +507,7 @@ class HarvestablesHandler
 
             case HarvestableType.Hide:
                 // 🐛 DEBUG: Log settings check for Hide T4+
-                if (tier >= 4 && charges > 0 && window.logger) {
+                if (this.settings && this.settings.debugHarvestables && tier >= 4 && charges > 0 && window.logger) {
                     const settingKey = `e${charges}`;
                     const settingIndex = tier - 1;
                     const settingValue = this.settings.harvestingStaticHide[settingKey] ? this.settings.harvestingStaticHide[settingKey][settingIndex] : undefined;
@@ -577,14 +577,16 @@ class HarvestablesHandler
                 }
             }
 
-            window.logger.debug('HARVEST', 'HarvestUpdateEvent_ALL_PARAMS', {
-                harvestableId: Parameters[0],
-                charges: Parameters[1],
-                typeId: Parameters[5],
-                tier: Parameters[6],
-                allParameters: allParams,
-                parameterCount: Object.keys(Parameters).length
-            });
+            if (this.settings && this.settings.debugHarvestables && window.logger) {
+                window.logger.debug('HARVEST', 'HarvestUpdateEvent_ALL_PARAMS', {
+                    harvestableId: Parameters[0],
+                    charges: Parameters[1],
+                    typeId: Parameters[5],
+                    tier: Parameters[6],
+                    allParameters: allParams,
+                    parameterCount: Object.keys(Parameters).length
+                });
+            }
         }
 
         const id = Parameters[0];

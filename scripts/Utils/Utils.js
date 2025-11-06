@@ -44,7 +44,9 @@ console.log('🔧 [Utils.js] Settings initialized (logger is managed by LoggerCl
 // This allows settings to update in real-time without page reload
 window.addEventListener('storage', (event) => {
     if (event.key && event.key.startsWith('setting')) {
-        console.log(`🔄 [Settings] Dynamic update: ${event.key} = ${event.newValue}`);
+        if (window.logger) {
+            window.logger.info('SETTINGS', 'DynamicUpdate', { key: event.key, value: event.newValue });
+        }
         settings.update();
     }
 });
@@ -59,7 +61,9 @@ localStorage.setItem = function(key, value) {
     originalSetItem.apply(this, arguments);
 
     if (key.startsWith('setting')) {
-        console.log(`🔄 [Settings] Same-page update: ${key} = ${value}`);
+        if (window.logger) {
+            window.logger.info('SETTINGS', 'SamePageUpdate', { key: key, value: value });
+        }
         settings.update();
     }
 };
@@ -75,19 +79,30 @@ var mobsInfo = new MobsInfo();
 itemsInfo.initItems();
 mobsInfo.initMobs();
 
-console.log(`[Utils] 📊 MobsInfo loaded: ${Object.keys(mobsInfo.moblist).length} TypeIDs (fusionné)`);
+if (window.logger) {
+    window.logger.info('MOBS', 'MobsInfoLoaded', { 
+        typeIDCount: Object.keys(mobsInfo.moblist).length 
+    });
+}
 
 var map = new MapH(-1);
 const mapsDrawing = new MapDrawing(settings);
 
-const chestsHandler = new ChestsHandler();
+const chestsHandler = new ChestsHandler(settings);
 const mobsHandler = new MobsHandler(settings);
 mobsHandler.updateMobInfo(mobsInfo.moblist);
 
 // existing logEnemiesList button stays the same
 window.addEventListener('load', () => {
     const logEnemiesList = document.getElementById('logEnemiesList');
-    if (logEnemiesList) logEnemiesList.addEventListener('click', () => console.log(mobsHandler.getMobList()));
+    if (logEnemiesList) {
+        logEnemiesList.addEventListener('click', () => {
+            if (window.logger) {
+                const mobList = mobsHandler.getMobList();
+                window.logger.debug('DEBUG', 'EnemiesList', { mobList: mobList });
+            }
+        });
+    }
 
     // Clear TypeID Cache button
     const clearTypeIDCache = document.getElementById('clearTypeIDCache');
@@ -97,12 +112,20 @@ window.addEventListener('load', () => {
             const cached = localStorage.getItem('cachedStaticResourceTypeIDs');
             if (cached) {
                 const entries = JSON.parse(cached);
-                console.log(`[clearTypeIDCache] 🗑️ Clearing ${entries.length} cached entries:`);
-                entries.forEach(([typeId, info]) => {
-                    console.log(`  - TypeID ${typeId}: ${info.type} T${info.tier}`);
-                });
+                if (window.logger) {
+                    window.logger.info('CACHE', 'ClearingTypeIDCache', {
+                        entriesCount: entries.length,
+                        entries: entries.map(([typeId, info]) => ({
+                            typeId: typeId,
+                            type: info.type,
+                            tier: info.tier
+                        }))
+                    });
+                }
             } else {
-                console.log('[clearTypeIDCache] ℹ️ Cache is already empty');
+                if (window.logger) {
+                    window.logger.info('CACHE', 'CacheAlreadyEmpty', {});
+                }
             }
 
             // Clear in-memory cache in MobsHandler
@@ -114,7 +137,9 @@ window.addEventListener('load', () => {
                 window.location.reload();
             }
         } catch (e) {
-            console.error('❌ Failed to clear TypeID cache:', e);
+            if (window.logger) {
+                window.logger.error('CACHE', 'ClearCacheFailed', { error: e.message });
+            }
             alert('❌ Failed to clear cache: ' + e.message);
         }
     });
@@ -162,8 +187,9 @@ drawingUtils.InitOurPlayerCanvas(canvasOurPlayer, contextOurPlayer);
 const socket = new WebSocket('ws://localhost:5002');
       
 socket.addEventListener('open', () => {
-  console.log('📡 [Utils] WebSocket connected to server');
-  console.log('📊 [Utils] Logger is managed globally by LoggerClient.js');
+  if (window.logger) {
+    window.logger.info('WEBSOCKET', 'Connected', { page: 'Utils' });
+  }
 });
 
 socket.addEventListener('message', (event) => {

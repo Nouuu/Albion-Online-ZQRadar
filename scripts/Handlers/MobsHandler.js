@@ -119,7 +119,12 @@ class MobsHandler {
                         url: response.url
                     });
                 } else {
-                    console.warn(`[MobsHandler] ⚠️ Could not load living-resources-enhanced.json: ${response.status} ${response.statusText}`);
+                    if (window.logger) {
+                        window.logger.warn('MOB', 'EnhancedJSONLoadFailed', {
+                            status: response.status,
+                            statusText: response.statusText
+                        });
+                    }
                 }
             }
         } catch (e) {
@@ -127,7 +132,9 @@ class MobsHandler {
             if (window.logger) {
                 window.logger.error('MOB', 'LoadMetadataFailed', e);
             } else {
-                console.error('[MobsHandler] ❌ Error loading living-resources-enhanced.json:', e);
+                if (window.logger) {
+                    window.logger.error('MOB', 'EnhancedJSONLoadError', e);
+                }
             }
         }
     }
@@ -169,7 +176,7 @@ class MobsHandler {
         if (!this.settings.logLivingCreatures) return;
 
         // 🐛 DEBUG (filtré par debugEnemies) - Guide de collecte verbeux
-        if (window.logger && this.settings && this.settings.debugEnemies) {
+        if (this.settings && this.settings.debugEnemies && window.logger) {
             window.logger.debug('MOB', 'CollectionGuide', {
                 title: 'LIVING RESOURCES COLLECTION GUIDE',
                 objective: 'Collecter les TypeIDs des créatures enchantées',
@@ -320,7 +327,9 @@ class MobsHandler {
         }
 
         // JSON for parsing
-        console.log(`[LIVING_JSON] ${JSON.stringify(logData)}`);
+        if (window.logger) {
+            window.logger.info('LIVING_CREATURE', 'NewLivingCreature', logData);
+        }
 
         // Human-readable format
         const stateIcon = isAlive ? '🟢' : '🔴';
@@ -328,7 +337,19 @@ class MobsHandler {
         const animalInfo = metadata ? ` → ${metadata.animal}` : '';
         const hpValidation = metadata ? ` (expected ~${metadata.validation.expectedHP}, diff: ${metadata.validation.hpDiff})` : '';
 
-        console.log(`${stateIcon} ${matchIcon} TypeID ${typeId} | ${name} T${tier}.${realEnchant} | HP: ${health}${hpValidation}${animalInfo}`);
+        if (window.logger) {
+            window.logger.info('LIVING_CREATURE', 'LivingCreatureCSV', {
+                typeId: typeId,
+                name: name,
+                tier: tier,
+                enchant: realEnchant,
+                health: health,
+                stateIcon: stateIcon,
+                matchIcon: matchIcon,
+                hpValidation: hpValidation,
+                animalInfo: animalInfo
+            });
+        }
     }
 
     // 💾 Save cached TypeID mappings to localStorage
@@ -376,10 +397,13 @@ class MobsHandler {
                 tier: info.tier
             }));
 
-            window.logger.debug('MOB', 'DisplayCachedTypeIDs', {
-                total: this.staticResourceTypeIDs.size,
-                entries
-            });
+            // ℹ️ INFO (toujours loggé) - Affichage du cache (action utilisateur)
+            if (window.logger) {
+                window.logger.info('MOB', 'DisplayCachedTypeIDs', {
+                    total: this.staticResourceTypeIDs.size,
+                    entries
+                });
+            }
         }
     }
 
@@ -400,7 +424,7 @@ class MobsHandler {
         if (knownInfo && knownInfo[2]) {
             // Use mobinfo name (Fiber, Hide, Wood, Ore, Rock)
             resourceType = knownInfo[2];
-            if (window.logger && this.settings && this.settings.logLivingResources) {
+            if (this.settings && this.settings.logLivingResources && window.logger) {
                 window.logger.debug('MOB', 'UsingMobInfo', {
                     typeId,
                     resourceType,
@@ -418,11 +442,12 @@ class MobsHandler {
         const existing = this.staticResourceTypeIDs.get(typeId);
 
         // 📊 Log EVERY registration for analysis (capture typeNumber from game)
-        if (this.settings && this.settings.logLivingResources && window.logger) {
+        if (window.logger) {
             const isUpdate = !!existing;
             const changed = existing && (existing.type !== resourceType || existing.tier !== tier);
 
-            window.logger.debug('MOB', isUpdate ? (changed ? 'STATIC_UPDATE' : 'STATIC_DUPLICATE') : 'STATIC_REGISTER', {
+            // ℹ️ INFO (toujours loggé) - Enregistrement de TypeID statique (important pour collection)
+            window.logger.info('MOB', isUpdate ? (changed ? 'STATIC_UPDATE' : 'STATIC_DUPLICATE') : 'STATIC_REGISTER', {
                 typeId,
                 typeNumber,
                 resourceType,
@@ -473,14 +498,16 @@ class MobsHandler {
                     }
                 }
 
-                window.logger.debug('MOB', 'NewMobEvent_ALL_PARAMS', {
-                    mobId,
-                    typeId,
-                    posX: parameters[8],
-                    posY: parameters[9],
-                    allParameters: allParams,
-                    parameterCount: Object.keys(parameters).length
-                });
+                if (this.settings && this.settings.debugEnemies && window.logger) {
+                    window.logger.debug('MOB', 'NewMobEvent_ALL_PARAMS', {
+                        mobId,
+                        typeId,
+                        posX: parameters[8],
+                        posY: parameters[9],
+                        allParameters: allParams,
+                        parameterCount: Object.keys(parameters).length
+                    });
+                }
             }
 
             const loc = parameters[7] || [0, 0];
@@ -566,7 +593,20 @@ class MobsHandler {
 
         // 🐛 DEBUG: Log enemy creation with type info
         if (this.settings && this.settings.debugEnemies) {
-            console.log(`[DEBUG_ENEMY] NEW MOB | ID=${id} TypeID=${typeId} HP=${mob.getCurrentHP()}/${maxHealth} (${mob.getHealthPercent()}%) | Enchant=${enchant} Rarity=${rarity} | Assigned Type=${mob.type} (${this.getEnemyTypeName(mob.type)}) | Name=${mob.name} | HasInfo=${hasKnownInfo}`);
+            if (window.logger) {
+                window.logger.debug('MOB', 'NewMobDebug', {
+                    id: id,
+                    typeId: typeId,
+                    health: `${mob.getCurrentHP()}/${maxHealth}`,
+                    healthPercent: mob.getHealthPercent(),
+                    enchant: enchant,
+                    rarity: rarity,
+                    assignedType: mob.type,
+                    typeName: this.getEnemyTypeName(mob.type),
+                    name: mob.name,
+                    hasKnownInfo: hasKnownInfo
+                });
+            }
         }
 
         // Get cross-referenced static resource info
@@ -674,7 +714,13 @@ class MobsHandler {
         const after = this.mobsList.length;
 
         if (this.settings && this.settings.logLivingResources && before !== after) {
-            console.log(`[MobsHandler] 🗑️ Removed mob ${id} (living resources: ${before} → ${after})`);
+            if (window.logger) {
+                window.logger.info('MOB', 'MobRemoved', {
+                    id: id,
+                    livingResourcesBefore: before,
+                    livingResourcesAfter: after
+                });
+            }
         }
     }
 
@@ -725,13 +771,27 @@ class MobsHandler {
         // 🐛 DEBUG: Log health update
         if (this.settings && this.settings.debugEnemies) {
             const oldHP = mob.getCurrentHP();
-            console.log(`[MobsHandler] 💔 HP Update | ID=${mobId} | ${oldHP}→${currentHP}/${mob.maxHealth} (Δ${hpDelta}) | Attacker=${attackerId}`);
+            if (this.settings && this.settings.debugEnemies && window.logger) {
+                window.logger.debug('MOB_HEALTH', 'HealthUpdate', {
+                    mobId: mobId,
+                    oldHP: oldHP,
+                    newHP: currentHP,
+                    maxHealth: mob.maxHealth,
+                    delta: hpDelta,
+                    attackerId: attackerId
+                });
+            }
         }
 
         // Handle death (currentHP is undefined when entity dies)
         if (currentHP === undefined || currentHP <= 0) {
             if (this.settings && this.settings.debugEnemies) {
-                console.log(`[MobsHandler] ☠️ Mob DIED | ID=${mobId} TypeID=${mob.typeId} | Removing from list`);
+                if (window.logger) {
+                    window.logger.debug('MOB', 'MobDied', {
+                        mobId: mobId,
+                        typeId: mob.typeId
+                    });
+                }
             }
             this.removeMob(mobId);
             return;
@@ -755,7 +815,7 @@ class MobsHandler {
         const mob = this.mobsList.find(m => m.id === mobId);
 
         // 🐛 DEBUG: Log RegenerationHealthChanged avec analyse HP
-        if (this.settings.debugEnemies && window.logger) {
+        if (this.settings && this.settings.debugEnemies && window.logger) {
             const allParams = {};
             for (let key in parameters) {
                 if (parameters.hasOwnProperty(key)) {
@@ -810,7 +870,14 @@ class MobsHandler {
 
             // 🐛 DEBUG: Log bulk processing
             if (this.settings && this.settings.debugEnemies) {
-                console.log(`[MobsHandler] 📦 Bulk HP Update [${i}/${currentHPs.length}] | Δ${hpDeltas[i]} → ${currentHPs[i]}`);
+                if (window.logger) {
+                    window.logger.debug('MOB_HEALTH', 'BulkHPUpdate', {
+                        index: i,
+                        total: currentHPs.length,
+                        delta: hpDeltas[i],
+                        newHP: currentHPs[i]
+                    });
+                }
             }
 
             this.updateMobHealth(singleParams);
