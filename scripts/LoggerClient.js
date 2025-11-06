@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
             this.wsClient = socket;
             this.buffer = [];
             this.sessionId = this.generateSessionId();
-            this.maxBufferSize = 50;
+            this.maxBufferSize = 100;
             this.flushInterval = 5000;
 
             this.startFlushInterval();

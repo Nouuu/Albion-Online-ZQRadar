@@ -1,7 +1,30 @@
 # 🐛 Debug & Logging System - Guide Complet
 
 > **Date:** 2025-11-06
-> **Version:** 2.1 - Refactoring catégories debug
+> **Version:** 2.2 - Refactoring constantes & filtrage centralisé
+
+## 🔄 Migration v2.1 → v2.2
+
+**Changements majeurs :**
+
+- ✅ **Nouveau fichier** : `scripts/constants/LoggerConstants.js` - Constantes centralisées
+  - 42 CATEGORIES (MOB, HARVEST, PLAYER, etc.)
+  - 90+ EVENTS (NewMobEvent, HarvestStart, etc.)
+  - CATEGORY_SETTINGS_MAP (mapping catégorie → setting)
+
+- ✅ **Filtrage centralisé** : LoggerClient.shouldLog() - Lit localStorage en temps réel
+  - Suppression de ~40+ conditions `if (settings.debugX && window.logger)`
+  - Handlers n'ont plus besoin de vérifier settings
+  - Exit early pour performance optimale
+
+- ✅ **Constantes partout** : Remplacement de TOUS les strings hardcodés
+  - ❌ AVANT : `window.logger.debug('MOB', 'NewMobEvent', {...})`
+  - ✅ APRÈS : `window.logger?.debug(this.CATEGORIES.MOB, this.EVENTS.NewMobEvent, {...})`
+
+- ✅ **Patterns standardisés** : Import cohérent dans tout le code
+  - Classes : `this.CATEGORIES`, `this.EVENTS` (import dans constructor)
+  - Scripts locaux : `CATEGORIES`, `EVENTS` (import en haut du module)
+  - Fonctions globales : `window.CATEGORIES`, `window.EVENTS`
 
 ## 🔄 Migration v2.0 → v2.1
 
@@ -33,17 +56,19 @@
 ### Objectif
 Fournir un système de debug et logging **centralisé**, **dynamique** et **facile d'utilisation** pour tracer les événements dans le radar Albion Online.
 
-### Principes
-- ✅ **Centralisation** : Tous les contrôles dans Settings.ejs
-- ✅ **Pas de duplication** : Un seul endroit pour chaque setting
-- ✅ **Mise à jour dynamique** : Changements instantanés sans reload
+### Principes v2.2
+- ✅ **Centralisation complète** : Filtrage dans LoggerClient uniquement
+- ✅ **Zéro duplication** : ~40+ conditions supprimées des handlers
+- ✅ **Type-safe** : Constantes pour catégories et events (42 CATEGORIES, 90+ EVENTS)
+- ✅ **Temps réel** : Changements instantanés sans reload (lit localStorage sans cache)
 - ✅ **Persistance** : Settings sauvegardés dans localStorage
+- ✅ **KISS** : Handlers simples, pas de logique de filtrage
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Architecture v2.2
 
-### Flux de Données
+### Flux de Données v2.2 (Simplifié)
 
 ```
 ┌─────────────────┐
@@ -56,42 +81,59 @@ Fournir un système de debug et logging **centralisé**, **dynamique** et **faci
 │  localStorage   │ ← Sauvegarde automatique
 │   (Storage)     │
 └────────┬────────┘
-         │ Custom setItem override
+         │ Lecture en temps réel (pas de cache)
+         ▼
+┌──────────────────────────┐
+│  LoggerClient.shouldLog()│ ← Filtrage centralisé
+│  (Décision unique)       │
+└────────┬─────────────────┘
+         │ true/false
          ▼
 ┌─────────────────┐
-│   Settings.js   │ ← settings.update() appelé automatiquement
-│   (État)        │
-└────────┬────────┘
-         │ Propriétés mises à jour
-         ▼
-┌─────────────────┐
-│   Handlers      │ ← Vérifient this.settings.logXXX
-│  (Logique)      │
+│   Handlers      │ ← Appellent window.logger?.debug() directement
+│  (Logique)      │    PAS de vérification settings !
 └─────────────────┘
 ```
 
-### Composants
+### Composants v2.2
 
-#### 1. **Interface Utilisateur** (views/main/settings.ejs)
+#### 1. **LoggerConstants.js** (NOUVEAU v2.2)
+- **Fichier:** `scripts/constants/LoggerConstants.js`
+- **42 CATEGORIES** : MOB, HARVEST, PLAYER, CHEST, etc.
+- **90+ EVENTS** : NewMobEvent, HarvestStart, HealthUpdate, etc.
+- **CATEGORY_SETTINGS_MAP** : Mapping catégorie → setting
+  - MOB → debugEnemies
+  - HARVEST → debugHarvestables
+  - null pour catégories toujours loggées
+
+#### 2. **LoggerClient.shouldLog()** (NOUVEAU v2.2)
+- **Fichier:** `scripts/LoggerClient.js`
+- **Filtrage centralisé** : Un seul endroit pour toute la logique
+- **Temps réel** : Lit localStorage.getItem() sans cache
+- **Exit early** : Return immédiat si filtré (performance)
+
+#### 3. **Interface Utilisateur** (views/main/settings.ejs)
 - **Section "🐛 Debug & Logging"**
-- 3 checkboxes globales
+- Checkboxes globales pour debug
 - Bouton Download Debug Logs
 - Liens vers pages spécialisées
 
-#### 2. **Stockage** (localStorage)
+#### 4. **Stockage** (localStorage)
 - Clés préfixées par `setting`
 - Valeurs: `"true"` ou `"false"` (strings)
 - Persistant entre sessions
+- **Lu en temps réel** par LoggerClient (pas de cache)
 
-#### 3. **État Global** (scripts/Utils/Settings.js)
-- Classe `Settings` avec propriétés
+#### 5. **État Global** (scripts/Utils/Settings.js)
+- Classe `Settings` avec propriétés (optionnel en v2.2)
 - Méthode `update()` pour rafraîchir
-- Méthode `returnLocalBool()` pour lire
+- **Note:** Les handlers n'ont plus besoin de vérifier settings
 
-#### 4. **Handlers** (scripts/Handlers/*.js)
-- Vérifient `this.settings.logXXX`
-- Loggent conditionnellement
-- Accès en lecture seule
+#### 6. **Handlers** (scripts/Handlers/*.js)
+- **v2.2:** Appellent `window.logger?.debug()` directement
+- **Plus de conditions** `if (settings.debugX)`
+- Importent constantes dans constructor
+- Code simplifié et maintenable
 
 ---
 
@@ -232,109 +274,188 @@ onHarvestStart(harvestableId) {
 
 ---
 
-## 👨‍💻 Guide Développeur
+## 👨‍💻 Guide Développeur v2.2
 
-### Ajouter un Nouveau Setting de Debug
+### Patterns d'Import des Constantes
 
-#### 1. Ajouter la propriété dans Settings.js
+#### 1. Classes (Handlers, Drawings)
 
 ```javascript
-// Constructor (ligne ~200)
-this.myNewDebugSetting = false;
-
-// update() method (ligne ~480)
-this.myNewDebugSetting = this.returnLocalBool("settingMyNewDebug");
+class MobsHandler {
+    constructor(settings) {
+        // Import constantes dans constructor
+        const { CATEGORIES, EVENTS } = window;
+        this.CATEGORIES = CATEGORIES;
+        this.EVENTS = EVENTS;
+        this.settings = settings;
+    }
+    
+    NewMobEvent(params) {
+        // ✅ v2.2 - Filtrage automatique, pas de if
+        window.logger?.debug(this.CATEGORIES.MOB, this.EVENTS.NewMobEvent, {
+            id: params[0],
+            typeId: params[1]
+        });
+    }
+}
 ```
 
-#### 2. Ajouter le checkbox dans settings.ejs
+#### 2. Scripts avec Scope Local (Utils.js)
+
+```javascript
+// Import en haut du module
+const { CATEGORIES, EVENTS } = window;
+
+// Utilisation directe
+window.logger?.info(CATEGORIES.WEBSOCKET, EVENTS.Connected, {
+    page: 'drawing'
+});
+```
+
+#### 3. Fonctions Globales (ResourcesHelper.js)
+
+```javascript
+function clearCache() {
+    // Utiliser window.CATEGORIES directement
+    window.logger?.info(window.CATEGORIES.CACHE, window.EVENTS.CacheCleared, {});
+}
+```
+
+### Ajouter une Nouvelle Catégorie/Event
+
+#### 1. Ajouter dans LoggerConstants.js
+
+```javascript
+const CATEGORIES = {
+    // ... existants
+    MY_FEATURE: 'MY_FEATURE'
+};
+
+const EVENTS = {
+    // ... existants
+    MyFeatureStart: 'MyFeatureStart',
+    MyFeatureEnd: 'MyFeatureEnd'
+};
+
+const CATEGORY_SETTINGS_MAP = {
+    // ... existants
+    MY_FEATURE: 'debugMyFeature', // ou null si toujours loggé
+};
+```
+
+#### 2. Ajouter le checkbox dans settings.ejs (si nouveau setting)
 
 ```html
 <label class="flex items-center space-x-2">
   <input 
     type="checkbox" 
-    id="settingMyNewDebug" 
+    id="settingDebugMyFeature" 
     class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md"
   >
-  <span class="text-gray-600 dark:text-gray-300">🆕 My New Debug Feature</span>
+  <span class="text-gray-600 dark:text-gray-300">🆕 Debug My Feature</span>
 </label>
 ```
 
-#### 3. Ajouter l'event listener dans settings.ejs
+#### 3. Ajouter event listener dans settings.ejs
 
 ```javascript
-const settingMyNewDebugCheckbox = document.getElementById("settingMyNewDebug");
+const settingDebugMyFeature = document.getElementById("settingDebugMyFeature");
 
-settingMyNewDebugCheckbox.addEventListener("change", function (event) {
-  saveToLocalStorage("settingMyNewDebug", event.target.checked);
-  if (event.target.checked) {
-    console.log("🆕 My New Debug ENABLED");
-  } else {
-    console.log("🆕 My New Debug DISABLED");
-  }
+settingDebugMyFeature.addEventListener("change", function (event) {
+  saveToLocalStorage("settingDebugMyFeature", event.target.checked);
 });
 
 // Initialize
-settingMyNewDebugCheckbox.checked = getFromLocalStorage("settingMyNewDebug") === "true";
+settingDebugMyFeature.checked = getFromLocalStorage("settingDebugMyFeature") === "true";
 ```
 
-#### 4. Utiliser dans un Handler
+#### 4. Utiliser dans le Code
 
 ```javascript
-someMethod() {
-    if (this.settings && this.settings.myNewDebugSetting) {
-        console.log('🆕 [MyHandler] Debug info:', data);
-    }
+// ✅ CORRECT v2.2 - Filtrage automatique
+window.logger?.debug(this.CATEGORIES.MY_FEATURE, this.EVENTS.MyFeatureStart, {
+    data: 'some data'
+});
+
+// ❌ INCORRECT v2.2 - Ne PAS vérifier settings manuellement
+if (this.settings.debugMyFeature && window.logger) {
+    window.logger.debug(...); // Duplication inutile !
 }
 ```
 
-### Best Practices
+### Best Practices v2.2
 
 #### ✅ DO
-- Préfixer toutes les clés localStorage par `setting`
-- Vérifier `this.settings &&` avant accès
-- Logger avec emojis pour clarté (🐛 📊 🔍 etc.)
-- Utiliser des formats structurés (JSON, CSV)
-- Inclure timestamp dans les logs
+
+- **Utiliser constantes partout** : `this.CATEGORIES.MOB`, `this.EVENTS.NewMobEvent`
+- **Importer dans constructor** (classes) : `const { CATEGORIES, EVENTS } = window;`
+- **Optional chaining** : `window.logger?.debug(...)` au lieu de `if (window.logger)`
+- **Pas de vérification settings** : Laisser LoggerClient.shouldLog() filtrer
+- **Ajouter CATEGORY_SETTINGS_MAP** : Définir le mapping pour nouvelles catégories
+- **Temps réel garanti** : LoggerClient lit localStorage sans cache
 
 #### ❌ DON'T
-- Ne pas accéder directement à localStorage dans les handlers
-- Ne pas dupliquer les checkboxes entre pages
-- Ne pas oublier d'ajouter dans `update()`
-- Ne pas logger sans vérifier le setting
-- Ne pas utiliser `console.log()` sans condition
+
+- **Ne PAS** utiliser strings hardcodés : `'MOB'` → utiliser `CATEGORIES.MOB`
+- **Ne PAS** vérifier settings manuellement : `if (settings.debugX)` → obsolète en v2.2
+- **Ne PAS** dupliquer le filtrage : LoggerClient.shouldLog() s'en occupe
+- **Ne PAS** oublier d'importer constantes : Import obligatoire dans constructor
+- **Ne PAS** utiliser `console.log()` : Utiliser `window.logger`
+
+#### Migration v2.1 → v2.2
+
+```javascript
+// ❌ ANCIEN v2.1
+if (this.settings.debugEnemies && window.logger) {
+    window.logger.debug('MOB', 'NewMobEvent', {...});
+}
+
+// ✅ NOUVEAU v2.2
+window.logger?.debug(this.CATEGORIES.MOB, this.EVENTS.NewMobEvent, {...});
+```
 
 ---
 
-## 🔧 Troubleshooting
+## 🔧 Troubleshooting v2.2
 
 ### Les changements ne prennent pas effet
 
 **Symptôme:** Checkbox changée mais logs n'apparaissent pas
 
-**Solutions:**
-1. ✅ Vérifier console (F12) : Le log `🔄 [Settings] Update` apparaît ?
-2. ✅ Vérifier localStorage : `localStorage.getItem("settingXXX")` = `"true"` ?
-3. ✅ Vérifier Settings.js : La propriété est dans `update()` ?
-4. ✅ Vérifier Handler : Condition `if (this.settings.XXX)` présente ?
+**Solutions v2.2:**
+1. ✅ Vérifier localStorage : `localStorage.getItem("settingDebugEnemies")` = `"true"` ?
+2. ✅ Vérifier CATEGORY_SETTINGS_MAP : Le mapping catégorie → setting existe ?
+3. ✅ Vérifier LoggerConstants.js : La catégorie/event est définie ?
+4. ✅ Vérifier console : LoggerClient.shouldLog() retourne true ?
 
 ### Logs n'apparaissent pas dans console
 
 **Symptôme:** Setting activé mais rien dans console
 
-**Solutions:**
+**Solutions v2.2:**
 1. ✅ Vérifier niveau console : Warnings/Logs pas filtrés ?
 2. ✅ Vérifier radar connecté : Handlers pas initialisés avant connexion
 3. ✅ Vérifier événement : L'action loguée se produit vraiment ?
 4. ✅ Vérifier F12 : Console ouverte et visible ?
+5. ✅ Vérifier constantes : `window.CATEGORIES` et `window.EVENTS` chargés ?
 
-### "Cannot read properties of undefined (reading 'logXXX')"
+### "Cannot read properties of undefined (reading 'MOB')"
 
 **Symptôme:** Erreur au chargement
 
-**Solutions:**
-1. ✅ Ajouter vérification : `this.settings &&` avant accès
-2. ✅ Vérifier constructeur : Handler reçoit bien `settings` ?
-3. ✅ Vérifier initialisation : Utils.js charge Settings avant handlers ?
+**Solutions v2.2:**
+1. ✅ Vérifier layout.ejs : LoggerConstants.js chargé avant les autres scripts ?
+2. ✅ Vérifier constructor : Import `const { CATEGORIES, EVENTS } = window;` présent ?
+3. ✅ Vérifier timing : Handler instancié après chargement des constantes ?
+
+### Strings hardcodés détectés
+
+**Symptôme:** Code utilise encore `'MOB'` au lieu de `CATEGORIES.MOB`
+
+**Solutions v2.2:**
+1. ✅ Remplacer tous les strings par constantes
+2. ✅ Utiliser recherche globale pour trouver : `window.logger.*(\'[A-Z_]+\'`
+3. ✅ Vérifier MCP git diff pour s'assurer que tout est migré
 
 ### Download Debug Logs ne fonctionne pas
 
@@ -392,6 +513,19 @@ someMethod() {
 ---
 
 ## 📝 Changelog
+
+### v2.2 - 2025-11-06 (NOUVEAU)
+- ✅ **Constantes centralisées** : LoggerConstants.js (42 CATEGORIES, 90+ EVENTS)
+- ✅ **Filtrage centralisé** : LoggerClient.shouldLog() - Lit localStorage en temps réel
+- ✅ **Suppression duplication** : ~40+ conditions `if (settings.debugX)` supprimées
+- ✅ **Type-safe** : Remplacement de TOUS les strings par constantes
+- ✅ **Patterns standardisés** : Import cohérent (classes, scripts, fonctions globales)
+- ✅ **CATEGORY_SETTINGS_MAP** : Mapping automatique catégorie → setting
+- ✅ **Performance** : Exit early dans shouldLog()
+- ✅ **KISS compliant** : Handlers ultra-simples, zéro logique de filtrage
+- ✅ **15 fichiers refactorés** : MobsHandler, HarvestablesHandler, Utils.js, etc.
+- ✅ **Documentation complète** : LOGGING.md et DEBUG_LOGGING_GUIDE.md v2.2
+- ✅ **Mémoire MCP** : logging_system_v2.2_constants_refactoring
 
 ### v2.1 - 2025-11-06
 - ✅ Refactoring complet catégories debug
