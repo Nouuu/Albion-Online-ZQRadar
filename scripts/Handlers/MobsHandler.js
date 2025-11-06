@@ -173,7 +173,7 @@ class MobsHandler {
     }
 
     printLoggingGuide() {
-        if (!this.settings.logLivingCreatures) return;
+        if (!this.settings.debugEnemies) return;
 
         // 🐛 DEBUG (filtré par debugEnemies) - Guide de collecte verbeux
         if (this.settings && this.settings.debugEnemies && window.logger) {
@@ -281,7 +281,7 @@ class MobsHandler {
 
     // 📊 Enhanced logging for living resources with validation
     logLivingCreatureEnhanced(id, typeId, health, enchant, rarity, tier, type, name) {
-        if (!this.settings.logLivingCreatures) return;
+        if (!this.settings.debugHarvestables) return;
 
         const typeLabel = type === EnemyType.LivingSkinnable ? "Skinnable" : "Harvestable";
         const isAlive = health > 0;
@@ -328,7 +328,7 @@ class MobsHandler {
 
         // JSON for parsing
         if (window.logger) {
-            window.logger.info('LIVING_CREATURE', 'NewLivingCreature', logData);
+            window.logger.debug('HARVEST', 'NewLivingCreature', logData);
         }
 
         // Human-readable format
@@ -338,7 +338,7 @@ class MobsHandler {
         const hpValidation = metadata ? ` (expected ~${metadata.validation.expectedHP}, diff: ${metadata.validation.hpDiff})` : '';
 
         if (window.logger) {
-            window.logger.info('LIVING_CREATURE', 'LivingCreatureCSV', {
+            window.logger.debug('HARVEST', 'LivingCreatureCSV', {
                 typeId: typeId,
                 name: name,
                 tier: tier,
@@ -386,8 +386,8 @@ class MobsHandler {
     }
 
     showCachedTypeIDs() {
-        // 🐛 DEBUG (filtré par debugEnemies) - Affichage verbeux pour debug
-        if (window.logger && this.settings && this.settings.debugEnemies) {
+        // ℹ️ INFO (toujours loggué) - Affichage du cache (action utilisateur)
+        if (window.logger) {
             const sorted = Array.from(this.staticResourceTypeIDs.entries())
                 .sort((a, b) => a[0] - b[0]);
 
@@ -397,13 +397,10 @@ class MobsHandler {
                 tier: info.tier
             }));
 
-            // ℹ️ INFO (toujours loggé) - Affichage du cache (action utilisateur)
-            if (window.logger) {
-                window.logger.info('MOB', 'DisplayCachedTypeIDs', {
-                    total: this.staticResourceTypeIDs.size,
-                    entries
-                });
-            }
+            window.logger.info('MOB', 'DisplayCachedTypeIDs', {
+                total: this.staticResourceTypeIDs.size,
+                entries
+            });
         }
     }
 
@@ -424,7 +421,7 @@ class MobsHandler {
         if (knownInfo && knownInfo[2]) {
             // Use mobinfo name (Fiber, Hide, Wood, Ore, Rock)
             resourceType = knownInfo[2];
-            if (this.settings && this.settings.logLivingResources && window.logger) {
+            if (this.settings && this.settings.debugEnemies && window.logger) {
                 window.logger.debug('MOB', 'UsingMobInfo', {
                     typeId,
                     resourceType,
@@ -540,10 +537,10 @@ class MobsHandler {
             }
 
             // 🔍 DEBUG: Log ALL parameters for living resources to find enchantment
-            if (this.settings && this.settings.logLivingCreatures && window.logger) {
+            if (this.settings && this.settings.debugEnemies && window.logger) {
                 const knownInfo = this.mobinfo[typeId];
                 if (knownInfo && (knownInfo[1] === 0 || knownInfo[1] === 1)) { // Living resources
-                    window.logger.debug('LIVING_CREATURE', 'NewLivingCreature', {
+                    window.logger.debug('MOB', 'NewLivingCreature', {
                         typeId,
                         allParams: {
                             p19_rarity: parameters[19],
@@ -700,7 +697,7 @@ class MobsHandler {
         }
 
         // 📊 Enhanced logging for living creatures
-        if (this.settings && this.settings.logLivingCreatures) {
+        if (this.settings && this.settings.debugHarvestables) {
             if (mob.type === EnemyType.LivingHarvestable || mob.type === EnemyType.LivingSkinnable) {
                 this.logLivingCreatureEnhanced(id, typeId, health, enchant, rarity, mob.tier, mob.type, mob.name);
             }
@@ -713,14 +710,13 @@ class MobsHandler {
         this.harvestablesNotGood = this.harvestablesNotGood.filter(x => x.id !== id);
         const after = this.mobsList.length;
 
-        if (this.settings && this.settings.logLivingResources && before !== after) {
-            if (window.logger) {
-                window.logger.info('MOB', 'MobRemoved', {
-                    id: id,
-                    livingResourcesBefore: before,
-                    livingResourcesAfter: after
-                });
-            }
+        // 🐛 DEBUG (filtré par debugEnemies) - Suppression de mob détaillée
+        if (this.settings && this.settings.debugEnemies && before !== after && window.logger) {
+            window.logger.debug('MOB', 'MobRemoved', {
+                id: id,
+                livingResourcesBefore: before,
+                livingResourcesAfter: after
+            });
         }
     }
 
@@ -769,29 +765,25 @@ class MobsHandler {
         if (!mob) return; // Not a mob (probably player)
 
         // 🐛 DEBUG: Log health update
-        if (this.settings && this.settings.debugEnemies) {
+        if (this.settings.debugEnemies && window.logger) {
             const oldHP = mob.getCurrentHP();
-            if (this.settings && this.settings.debugEnemies && window.logger) {
-                window.logger.debug('MOB_HEALTH', 'HealthUpdate', {
-                    mobId: mobId,
-                    oldHP: oldHP,
-                    newHP: currentHP,
-                    maxHealth: mob.maxHealth,
-                    delta: hpDelta,
-                    attackerId: attackerId
-                });
-            }
+            window.logger.debug('MOB_HEALTH', 'HealthUpdate', {
+                mobId: mobId,
+                oldHP: oldHP,
+                newHP: currentHP,
+                maxHealth: mob.maxHealth,
+                delta: hpDelta,
+                attackerId: attackerId
+            });
         }
 
         // Handle death (currentHP is undefined when entity dies)
         if (currentHP === undefined || currentHP <= 0) {
-            if (this.settings && this.settings.debugEnemies) {
-                if (window.logger) {
-                    window.logger.debug('MOB', 'MobDied', {
-                        mobId: mobId,
-                        typeId: mob.typeId
-                    });
-                }
+            if (this.settings.debugEnemies && window.logger) {
+                window.logger.debug('MOB', 'MobDied', {
+                    mobId: mobId,
+                    typeId: mob.typeId
+                });
             }
             this.removeMob(mobId);
             return;

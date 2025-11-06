@@ -379,14 +379,6 @@
               📊 Global Logging Toggles
             </h3>
             <label class="flex items-center space-x-2 mb-2">
-              <input type="checkbox" id="settingLogLivingCreatures" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-              <span class="text-gray-600 dark:text-gray-300">📊 Living Creatures (mobs)</span>
-            </label>
-            <label class="flex items-center space-x-2 mb-2">
-              <input type="checkbox" id="settingLogLivingResources" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-              <span class="text-gray-600 dark:text-gray-300">🔍 Living Resources (CSV)</span>
-            </label>
-            <label class="flex items-center space-x-2">
               <input type="checkbox" id="settingDebugEnemies" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
               <span class="text-gray-600 dark:text-gray-300">🐛 Debug Enemies/Mobs (verbose)</span>
             </label>
@@ -405,6 +397,10 @@
             <label class="flex items-center space-x-2">
               <input type="checkbox" id="settingDebugFishing" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
               <span class="text-gray-600 dark:text-gray-300">🎣 Debug Fishing (verbose)</span>
+            </label>
+            <label class="flex items-center space-x-2">
+              <input type="checkbox" id="settingDebugHarvestables" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+              <span class="text-gray-600 dark:text-gray-300">🌱 Debug Harvestables (verbose)</span>
             </label>
 
             <div class="mt-4 pt-3 border-t border-gray-300 dark:border-gray-600">
@@ -657,13 +653,12 @@
     });
 
     // Debug settings
-    const settingLogLivingCreaturesCheckbox = document.getElementById("settingLogLivingCreatures");
-    const settingLogLivingResourcesCheckbox = document.getElementById("settingLogLivingResources");
     const settingDebugEnemiesCheckbox = document.getElementById("settingDebugEnemies");
     const settingDebugPlayersCheckbox = document.getElementById("settingDebugPlayers");
     const settingDebugChestsCheckbox = document.getElementById("settingDebugChests");
     const settingDebugDungeonsCheckbox = document.getElementById("settingDebugDungeons");
     const settingDebugFishingCheckbox = document.getElementById("settingDebugFishing");
+    const settingDebugHarvestablesCheckbox = document.getElementById("settingDebugHarvestables");
 
     // 🆕 Console & Server debug settings
     const settingLogToConsoleCheckbox = document.getElementById("settingLogToConsole");
@@ -682,8 +677,6 @@
           language: navigator.language
         },
         settings: {
-          logLivingCreatures: localStorage.getItem("settingLogLivingCreatures") === "true",
-          logLivingResources: localStorage.getItem("settingLogLivingResources") === "true",
           debugEnemies: localStorage.getItem("settingDebugEnemies") === "true"
         },
         localStorage: Object.keys(localStorage).reduce((acc, key) => {
@@ -706,24 +699,6 @@
 
       console.log('📥 Debug logs downloaded:', debugData);
     }
-
-    settingLogLivingCreaturesCheckbox.addEventListener("change", function (event) {
-      saveToLocalStorage("settingLogLivingCreatures", event.target.checked);
-      if (event.target.checked) {
-        console.log("📊 Living Creatures Enhanced Logging ENABLED");
-      } else {
-        console.log("📊 Living Creatures Enhanced Logging DISABLED");
-      }
-    });
-
-    settingLogLivingResourcesCheckbox.addEventListener("change", function (event) {
-      saveToLocalStorage("settingLogLivingResources", event.target.checked);
-      if (event.target.checked) {
-        console.log("🔍 Living Resources Logging ENABLED");
-      } else {
-        console.log("🔍 Living Resources Logging DISABLED");
-      }
-    });
 
     settingDebugEnemiesCheckbox.addEventListener("change", function (event) {
       saveToLocalStorage("settingDebugEnemies", event.target.checked);
@@ -767,6 +742,15 @@
         console.log("🎣 Debug Fishing ENABLED");
       } else {
         console.log("🎣 Debug Fishing DISABLED");
+      }
+    });
+
+    settingDebugHarvestablesCheckbox.addEventListener("change", function (event) {
+      saveToLocalStorage("settingDebugHarvestables", event.target.checked);
+      if (event.target.checked) {
+        console.log("🌱 Debug Harvestables ENABLED");
+      } else {
+        console.log("🌱 Debug Harvestables DISABLED");
       }
     });
 
@@ -849,13 +833,12 @@
     settingClusterMinSizeInput.value = getFromLocalStorage("settingClusterMinSize") || "2";
 
     // Initialize debug settings
-    settingLogLivingCreaturesCheckbox.checked = getFromLocalStorage("settingLogLivingCreatures") === "true";
-    settingLogLivingResourcesCheckbox.checked = getFromLocalStorage("settingLogLivingResources") === "true";
     settingDebugEnemiesCheckbox.checked = getFromLocalStorage("settingDebugEnemies") === "true";
     settingDebugPlayersCheckbox.checked = getFromLocalStorage("settingDebugPlayers") === "true";
     settingDebugChestsCheckbox.checked = getFromLocalStorage("settingDebugChests") === "true";
     settingDebugDungeonsCheckbox.checked = getFromLocalStorage("settingDebugDungeons") === "true";
     settingDebugFishingCheckbox.checked = getFromLocalStorage("settingDebugFishing") === "true";
+    settingDebugHarvestablesCheckbox.checked = getFromLocalStorage("settingDebugHarvestables") === "true";
 
     // Initialize console & server settings (defaults)
     settingLogToConsoleCheckbox.checked = getFromLocalStorage("settingLogToConsole") === null ? true : getFromLocalStorage("settingLogToConsole") === "true";

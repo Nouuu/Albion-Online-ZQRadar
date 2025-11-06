@@ -106,7 +106,7 @@ class HarvestablesHandler
     // Parameters[2] = quantité totale dans l'inventaire
     onNewSimpleItem(itemId, newQuantity) {
         // 🐛 DEBUG: Log détaillé de la découverte d'ItemID
-        if (this.settings.logLivingResources && window.logger) {
+        if (this.settings.debugHarvestables && window.logger) {
             window.logger.debug('HARVEST', 'NewSimpleItem_DETAIL', {
                 itemId,
                 quantity: newQuantity,
@@ -569,7 +569,7 @@ class HarvestablesHandler
     HarvestUpdateEvent(Parameters)
     {
         // 🐛 DEBUG ULTRA-DÉTAILLÉ: Log ALL parameters pour identifier patterns
-        if (this.settings.logLivingResources && window.logger) {
+        if (this.settings.debugHarvestables && window.logger) {
             const allParams = {};
             for (let key in Parameters) {
                 if (Parameters.hasOwnProperty(key)) {
@@ -601,7 +601,7 @@ class HarvestablesHandler
 
                 // CAS 1: trackedByNewSimpleItem = true → Déjà tracké par NewSimpleItem (living resources)
                 if (cacheEntry.trackedByNewSimpleItem) {
-                    if (this.settings && this.settings.logLivingResources && window.logger) {
+                    if (this.settings && this.settings.debugHarvestables && window.logger) {
                         window.logger.debug('HARVEST', 'AlreadyTracked', {
                             note: 'Already tracked by NewSimpleItem - SKIP'
                         });
@@ -663,7 +663,7 @@ class HarvestablesHandler
         // On met à jour uniquement si la valeur a augmenté (régénération)
         const newSize = Parameters[1];
         if (newSize > harvestable.size) {
-            if (this.settings && this.settings.logLivingResources && window.logger) {
+            if (this.settings && this.settings.debugHarvestables && window.logger) {
                 window.logger.debug('HARVEST', 'Regeneration', {
                     oldSize: harvestable.size,
                     newSize

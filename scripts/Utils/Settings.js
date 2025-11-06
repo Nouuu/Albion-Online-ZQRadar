@@ -138,8 +138,6 @@ export class Settings
         };
 
         this.livingResourcesID = false;
-        this.logLivingResources = false;
-        this.logLivingCreatures = false; // Enhanced CSV logging for living resources
         // logFormat: 'json' | 'human' — controls how logs are pretty-printed in console
         this.logFormat = localStorage.getItem('logFormat') || 'human';
         //#endregion
@@ -189,6 +187,7 @@ export class Settings
         this.debugChests = false;
         this.debugDungeons = false;
         this.debugFishing = false;
+        this.debugHarvestables = false;
 
         // 🐛 Debug & Logging settings
         this.logToConsole = true; // Default: enabled
@@ -459,8 +458,6 @@ export class Settings
 
         this.livingResourcesHealthBar = this.returnLocalBool("settingLivingResourcesHealthBar");
         this.livingResourcesID = this.returnLocalBool("settingLivingResourcesID");
-        this.logLivingResources = this.returnLocalBool("settingLogLivingResources");
-        this.logLivingCreatures = this.returnLocalBool("settingLogLivingCreatures");
         this.resourceSize = this.returnLocalBool("settingRawSize");
 
         // 📊 Load overlay settings from localStorage (matching UI setting names)
@@ -507,18 +504,14 @@ export class Settings
         this.debugPlayers = this.returnLocalBool("settingDebugPlayers");
         this.debugChests = this.returnLocalBool("settingDebugChests");
         this.debugDungeons = this.returnLocalBool("settingDebugDungeons");
+        this.debugFishing = this.returnLocalBool("settingDebugFishing");
+        this.debugHarvestables = this.returnLocalBool("settingDebugHarvestables");
 
         // 🐛 Debug & Logging settings (dynamic update)
         this.logToConsole = this.returnLocalBool("settingLogToConsole", true); // Default: true
         this.logToServer = this.returnLocalBool("settingLogToServer"); // Default: false
         this.debugRawPacketsConsole = this.returnLocalBool("settingDebugRawPacketsConsole"); // Default: false
         this.debugRawPacketsServer = this.returnLocalBool("settingDebugRawPacketsServer"); // Default: false
-
-
-        this.logLivingCreatures = this.returnLocalBool("settingLogLivingCreatures");
-        this.logLivingResources = this.returnLocalBool("settingLogLivingResources");
-        this.livingResourcesHealthBar = this.returnLocalBool("settingLivingResourcesHealthBar");
-        this.livingResourcesID = this.returnLocalBool("settingLivingResourcesID");
 
         //#region Mists
         // TODO
