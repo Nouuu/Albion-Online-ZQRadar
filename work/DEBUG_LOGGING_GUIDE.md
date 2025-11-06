@@ -1,7 +1,19 @@
 # 🐛 Debug & Logging System - Guide Complet
 
-> **Date:** 2025-11-05  
-> **Version:** 2.0 - Système centralisé avec mise à jour dynamique
+> **Date:** 2025-11-06
+> **Version:** 2.1 - Refactoring catégories debug
+
+## 🔄 Migration v2.0 → v2.1
+
+**Changements de catégories debug :**
+
+- ❌ **Supprimé** : `logLivingCreatures` → ✅ **Remplacé par** : `debugEnemies`
+- ❌ **Supprimé** : `logLivingResources` → ✅ **Remplacé par** : `debugHarvestables`
+
+**Nouveaux settings ajoutés :**
+- ✅ `debugHarvestables` : Debug verbose des ressources récoltables (living + static)
+- ✅ `debugFishing` : Debug verbose de la pêche
+- ✅ `debugPlayers`, `debugChests`, `debugDungeons` : Complètement intégrés
 
 ---
 
@@ -89,11 +101,14 @@ Fournir un système de debug et logging **centralisé**, **dynamique** et **faci
 
 #### Global Logging Toggles
 
-| Checkbox | localStorage Key | Propriété Settings | Usage |
-|----------|------------------|-------------------|-------|
-| 📊 Living Creatures (mobs) | `settingLogLivingCreatures` | `this.logLivingCreatures` | Log JSON enhanced des mobs vivants |
-| 🔍 Living Resources (CSV) | `settingLogLivingResources` | `this.logLivingResources` | Log CSV des ressources récoltées |
-| 🐛 Debug Enemies (verbose) | `settingDebugEnemies` | `this.debugEnemies` | Debug verbose des ennemis |
+| Checkbox              | localStorage Key             | Propriété Settings    | Usage                                   |
+|-----------------------|------------------------------|-----------------------|-----------------------------------------|
+| 🐛 Debug Enemies      | `settingDebugEnemies`        | `this.debugEnemies`   | Debug verbose des ennemis/mobs          |
+| 👥 Debug Players      | `settingDebugPlayers`        | `this.debugPlayers`   | Debug verbose des joueurs               |
+| 📦 Debug Chests       | `settingDebugChests`         | `this.debugChests`    | Debug verbose des coffres               |
+| 🏰 Debug Dungeons     | `settingDebugDungeons`       | `this.debugDungeons`  | Debug verbose des donjons               |
+| 🎣 Debug Fishing      | `settingDebugFishing`        | `this.debugFishing`   | Debug verbose de la pêche               |
+| 🌱 Debug Harvestables | `settingDebugHarvestables`   | `this.debugHarvestables` | Debug verbose des ressources récoltables |
 
 #### Visual Overlays (Pages Spécialisées)
 
@@ -150,8 +165,8 @@ NewMobEvent(parameters) {
         console.log(`[DEBUG_ENEMY] RAW PARAMS | ID=${id} TypeID=${typeId}`);
     }
     
-    // 📊 LOG: Living creatures enhanced
-    if (this.settings && this.settings.logLivingCreatures) {
+    // 🌱 DEBUG: Living creatures enhanced (harvestables)
+    if (this.settings && this.settings.debugHarvestables) {
         this.logLivingCreatureEnhanced(id, typeId, health, ...);
     }
 }
@@ -162,9 +177,9 @@ NewMobEvent(parameters) {
 ```javascript
 onHarvestStart(harvestableId) {
     // ...
-    
-    if (this.settings && this.settings.logLivingResources) {
-        console.log(`🌱 [HarvestablesHandler] HarvestStart`, {
+
+    if (this.settings && this.settings.debugHarvestables && window.logger) {
+        window.logger.debug('HARVEST', 'HarvestStart', {
             harvestableId,
             timestamp: new Date().toISOString()
         });
@@ -378,6 +393,15 @@ someMethod() {
 
 ## 📝 Changelog
 
+### v2.1 - 2025-11-06
+- ✅ Refactoring complet catégories debug
+- ✅ Suppression `logLivingCreatures` → `debugEnemies`
+- ✅ Suppression `logLivingResources` → `debugHarvestables`
+- ✅ Ajout complet : `debugHarvestables`, `debugFishing`
+- ✅ Correction cohérence logs (catégories, niveaux, filtrage)
+- ✅ Suppression alpine.min.js local (-27 KB) - CDN utilisé
+- ✅ Documentation v2.1 complète
+
 ### v2.0 - 2025-11-05
 - ✅ Centralisation complète dans Settings.ejs
 - ✅ Mise à jour dynamique sans reload
@@ -403,10 +427,11 @@ someMethod() {
 
 - **Documentation:**
   - `work/DEBUG_LOGGING_GUIDE.md` - Ce fichier
+  - `docs/technical/LOGGING.md` - Documentation technique complète
   - Memory Serena: `debug-logging-centralization.md`
 
 ---
 
-**Maintenu par:** Équipe ZQRadar  
-**Dernière mise à jour:** 2025-11-05
+**Maintenu par:** Équipe ZQRadar
+**Dernière mise à jour:** 2025-11-06
 

@@ -1,9 +1,21 @@
-# 📊 Système de Logging & Debug - ZQRadar v2.0
+# 📊 Système de Logging & Debug - ZQRadar v2.1
 
-> **Version:** 2.0 (Système centralisé amélioré)  
-> **Dernière mise à jour:** 2025-11-06  
-> **Statut:** ✅ Implémenté et fonctionnel  
+> **Version:** 2.1 (Refactoring catégories debug)
+> **Dernière mise à jour:** 2025-11-06
+> **Statut:** ✅ Implémenté et fonctionnel
 > **Mainteneur:** Nospy
+
+## 🔄 Migration v2.0 → v2.1
+
+**Changements de catégories debug :**
+
+- ❌ **Supprimé** : `logLivingCreatures` → ✅ **Remplacé par** : `debugEnemies`
+- ❌ **Supprimé** : `logLivingResources` → ✅ **Remplacé par** : `debugHarvestables`
+- ❌ **Supprimé** : Catégorie log `LIVING_CREATURE` → ✅ **Remplacé par** : `HARVEST`
+
+**Nouveaux settings ajoutés :**
+- ✅ `debugHarvestables` : Debug verbose des ressources récoltables (living + static)
+- ✅ `debugFishing` : Debug verbose de la pêche (complètement intégré)
 
 ---
 
@@ -68,11 +80,14 @@ qui permet de tracer tous les événements du jeu en temps réel.
 
 ### Debug Settings (Settings.ejs)
 
-| Setting             | localStorage Key            | Propriété Settings   | Usage                              |
-|---------------------|-----------------------------|----------------------|------------------------------------|
-| 📊 Living Creatures | `settingLogLivingCreatures` | `logLivingCreatures` | Log JSON enhanced des mobs vivants |
-| 🔍 Living Resources | `settingLogLivingResources` | `logLivingResources` | Log CSV des ressources récoltées   |
-| 🐛 Debug Enemies    | `settingDebugEnemies`       | `debugEnemies`       | Debug verbose des ennemis          |
+| Setting              | localStorage Key             | Propriété Settings    | Usage                                      |
+|----------------------|------------------------------|-----------------------|--------------------------------------------|
+| 🐛 Debug Enemies     | `settingDebugEnemies`        | `debugEnemies`        | Debug verbose des ennemis/mobs             |
+| 👥 Debug Players     | `settingDebugPlayers`        | `debugPlayers`        | Debug verbose des joueurs                  |
+| 📦 Debug Chests      | `settingDebugChests`         | `debugChests`         | Debug verbose des coffres                  |
+| 🏰 Debug Dungeons    | `settingDebugDungeons`       | `debugDungeons`       | Debug verbose des donjons                  |
+| 🎣 Debug Fishing     | `settingDebugFishing`        | `debugFishing`        | Debug verbose de la pêche                  |
+| 🌱 Debug Harvestables| `settingDebugHarvestables`   | `debugHarvestables`   | Debug verbose des ressources récoltables   |
 
 ### Visual Debug Settings (Pages spécialisées)
 
@@ -117,14 +132,13 @@ window.logger.critical(category, event, data, context);
 
 ### Catégories Utilisées
 
-| Catégorie         | Événements                                   | Fichiers                 | Contrôlé par                                                     |
-|-------------------|----------------------------------------------|--------------------------|------------------------------------------------------------------|
-| `MOB`             | NewMobEvent_RAW                              | MobsHandler.js           | `settingDebugEnemies`                                            |
-| `MOB_HEALTH`      | HealthUpdate, RegenerationHealthChanged      | Utils.js, MobsHandler.js | `settingDebugEnemies`                                            |
-| `LIVING_CREATURE` | NewLivingCreature                            | MobsHandler.js           | `settingLogLivingCreatures`                                      |
-| `HARVEST`         | HarvestStart, HarvestCancel, ItemIdDiscovery | HarvestablesHandler.js   | `settingLogLivingResources`                                      |
-| `HARVEST_HIDE_T4` | Detection, Update, SettingsCheck             | HarvestablesHandler.js   | Toujours actif                                                   |
-| `PACKET_RAW`      | Event_* (tous les événements)                | Utils.js                 | `settingDebugRawPacketsConsole` / `settingDebugRawPacketsServer` |
+| Catégorie         | Événements                                   | Fichiers                       | Contrôlé par                                                     |
+|-------------------|----------------------------------------------|--------------------------------|------------------------------------------------------------------|
+| `MOB`             | NewMobEvent_RAW, UsingMobInfo                | MobsHandler.js                 | `settingDebugEnemies`                                            |
+| `MOB_HEALTH`      | HealthUpdate, RegenerationHealthChanged      | Utils.js, MobsHandler.js       | `settingDebugEnemies`                                            |
+| `HARVEST`         | HarvestStart, HarvestCancel, ItemIdDiscovery, NewLivingCreature | MobsHandler.js, HarvestablesHandler.js | `settingDebugHarvestables`        |
+| `HARVEST_HIDE_T4` | Detection, Update, SettingsCheck             | HarvestablesHandler.js         | `settingDebugHarvestables` (toujours pour T4+)                   |
+| `PACKET_RAW`      | Event_* (tous les événements)                | Utils.js                       | `settingDebugRawPacketsConsole` / `settingDebugRawPacketsServer` |
 
 ### Exemples d'Utilisation
 
@@ -290,8 +304,8 @@ if (settings.debugEnemies && window.logger) {
     window.logger.debug('MOB', 'EventName', {...});
 }
 
-if (settings.logLivingResources && window.logger) {
-    window.logger.info('HARVEST', 'EventName', {...});
+if (settings.debugHarvestables && window.logger) {
+    window.logger.debug('HARVEST', 'EventName', {...});
 }
 
 // Pour RAW packets, le logger gère le filtrage automatiquement
@@ -359,7 +373,7 @@ Chaque composant a son setting de debug :
 
 - Enemies/Mobs → `debugEnemies`
 - Players → `debugPlayers`
-- Harvestables/Resources → `debugHarvestables` ou `logLivingResources` (legacy)
+- Harvestables/Resources → `debugHarvestables`
 - Fishing → `debugFishing`
 - Chests → `debugChests`
 - Dungeons → `debugDungeons`
