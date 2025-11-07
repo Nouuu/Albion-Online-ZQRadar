@@ -248,34 +248,38 @@ function clearTypeIDCache() {
 		const cached = localStorage.getItem('cachedStaticResourceTypeIDs');
 		if (cached) {
 			const entries = JSON.parse(cached);
-			console.log(`[clearTypeIDCache] 🗑️ Clearing ${entries.length} cached entries:`);
-			entries.forEach(([typeId, info]) => {
-				console.log(`  - TypeID ${typeId}: ${info.type} T${info.tier}`);
+			window.logger?.info(window.CATEGORIES.CACHE, window.EVENTS.ClearTypeIDCache, {
+				entriesCount: entries.length,
+				entries: entries.map(([typeId, info]) => ({
+					typeId: typeId,
+					type: info.type,
+					tier: info.tier
+				}))
 			});
 		} else {
-			console.log('[clearTypeIDCache] ℹ️ Cache is already empty');
+			window.logger?.info(window.CATEGORIES.CACHE, window.EVENTS.CacheAlreadyEmpty, {});
 		}
 
 		// Clear localStorage
 		localStorage.removeItem('cachedStaticResourceTypeIDs');
-		console.log('✅ TypeID Cache cleared from localStorage');
+		window.logger?.info(window.CATEGORIES.CACHE, window.EVENTS.TypeIDCacheCleared, {});
 
 		// Confirm and reload to clear in-memory cache too
 		const shouldReload = confirm('✅ TypeID Cache cleared!\n\n⚠️ The radar page needs to reload to clear the in-memory cache.\n\nReload now?');
 		if (shouldReload) {
 			// Find and reload the radar window if open
 			if (window.opener && !window.opener.closed) {
-				console.log('🔄 Reloading opener window (radar)...');
+				window.logger?.info(window.CATEGORIES.CACHE, window.EVENTS.ReloadingOpenerWindow, {});
 				window.opener.location.reload();
 			}
 			// Also reload this settings page
-			console.log('🔄 Reloading settings page...');
+			window.logger?.info(window.CATEGORIES.CACHE, window.EVENTS.ReloadingSettingsPage, {});
 			window.location.reload();
 		} else {
 			alert('⚠️ Cache cleared from localStorage, but you need to reload the radar page manually for full effect.');
 		}
 	} catch (e) {
-		console.error('❌ Failed to clear TypeID cache:', e);
+		window.logger?.error(window.CATEGORIES.CACHE, window.EVENTS.ClearCacheFailed, { error: e.message });
 		alert('❌ Failed to clear cache: ' + e.message);
 	}
 }

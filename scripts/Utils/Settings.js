@@ -138,8 +138,6 @@ export class Settings
         };
 
         this.livingResourcesID = false;
-        this.logLivingResources = false;
-        this.logLivingCreatures = false; // Enhanced CSV logging for living resources
         // logFormat: 'json' | 'human' — controls how logs are pretty-printed in console
         this.logFormat = localStorage.getItem('logFormat') || 'human';
         //#endregion
@@ -181,6 +179,21 @@ export class Settings
         this.avaloneDrones = false;
         this.showUnmanagedEnemies = false;
         this.showEventEnemies = false;
+
+        this.enemiesHealthBar = false;
+        this.enemiesID = false;
+        this.debugEnemies = false;
+        this.debugPlayers = false;
+        this.debugChests = false;
+        this.debugDungeons = false;
+        this.debugFishing = false;
+        this.debugHarvestables = false;
+
+        // 🐛 Debug & Logging settings
+        this.logToConsole = true; // Default: enabled
+        this.logToServer = false; // Default: disabled (requires WebSocket)
+        this.debugRawPacketsConsole = false; // Default: disabled (très verbeux)
+        this.debugRawPacketsServer = false; // Default: disabled (très verbeux)
 
         //#region Mists
         this.bossCrystalSpider = false;
@@ -363,9 +376,13 @@ export class Settings
         }
     }
 
-    returnLocalBool(item)
+    returnLocalBool(item, defaultValue = false)
     {
-        return localStorage.getItem(item) == "true";
+        const value = localStorage.getItem(item);
+        if (value === null) {
+            return defaultValue; // Retourner la valeur par défaut si non défini
+        }
+        return value == "true";
     }
 
     update()
@@ -441,8 +458,6 @@ export class Settings
 
         this.livingResourcesHealthBar = this.returnLocalBool("settingLivingResourcesHealthBar");
         this.livingResourcesID = this.returnLocalBool("settingLivingResourcesID");
-        this.logLivingResources = this.returnLocalBool("settingLogLivingResources");
-        this.logLivingCreatures = this.returnLocalBool("settingLogLivingCreatures");
         this.resourceSize = this.returnLocalBool("settingRawSize");
 
         // 📊 Load overlay settings from localStorage (matching UI setting names)
@@ -486,6 +501,17 @@ export class Settings
         this.enemiesHealthBar = this.returnLocalBool("settingEnemiesHealthBar");
         this.enemiesID = this.returnLocalBool("settingEnemiesID");
         this.debugEnemies = this.returnLocalBool("settingDebugEnemies");
+        this.debugPlayers = this.returnLocalBool("settingDebugPlayers");
+        this.debugChests = this.returnLocalBool("settingDebugChests");
+        this.debugDungeons = this.returnLocalBool("settingDebugDungeons");
+        this.debugFishing = this.returnLocalBool("settingDebugFishing");
+        this.debugHarvestables = this.returnLocalBool("settingDebugHarvestables");
+
+        // 🐛 Debug & Logging settings (dynamic update)
+        this.logToConsole = this.returnLocalBool("settingLogToConsole", true); // Default: true
+        this.logToServer = this.returnLocalBool("settingLogToServer"); // Default: false
+        this.debugRawPacketsConsole = this.returnLocalBool("settingDebugRawPacketsConsole"); // Default: false
+        this.debugRawPacketsServer = this.returnLocalBool("settingDebugRawPacketsServer"); // Default: false
 
         //#region Mists
         // TODO

@@ -33,6 +33,11 @@ class HarvestablesHandler
 {
     constructor(settings, mobsHandler = null)
     {
+        // Import constants once in constructor
+        const { CATEGORIES, EVENTS } = window;
+        this.CATEGORIES = CATEGORIES;
+        this.EVENTS = EVENTS;
+        
         this.harvestableList = [];
         this.settings = settings;
         this.mobsHandler = mobsHandler;
@@ -79,19 +84,21 @@ class HarvestablesHandler
         this.pendingHarvestableId = harvestableId;
         this.isHarvesting = true;
 
-        if (window.debugLogs) {
-            console.log(`🌱 [HarvestablesHandler] HarvestStart`, {
-                harvestableId,
-                timestamp: new Date().toISOString()
-            });
-        }
+        // ℹ️ INFO (toujours loggé) - Début de récolte
+        window.logger?.info(this.CATEGORIES.HARVEST, this.EVENTS.HarvestStart, {
+            harvestableId,
+            timestamp: new Date().toISOString()
+        });
     }
 
     // 🆕 Appelé par Utils.js lors de HarvestCancel
     onHarvestCancel() {
-        if (window.debugLogs) {
-            console.log('❌ [HarvestablesHandler] HarvestCancel - Reset flags');
-        }
+        // ⚠️ WARN (toujours loggé) - Annulation de récolte
+        window.logger?.warn(this.CATEGORIES.HARVEST, this.EVENTS.HarvestCancel, {
+            wasHarvesting: this.isHarvesting,
+            pendingId: this.pendingHarvestableId
+        });
+        
         this.pendingHarvestableId = null;
         this.isHarvesting = false;
     }
@@ -100,6 +107,14 @@ class HarvestablesHandler
     // ✅ SOLUTION SIMPLIFIÉE: On track uniquement les ressources déjà dans harvestableList (détectées par le radar)
     // Parameters[2] = quantité totale dans l'inventaire
     onNewSimpleItem(itemId, newQuantity) {
+        // 🐛 DEBUG: Log détaillé de la découverte d'ItemID
+        window.logger?.debug(this.CATEGORIES.HARVEST, this.EVENTS.NewSimpleItem_DETAIL, {
+            itemId,
+            quantity: newQuantity,
+            harvestableId: this.pendingHarvestableId,
+            timestamp: new Date().toISOString()
+        });
+
         const oldQuantity = this.lastInventoryQuantities.get(itemId) || 0;
         const gained = newQuantity - oldQuantity;
 
@@ -121,9 +136,13 @@ class HarvestablesHandler
                 // 📋 Logger la découverte itemId pour référence future (une seule fois)
                 if (!this.discoveredItemIds.has(itemId)) {
                     this.discoveredItemIds.set(itemId, { type: harvestable.type, tier: harvestable.tier, charges: harvestable.charges });
-                    if (window.debugLogs) {
-                        console.log(`🆕 [ItemId Discovery]`, itemId, '=', harvestable.type, `T${harvestable.tier}.${harvestable.charges}`);
-                    }
+                    // ℹ️ INFO (toujours loggé) - Découverte d'un nouvel itemId
+                    window.logger?.info(this.CATEGORIES.HARVEST, this.EVENTS.ItemIdDiscovery, {
+                        itemId,
+                        type: harvestable.type,
+                        tier: harvestable.tier,
+                        charges: harvestable.charges
+                    });
                 }
 
 
@@ -138,9 +157,12 @@ class HarvestablesHandler
                 this.updateStatsHarvested(harvestable.type, harvestable.tier, harvestable.charges, gained);
             } else {
                 // ⚠️ Resource NOT detected by radar (static harvestables: Wood, Ore, Rock)
-                if (window.debugLogs) {
-                    console.warn(`⚠️ [NewSimpleItem] +${gained} resources but harvestable NOT in list (static resource?). ItemId: ${itemId}`);
-                }
+                // ⚠️ WARN (toujours loggé) - Ressource statique non détectée par le radar
+                window.logger?.warn(this.CATEGORIES.HARVEST, this.EVENTS.StaticResourceNotInList, {
+                    gained,
+                    itemId,
+                    note: 'Static resource not detected by radar'
+                });
 
                 // Stocker quand même dans le cache pour éviter double-comptage
                 this.lastHarvestCache.set(this.pendingHarvestableId, {
@@ -365,9 +387,15 @@ class HarvestablesHandler
 
         // 🐛 DEBUG: Log Hide T4+ enchanted resources
         const stringType = this.GetStringType(type);
-        if (stringType === HarvestableType.Hide && tier >= 4 && charges > 0) {
-            console.log(`[DEBUG Hide T4+] ID=${id}, TypeID=${mobileTypeId}, type=${type}, tier=${tier}, enchant=${charges}, size=${size}, stringType=${stringType}`);
-        }
+        window.logger?.debug(this.CATEGORIES.HARVEST_HIDE_T4, this.EVENTS.Detection, {
+            id,
+            mobileTypeId,
+            type,
+            tier,
+            enchant: charges,
+            size,
+            stringType
+        });
 
         switch (stringType)
         {
@@ -377,12 +405,14 @@ class HarvestablesHandler
 
             case HarvestableType.Hide:
                 // 🐛 DEBUG: Log settings check for Hide T4+
-                if (tier >= 4 && charges > 0) {
-                    const settingKey = `e${charges}`;
-                    const settingIndex = tier - 1;
-                    const settingValue = this.settings.harvestingStaticHide[settingKey] ? this.settings.harvestingStaticHide[settingKey][settingIndex] : undefined;
-                    console.log(`[DEBUG Hide T4+ Settings] tier=${tier}, charges=${charges}, key=${settingKey}, index=${settingIndex}, value=${settingValue}, passed=${!!settingValue}`);
-                }
+                window.logger?.debug(this.CATEGORIES.HARVEST_HIDE_T4, this.EVENTS.SettingsCheck, {
+                    tier,
+                    charges,
+                    settingKey: `e${charges}`,
+                    settingIndex: tier - 1,
+                    settingValue: this.settings.harvestingStaticHide[`e${charges}`] ? this.settings.harvestingStaticHide[`e${charges}`][tier - 1] : undefined,
+                    passed: !!this.settings.harvestingStaticHide[`e${charges}`]?.[tier - 1]
+                });
                 if (!this.settings.harvestingStaticHide[`e${charges}`][tier-1]) return;
                 break;
 
@@ -411,7 +441,6 @@ class HarvestablesHandler
 
             // 📊 Update statistics
             this.updateStats(type, tier, charges, false);
-            //console.log("New Harvestable: " + h.toString());
         }
         else // update
         {
@@ -447,9 +476,15 @@ class HarvestablesHandler
 
         // 🐛 DEBUG: Log Hide T4+ enchanted resources
         const stringType = this.GetStringType(type);
-        if (stringType === HarvestableType.Hide && tier >= 4 && charges > 0) {
-            console.log(`[DEBUG Hide T4+ UPDATE] ID=${id}, TypeID=${mobileTypeId}, type=${type}, tier=${tier}, enchant=${charges}, size=${size}, stringType=${stringType}`);
-        }
+        window.logger?.debug(this.CATEGORIES.HARVEST_HIDE_T4, this.EVENTS.Update, {
+            id,
+            mobileTypeId,
+            type,
+            tier,
+            enchant: charges,
+            size,
+            stringType
+        });
 
         switch (stringType)
         {
@@ -459,12 +494,14 @@ class HarvestablesHandler
 
             case HarvestableType.Hide:
                 // 🐛 DEBUG: Log settings check for Hide T4+
-                if (tier >= 4 && charges > 0) {
-                    const settingKey = `e${charges}`;
-                    const settingIndex = tier - 1;
-                    const settingValue = this.settings.harvestingStaticHide[settingKey] ? this.settings.harvestingStaticHide[settingKey][settingIndex] : undefined;
-                    console.log(`[DEBUG Hide T4+ UPDATE Settings] tier=${tier}, charges=${charges}, key=${settingKey}, index=${settingIndex}, value=${settingValue}, passed=${!!settingValue}`);
-                }
+                window.logger?.debug(this.CATEGORIES.HARVEST_HIDE_T4, this.EVENTS.UpdateSettingsCheck, {
+                    tier,
+                    charges,
+                    settingKey: `e${charges}`,
+                    settingIndex: tier - 1,
+                    settingValue: this.settings.harvestingStaticHide[`e${charges}`] ? this.settings.harvestingStaticHide[`e${charges}`][tier - 1] : undefined,
+                    passed: !!this.settings.harvestingStaticHide[`e${charges}`]?.[tier - 1]
+                });
                 if (!this.settings.harvestingStaticHide[`e${charges}`][tier-1]) return;
                 break;
 
@@ -513,6 +550,23 @@ class HarvestablesHandler
 
     HarvestUpdateEvent(Parameters)
     {
+        // 🐛 DEBUG ULTRA-DÉTAILLÉ: Log ALL parameters pour identifier patterns
+        const allParams = {};
+        for (let key in Parameters) {
+            if (Parameters.hasOwnProperty(key)) {
+                allParams[`param[${key}]`] = Parameters[key];
+            }
+        }
+
+        window.logger?.debug(this.CATEGORIES.HARVEST, this.EVENTS.HarvestUpdateEvent_ALL_PARAMS, {
+            harvestableId: Parameters[0],
+            charges: Parameters[1],
+            typeId: Parameters[5],
+            tier: Parameters[6],
+            allParameters: allParams,
+            parameterCount: Object.keys(Parameters).length
+        });
+
         const id = Parameters[0];
 
         if (Parameters[1] === undefined)
@@ -525,9 +579,9 @@ class HarvestablesHandler
 
                 // CAS 1: trackedByNewSimpleItem = true → Déjà tracké par NewSimpleItem (living resources)
                 if (cacheEntry.trackedByNewSimpleItem) {
-                    if (window.debugLogs) {
-                        console.log('⏭️ [HarvestUpdateEvent] Already tracked by NewSimpleItem - SKIP');
-                    }
+                    window.logger?.debug(this.CATEGORIES.HARVEST, this.EVENTS.AlreadyTracked, {
+                        note: 'Already tracked by NewSimpleItem - SKIP'
+                    });
                 }
                 // CAS 2: trackedByNewSimpleItem = false → Static harvestable, on doit tracker ici
                 else {
@@ -535,16 +589,22 @@ class HarvestablesHandler
                     const resourceInfo = this.getResourceInfoFromItemId(cacheEntry.itemId);
 
                     if (resourceInfo) {
-                        if (window.debugLogs) {
-                            console.log(`✅ [HarvestUpdateEvent] Tracking ${resources} static resources:`, resourceInfo.type, `T${resourceInfo.tier}.${resourceInfo.charges}`);
-                        }
+                        // ℹ️ INFO (toujours loggé) - Tracking des ressources statiques
+                        window.logger?.info(this.CATEGORIES.HARVEST, this.EVENTS.TrackingStaticResources, {
+                            resources,
+                            type: resourceInfo.type,
+                            tier: resourceInfo.tier,
+                            charges: resourceInfo.charges
+                        });
                         // Tracker avec les vraies infos type/tier
                         this.updateStatsHarvested(resourceInfo.type, resourceInfo.tier, resourceInfo.charges, resources);
                     } else {
                         // Fallback: juste incrémenter le total si on ne peut pas mapper l'itemId
-                        if (window.debugLogs) {
-                            console.warn(`⚠️ [HarvestUpdateEvent] Unknown itemId ${cacheEntry.itemId} - tracking total only`);
-                        }
+                        // ⚠️ WARN (toujours loggé) - ItemId inconnu
+                        window.logger?.warn(this.CATEGORIES.HARVEST, this.EVENTS.UnknownItemId, {
+                            itemId: cacheEntry.itemId,
+                            note: 'Tracking total only'
+                        });
                         this.stats.totalHarvested += resources;
                     }
                 }
@@ -553,9 +613,10 @@ class HarvestablesHandler
                 this.lastHarvestCache.delete(id);
             } else {
                 // Pas de cache du tout
-                if (window.debugLogs) {
-                    console.warn('⚠️ [HarvestUpdateEvent] NO CACHE! Resource tracking may be incomplete');
-                }
+                // ⚠️ WARN (toujours loggé) - Pas de cache disponible
+                window.logger?.warn(this.CATEGORIES.HARVEST, this.EVENTS.NoCacheWarning, {
+                    note: 'NO CACHE! Resource tracking may be incomplete'
+                });
             }
 
             // ⚠️ NE PAS supprimer ici! NewSimpleItem arrive APRÈS et a besoin du harvestable
@@ -572,9 +633,10 @@ class HarvestablesHandler
         // On met à jour uniquement si la valeur a augmenté (régénération)
         const newSize = Parameters[1];
         if (newSize > harvestable.size) {
-            if (window.debugLogs) {
-                console.log(`🔄 [Regen] ${harvestable.size} → ${newSize}`);
-            }
+            window.logger?.debug(this.CATEGORIES.HARVEST, this.EVENTS.Regeneration, {
+                oldSize: harvestable.size,
+                newSize
+            });
             harvestable.size = newSize;
         }
     }
@@ -583,6 +645,7 @@ class HarvestablesHandler
     // Good
     newHarvestableObject(id, Parameters) // Update
     {
+
         const type = Parameters[5];  // typeNumber (0-27)
         const mobileTypeId = Parameters[6];  // 🔗 Mobile TypeID (421, 422, 527, etc.)
         const tier = Parameters[7];
@@ -715,7 +778,11 @@ class HarvestablesHandler
             return HarvestableType.Ore;
         }
         else {
-            console.warn(`[GetStringType] Unknown typeNumber: ${typeNumber}`);
+            // ⚠️ WARN (toujours loggé) - Type de ressource inconnu
+            window.logger?.warn(this.CATEGORIES.HARVEST, this.EVENTS.UnknownTypeNumber, {
+                typeNumber,
+                note: 'Unknown typeNumber in GetStringType'
+            });
             return '';
         }
     }

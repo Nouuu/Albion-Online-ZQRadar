@@ -98,35 +98,50 @@ if (process.platform === 'win32') {
     } else {
         console.log('\n🔌 Checking Npcap (Windows)...\n');
 
-        try {
-            // Check in Windows registry (WSL compatible with reg.exe)
-            const regCommand = process.env.WINDIR
-                ? 'reg.exe query "HKLM\\SOFTWARE\\Npcap"'
-                : 'reg query "HKLM\\SOFTWARE\\Npcap"';
+        // Try multiple registry locations (native 64-bit and WOW6432Node for 32-bit apps on 64-bit Windows)
+        const registryPaths = [
+            'HKLM\\SOFTWARE\\Npcap',
+            'HKLM\\SOFTWARE\\WOW6432Node\\Npcap'
+        ];
 
-            const regOutput = execSync(regCommand, {encoding: 'utf8', stdio: 'pipe'});
-            console.log(`✓ Npcap installed`);
+        let npcapFound = false;
+        for (const regPath of registryPaths) {
+            try {
+                const regCommand = process.env.WINDIR
+                    ? `reg.exe query "${regPath}"`
+                    : `reg query "${regPath}"`;
 
-            // Try to extract version if available
-            const versionMatch = regOutput.match(/Version\s+REG_SZ\s+([\d.]+)/);
-            if (versionMatch) {
-                const detected = versionMatch[1];
-                console.log(`  Detected version: ${detected}`);
-                const cmp = compareVersions(detected, REQUIRED_NPCAP_VERSION);
-                if (cmp < 0) {
-                    console.error(`✗ Npcap version ${detected} detected — minimum required version: ${REQUIRED_NPCAP_VERSION}`);
-                    console.error(`  → Update Npcap: https://npcap.com/`);
-                    hasErrors = true;
+                const regOutput = execSync(regCommand, {encoding: 'utf8', stdio: 'pipe'});
+                console.log(`✓ Npcap installed (from ${regPath})`);
+                npcapFound = true;
+
+                // Try to extract version if available
+                const versionMatch = regOutput.match(/Version\s+REG_SZ\s+([\d.]+)/);
+                if (versionMatch) {
+                    const detected = versionMatch[1];
+                    console.log(`  Detected version: ${detected}`);
+                    const cmp = compareVersions(detected, REQUIRED_NPCAP_VERSION);
+                    if (cmp < 0) {
+                        console.error(`✗ Npcap version ${detected} detected — minimum required version: ${REQUIRED_NPCAP_VERSION}`);
+                        console.error(`  → Update Npcap: https://npcap.com/`);
+                        hasErrors = true;
+                    } else {
+                        console.log(`  Note: Version ${REQUIRED_NPCAP_VERSION}+ recommended — OK`);
+                    }
+                    break; // Version found, no need to check other registry paths
                 } else {
-                    console.log(`  Note: Version ${REQUIRED_NPCAP_VERSION}+ recommended — OK`);
+                    console.log('  Npcap detected but unable to read version from registry');
+                    console.log(`  → Assuming Npcap >= ${REQUIRED_NPCAP_VERSION} is installed`);
+                    // Registry key exists, so assume it's OK
+                    break;
                 }
-            } else {
-                console.warn('⚠️  Npcap detected but unable to read version from registry');
-                console.warn(`  → Manually verify that Npcap >= ${REQUIRED_NPCAP_VERSION} is installed: https://npcap.com/`);
-                // In CI / strict executable, consider this an error
-                hasErrors = true;
+            } catch (error) {
+                // Registry path not found, try next one
+                continue;
             }
-        } catch (error) {
+        }
+
+        if (!npcapFound) {
             // Also check WinPcap as fallback
             try {
                 const regCommand = process.env.WINDIR

@@ -9,10 +9,10 @@ itemsInfo.initItems().then(() => {
     var players = [];
 
     const socket = new WebSocket('ws://localhost:5002');
+    const { CATEGORIES, EVENTS } = window;
         
     socket.addEventListener('open', (event) => {
-    console.log('Connected to the WebSocket server.');
-
+        window.logger?.info(CATEGORIES.WEBSOCKET, EVENTS.Connected, { page: 'ItemsPage' });
     });
 
     socket.addEventListener('message', (event) => {
@@ -70,7 +70,10 @@ itemsInfo.initItems().then(() => {
 
     function RemovePlayer(parameters)
     {
-        console.log(players.find(p => p.id == parameters[0]));
+        const player = players.find(p => p.id == parameters[0]);
+        if (player) {
+            window.logger?.debug(CATEGORIES.PLAYER, EVENTS.PlayerDebugInfo, player);
+        }
 
         players = players.filter(player => player.id != parameters[0]);
     }
@@ -207,8 +210,12 @@ itemsInfo.initItems().then(() => {
         else
         {
             settings.preloadImageAndAddToList(src, folder)
-            .then(() => console.log('Item loaded'))
-            .catch(() => console.log('Item not loaded'));
+            .then(() => {
+                window.logger?.info(CATEGORIES.ITEM, EVENTS.ItemLoaded, { src: src, folder: folder });
+            })
+            .catch((error) => {
+                window.logger?.warn(CATEGORIES.ITEM, EVENTS.ItemLoadFailed, { src: src, folder: folder, error: error?.message });
+            });
         }
     }
 

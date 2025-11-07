@@ -1,5 +1,9 @@
 class DrawingUtils {
     constructor(settings) {
+        const { CATEGORIES, EVENTS } = window;
+        this.CATEGORIES = CATEGORIES;
+        this.EVENTS = EVENTS;
+        
         this.settings = settings || {};
         this.fontSize = "12px";
         this.fontFamily = "Arial";
@@ -72,8 +76,12 @@ class DrawingUtils {
             ctx.drawImage(preloadedImage, x - size / 2, y - size / 2, size, size);
         } else if (this.settings && typeof this.settings.preloadImageAndAddToList === 'function') {
             this.settings.preloadImageAndAddToList(src, folder)
-                .then(() => console.log('Item loaded'))
-                .catch(() => console.log('Item not loaded'));
+                .then(() => {
+                    window.logger?.info(this.CATEGORIES.ITEM, this.EVENTS.ItemLoaded, { src: src, folder: folder });
+                })
+                .catch((error) => {
+                    window.logger?.warn(this.CATEGORIES.ITEM, this.EVENTS.ItemLoadFailed, { src: src, folder: folder, error: error?.message });
+                });
         }
     }
 
@@ -398,7 +406,8 @@ class DrawingUtils {
             ctx.beginPath(); ctx.arc(cx, cy, (visualRadius - 6) * pulse, 0, 2 * Math.PI); ctx.stroke();
             ctx.restore();
         } catch (e) {
-            console.error('[Cluster] drawClusterRingsFromCluster fallback failed:', e);
+            // ❌ ERROR (toujours loggé) - Erreur critique de fallback de rendu
+            window.logger?.error(this.CATEGORIES.CLUSTER, this.EVENTS.DrawRingsFallbackFailed, e);
         }
     }
 

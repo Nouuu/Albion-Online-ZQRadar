@@ -10,11 +10,14 @@ class Chest {
     }
 }
 
-
-
-
 class ChestsHandler {
-    constructor() {
+    constructor(settings) {
+        // Import constants once in constructor
+        const { CATEGORIES, EVENTS } = window;
+        this.CATEGORIES = CATEGORIES;
+        this.EVENTS = EVENTS;
+        
+        this.settings = settings;
         this.chestsList = [];
     }
 
@@ -30,7 +33,22 @@ class ChestsHandler {
       
     }
 
-    addChestEvent(Parameters) {
+    addChestEvent(Parameters)
+    {
+        // 🐛 DEBUG ULTRA-DÉTAILLÉ: Log ALL parameters pour identifier patterns
+        const allParams = {};
+        for (let key in Parameters) {
+            if (Parameters.hasOwnProperty(key)) {
+                allParams[`param[${key}]`] = Parameters[key];
+            }
+        }
+        window.logger?.debug(this.CATEGORIES.CHEST, this.EVENTS.NewChestEvent_ALL_PARAMS, {
+            chestId: Parameters[0],
+            position: Parameters[7],
+            allParameters: allParams,
+            parameterCount: Object.keys(Parameters).length
+        });
+
         const chestId = Parameters[0];
         const chestsPosition = Parameters[1];
         let chestName = Parameters[3];

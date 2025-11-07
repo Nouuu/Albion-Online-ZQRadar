@@ -251,7 +251,7 @@
               <input type="checkbox" id="settingLivingResourceEnchantOverlay" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
               <span class="text-gray-600 dark:text-gray-300">Living resources (.1, .2, .3, .4)</span>
             </label>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <p class="text-xs text-gray-500 dark:text-gray-300 mt-2">
               Visual indicators for enchanted resource types
             </p>
           </div>
@@ -274,7 +274,7 @@
               <input type="checkbox" id="settingResourceCount" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
               <span class="text-gray-600 dark:text-gray-300">Show resource quantity</span>
             </label>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <p class="text-xs text-gray-500 dark:text-gray-300 mt-2">
               Displays harvestable amount per resource node
             </p>
           </div>
@@ -301,7 +301,7 @@
               <input type="checkbox" id="settingResourceDistanceLivingOnly" class="h-4 w-4 text-indigo-600 border-gray-300 rounded-md">
               <span class="text-sm text-gray-600 dark:text-gray-300">Living resources only</span>
             </label>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <p class="text-xs text-gray-500 dark:text-gray-300 mt-2">
               Distance in meters from your current position
             </p>
           </div>
@@ -350,16 +350,138 @@
                 />
               </label>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <p class="text-xs text-gray-500 dark:text-gray-300 mt-2">
               Groups resources of same type/tier within radius
             </p>
           </div>
         </div>
 
-        <div class="mt-4 p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
-          <p class="text-sm text-blue-800 dark:text-blue-300">
-            💡 <strong>Tip:</strong> Distance and cluster indicators work best for tracking valuable resources.
+        <div class="mt-4 p-3 bg-blue-200 dark:bg-blue-200 rounded-lg">
+          <p class="text-sm text-blue-800 dark:text-blue-100">
+            💡 <strong class="text-blue-800 dark:text-blue-100">Tip:</strong> Distance and cluster indicators work best for tracking valuable resources.
             Disable them for better performance when not needed.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Debug & Logging Card -->
+    <div class="flex items-start p-4 bg-white rounded-lg shadow-xs dark:bg-gray-800">
+      <div class="w-full">
+        <h2 class="mb-4 text-2xl font-semibold text-gray-600 dark:text-gray-300">
+          🐛 Debug & Logging
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <!-- Global Logging Toggles -->
+          <div class="p-4 border border-gray-300 dark:border-gray-600 rounded-lg">
+            <h3 class="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-3">
+              📊 Global Logging Toggles
+            </h3>
+            <label class="flex items-center space-x-2 mb-2">
+              <input type="checkbox" id="settingDebugEnemies" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+              <span class="text-gray-600 dark:text-gray-300">🐛 Debug Enemies/Mobs (verbose)</span>
+            </label>
+            <label class="flex items-center space-x-2">
+              <input type="checkbox" id="settingDebugPlayers" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+              <span class="text-gray-600 dark:text-gray-300">👥 Debug Players (verbose)</span>
+            </label>
+            <label class="flex items-center space-x-2">
+              <input type="checkbox" id="settingDebugChests" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+              <span class="text-gray-600 dark:text-gray-300">📦 Debug Chests (verbose)</span>
+            </label>
+            <label class="flex items-center space-x-2">
+              <input type="checkbox" id="settingDebugDungeons" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+              <span class="text-gray-600 dark:text-gray-300">🏰 Debug Dungeons (verbose)</span>
+            </label>
+            <label class="flex items-center space-x-2">
+              <input type="checkbox" id="settingDebugFishing" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+              <span class="text-gray-600 dark:text-gray-300">🎣 Debug Fishing (verbose)</span>
+            </label>
+            <label class="flex items-center space-x-2">
+              <input type="checkbox" id="settingDebugHarvestables" class="h-5 w-5 text-indigo-600 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+              <span class="text-gray-600 dark:text-gray-300">🌱 Debug Harvestables (verbose)</span>
+            </label>
+
+            <div class="mt-4 pt-3 border-t border-gray-300 dark:border-gray-600">
+              <h4 class="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">Console & Server Output</h4>
+
+              <label class="flex items-center space-x-2 mb-2">
+                <input type="checkbox" id="settingLogToConsole" class="h-5 w-5 text-blue-600 border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                <span class="text-gray-600 dark:text-gray-300">📺 Display logs in console (F12)</span>
+              </label>
+
+              <label class="flex items-center space-x-2 mb-2">
+                <input type="checkbox" id="settingLogToServer" class="h-5 w-5 text-green-600 border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500">
+                <span class="text-gray-600 dark:text-gray-300">📤 Send logs to server (JSONL files)</span>
+              </label>
+
+              <div class="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
+                <p class="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-2">⚠️ RAW Packet Debug (VERY VERBOSE!)</p>
+
+                <label class="flex items-center space-x-2 ml-6 mb-2">
+                  <input type="checkbox" id="settingDebugRawPacketsConsole" class="h-5 w-5 text-orange-600 border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500">
+                  <span class="text-gray-600 dark:text-gray-300 text-sm">📦 Show RAW packets in console</span>
+                </label>
+
+                <label class="flex items-center space-x-2 ml-6">
+                  <input type="checkbox" id="settingDebugRawPacketsServer" class="h-5 w-5 text-orange-600 border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500">
+                  <span class="text-gray-600 dark:text-gray-300 text-sm">📦 Send RAW packets to server (JSONL)</span>
+                </label>
+
+                <p class="text-xs text-orange-600 dark:text-orange-300 ml-6 mt-1">
+                  ⚠️ Logs EVERY packet! Use only for deep debugging.
+                </p>
+              </div>
+            </div>
+
+            <p class="text-xs text-gray-500 dark:text-gray-300 mt-3">
+              Console: Real-time colored logs in browser (F12)
+              <br>
+              Server: Persistent JSONL files in logs/sessions/
+            </p>
+          </div>
+
+          <!-- Visual Overlays Info -->
+          <div class="p-4 border border-gray-300 dark:border-gray-600 rounded-lg">
+            <h3 class="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-3">
+              🎨 Visual Overlays
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">
+              Visual debug options are available on their respective pages:
+            </p>
+            <ul class="text-sm text-gray-600 dark:text-gray-300 space-y-2">
+              <li>• <a href="/enemies" class="text-purple-600 dark:text-purple-300 hover:underline font-medium">Enemies Page</a> - Health bars, IDs, enemy list</li>
+              <li>• <a href="/resources" class="text-purple-600 dark:text-purple-300 hover:underline font-medium">Resources Page</a> - Living resource overlays, cache, stats</li>
+            </ul>
+            <p class="text-xs text-gray-500 dark:text-gray-300 mt-3">
+              These controls need to be on their pages to access the radar handlers
+            </p>
+          </div>
+
+          <!-- Export Data -->
+          <div class="p-4 border border-gray-300 dark:border-gray-600 rounded-lg">
+            <h3 class="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-3">
+              📥 Export Debug Data
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">
+              Export all settings and debug data for troubleshooting
+            </p>
+            <button
+              id="downloadLogsBtn"
+              class="w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors duration-200"
+            >
+              💾 Download Debug Logs (JSON)
+            </button>
+            <p class="text-xs text-gray-500 dark:text-gray-300 mt-2">
+              Includes session info, all settings, and localStorage data
+            </p>
+          </div>
+        </div>
+
+        <div class="p-3 bg-yellow-100 dark:bg-yellow-800 rounded-lg">
+          <p class="text-sm text-yellow-800 dark:text-yellow-100">
+            ⚠️ <strong class="text-yellow-800 dark:text-yellow-100">Note:</strong> Debug features may impact performance. Logs are written to browser console (F12).
           </p>
         </div>
       </div>
@@ -392,7 +514,7 @@
           </div>
         </div>
 
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">
+        <p class="text-xs text-gray-500 dark:text-gray-300 mt-3">
           Note: Load/Save functionality is currently disabled. Settings are auto-saved to browser storage.
         </p>
       </div>
@@ -530,8 +652,165 @@
       saveToLocalStorage("settingClusterMinSize", event.target.value);
     });
 
+    // Debug settings
+    const settingDebugEnemiesCheckbox = document.getElementById("settingDebugEnemies");
+    const settingDebugPlayersCheckbox = document.getElementById("settingDebugPlayers");
+    const settingDebugChestsCheckbox = document.getElementById("settingDebugChests");
+    const settingDebugDungeonsCheckbox = document.getElementById("settingDebugDungeons");
+    const settingDebugFishingCheckbox = document.getElementById("settingDebugFishing");
+    const settingDebugHarvestablesCheckbox = document.getElementById("settingDebugHarvestables");
+
+    // 🆕 Console & Server debug settings
+    const settingLogToConsoleCheckbox = document.getElementById("settingLogToConsole");
+    const settingLogToServerCheckbox = document.getElementById("settingLogToServer");
+    const settingDebugRawPacketsConsoleCheckbox = document.getElementById("settingDebugRawPacketsConsole");
+    const settingDebugRawPacketsServerCheckbox = document.getElementById("settingDebugRawPacketsServer");
+
+    // Function to download debug logs
+    function downloadDebugLogs() {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const debugData = {
+        timestamp: timestamp,
+        session: {
+          userAgent: navigator.userAgent,
+          screenResolution: `${window.screen.width}x${window.screen.height}`,
+          language: navigator.language
+        },
+        settings: {
+          debugEnemies: localStorage.getItem("settingDebugEnemies") === "true"
+        },
+        localStorage: Object.keys(localStorage).reduce((acc, key) => {
+          if (key.startsWith('setting')) {
+            acc[key] = localStorage.getItem(key);
+          }
+          return acc;
+        }, {})
+      };
+
+      const blob = new Blob([JSON.stringify(debugData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `zqradar-debug-${timestamp}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      console.log('📥 Debug logs downloaded:', debugData);
+    }
+
+    settingDebugEnemiesCheckbox.addEventListener("change", function (event) {
+      saveToLocalStorage("settingDebugEnemies", event.target.checked);
+      if (event.target.checked) {
+        console.log("🐛 Debug Enemies ENABLED");
+      } else {
+        console.log("🐛 Debug Enemies DISABLED");
+      }
+    });
+
+    settingDebugPlayersCheckbox.addEventListener("change", function (event) {
+      saveToLocalStorage("settingDebugPlayers", event.target.checked);
+      if (event.target.checked) {
+        console.log("👥 Debug Players ENABLED");
+      } else {
+        console.log("👥 Debug Players DISABLED");
+      }
+    });
+
+    settingDebugChestsCheckbox.addEventListener("change", function (event) {
+      saveToLocalStorage("settingDebugChests", event.target.checked);
+      if (event.target.checked) {
+        console.log("📦 Debug Chests ENABLED");
+      } else {
+        console.log("📦 Debug Chests DISABLED");
+      }
+    });
+
+    settingDebugDungeonsCheckbox.addEventListener("change", function (event) {
+      saveToLocalStorage("settingDebugDungeons", event.target.checked);
+      if (event.target.checked) {
+        console.log("🏰 Debug Dungeons ENABLED");
+      } else {
+        console.log("🏰 Debug Dungeons DISABLED");
+      }
+    });
+
+    settingDebugFishingCheckbox.addEventListener("change", function (event) {
+      saveToLocalStorage("settingDebugFishing", event.target.checked);
+      if (event.target.checked) {
+        console.log("🎣 Debug Fishing ENABLED");
+      } else {
+        console.log("🎣 Debug Fishing DISABLED");
+      }
+    });
+
+    settingDebugHarvestablesCheckbox.addEventListener("change", function (event) {
+      saveToLocalStorage("settingDebugHarvestables", event.target.checked);
+      if (event.target.checked) {
+        console.log("🌱 Debug Harvestables ENABLED");
+      } else {
+        console.log("🌱 Debug Harvestables DISABLED");
+      }
+    });
+
+    // 📺 Log to Console
+    settingLogToConsoleCheckbox.addEventListener("change", function (event) {
+      saveToLocalStorage("settingLogToConsole", event.target.checked);
+      if (event.target.checked) {
+        console.log("📺 Console Logging ENABLED");
+      } else {
+        console.log("📺 Console Logging DISABLED");
+      }
+    });
+
+    // 📤 Log to Server
+    settingLogToServerCheckbox.addEventListener("change", function (event) {
+      saveToLocalStorage("settingLogToServer", event.target.checked);
+      if (event.target.checked) {
+        console.log("📤 Server Logging ENABLED (JSONL files)");
+      } else {
+        console.log("📤 Server Logging DISABLED");
+      }
+    });
+
+    // 📦 Debug RAW Packets Console
+    settingDebugRawPacketsConsoleCheckbox.addEventListener("change", function (event) {
+      saveToLocalStorage("settingDebugRawPacketsConsole", event.target.checked);
+      if (event.target.checked) {
+        console.log("📦 RAW Packets Console ENABLED - ⚠️ VERY VERBOSE!");
+      } else {
+        console.log("📦 RAW Packets Console DISABLED");
+      }
+    });
+    // 📦 Debug RAW Packets Server
+    settingDebugRawPacketsServerCheckbox.addEventListener("change", function (event) {
+      saveToLocalStorage("settingDebugRawPacketsServer", event.target.checked);
+      if (event.target.checked) {
+        console.log("📦 RAW Packets Server ENABLED - ⚠️ VERY VERBOSE!");
+      } else {
+        console.log("📦 RAW Packets Server DISABLED");
+      }
+    });
+
+
+
+    const downloadBtn = document.getElementById('downloadLogsBtn');
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', function() {
+        downloadDebugLogs();
+      });
+    }
+
+    settingDebugPlayersCheckbox.checked = getFromLocalStorage("settingDebugPlayers") === "true";
+    settingDebugChestsCheckbox.checked = getFromLocalStorage("settingDebugChests") === "true";
+    settingDebugDungeonsCheckbox.checked = getFromLocalStorage("settingDebugDungeons") === "true";
     // Initialize all input fields and checkboxes with values from local storage (if available)
-    mainWindowMarginXInput.value = getFromLocalStorage("mainWindowMarginX") || "";
+
+    // Initialize console & server settings (defaults)
+    settingLogToConsoleCheckbox.checked = getFromLocalStorage("settingLogToConsole") === null ? true : getFromLocalStorage("settingLogToConsole") === "true";
+    settingLogToServerCheckbox.checked = getFromLocalStorage("settingLogToServer") === "true"; // Default: false
+    settingDebugRawPacketsConsoleCheckbox.checked = getFromLocalStorage("settingDebugRawPacketsConsole") === "true"; // Default: false
     mainWindowMarginYInput.value = getFromLocalStorage("mainWindowMarginY") || "";
     itemsWindowMarginXInput.value = getFromLocalStorage("itemsWindowMarginX") || "";
     itemsWindowMarginYInput.value = getFromLocalStorage("itemsWindowMarginY") || "";
@@ -552,5 +831,18 @@
     settingResourceClustersCheckbox.checked = getFromLocalStorage("settingResourceClusters") === null ? false : getFromLocalStorage("settingResourceClusters") === "true";
     settingClusterRadiusInput.value = getFromLocalStorage("settingClusterRadius") || "30";
     settingClusterMinSizeInput.value = getFromLocalStorage("settingClusterMinSize") || "2";
-  </script>
 
+    // Initialize debug settings
+    settingDebugEnemiesCheckbox.checked = getFromLocalStorage("settingDebugEnemies") === "true";
+    settingDebugPlayersCheckbox.checked = getFromLocalStorage("settingDebugPlayers") === "true";
+    settingDebugChestsCheckbox.checked = getFromLocalStorage("settingDebugChests") === "true";
+    settingDebugDungeonsCheckbox.checked = getFromLocalStorage("settingDebugDungeons") === "true";
+    settingDebugFishingCheckbox.checked = getFromLocalStorage("settingDebugFishing") === "true";
+    settingDebugHarvestablesCheckbox.checked = getFromLocalStorage("settingDebugHarvestables") === "true";
+
+    // Initialize console & server settings (defaults)
+    settingLogToConsoleCheckbox.checked = getFromLocalStorage("settingLogToConsole") === null ? true : getFromLocalStorage("settingLogToConsole") === "true";
+    settingLogToServerCheckbox.checked = getFromLocalStorage("settingLogToServer") === "true"; // Default: false
+    settingDebugRawPacketsConsoleCheckbox.checked = getFromLocalStorage("settingDebugRawPacketsConsole") === "true"; // Default: false
+    settingDebugRawPacketsServerCheckbox.checked = getFromLocalStorage("settingDebugRawPacketsServer") === "true"; // Default: false
+  </script>

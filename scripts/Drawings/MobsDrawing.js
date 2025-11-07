@@ -3,6 +3,9 @@ export class MobsDrawing extends DrawingUtils
     constructor(Settings)
     {
         super(Settings);
+        const { CATEGORIES, EVENTS } = window;
+        this.CATEGORIES = CATEGORIES;
+        this.EVENTS = EVENTS;
     }
 
     interpolate(mobs, mists, lpX, lpY, t)
@@ -120,8 +123,13 @@ export class MobsDrawing extends DrawingUtils
                 const color = this.getEnemyColor(mobOne.type);
 
                 // 🐛 DEBUG: Log color assignment (only once per mob to avoid spam)
-                if (this.settings.debugEnemies && !mobOne._debugLogged) {
-                    console.log(`[DEBUG_DRAW] MOB ID=${mobOne.id} TypeID=${mobOne.typeId} | Type=${mobOne.type} | Color=${color}`);
+                if (!mobOne._debugLogged) {
+                    window.logger?.debug(this.CATEGORIES.MOB_DRAW, this.EVENTS.MobDrawDetails, {
+                        id: mobOne.id,
+                        typeId: mobOne.typeId,
+                        type: mobOne.type,
+                        color: color
+                    });
                     mobOne._debugLogged = true;
                 }
 

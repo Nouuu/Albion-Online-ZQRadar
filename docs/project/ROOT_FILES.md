@@ -23,7 +23,9 @@
 ## 📁 Organisation des Autres Fichiers
 
 ### `build/`
+
 Scripts de build Node.js
+
 - `check-system.js` - Vérification système
 - `post-build.js` - Post-build
 - `optimize-images.js` - Optimisation images
@@ -31,12 +33,16 @@ Scripts de build Node.js
 - `README.md` - Documentation
 
 ### `config/`
+
 Fichiers de configuration
+
 - `nodemon.json` - Configuration nodemon
 - `README.md` - Documentation
 
 ### `scripts-shell/`
+
 Scripts batch Windows utilitaires
+
 - `_INSTALL.bat` - Installation
 - `_RUN.bat` - Lancement rapide
 - `README.md` - Documentation
@@ -73,21 +79,22 @@ CHANGELOG_ORGANIZATION.md
 
 ## ✅ Où Mettre Quoi
 
-| Type de fichier/info | Destination |
-|----------------------|-------------|
-| Notes temporaires | `mcp_serena_write_memory()` |
-| Infos importantes | `aim_create_entities()` (Knowledge Graph) |
-| Documentation | `docs/` avec structure appropriée |
-| Scripts de build | `build/` |
-| Configuration | `config/` |
-| Scripts shell | `scripts-shell/` |
-| TODOs | `docs/project/TODO.md` |
-| Bugs | GitHub Issues |
-| Changelog | `docs/project/CHANGELOG.md` |
+| Type de fichier/info | Destination                               |
+|----------------------|-------------------------------------------|
+| Notes temporaires    | `mcp_serena_write_memory()`               |
+| Infos importantes    | `aim_create_entities()` (Knowledge Graph) |
+| Documentation        | `docs/` avec structure appropriée         |
+| Scripts de build     | `build/`                                  |
+| Configuration        | `config/`                                 |
+| Scripts shell        | `scripts-shell/`                          |
+| TODOs                | `docs/project/TODO.md`                    |
+| Bugs                 | GitHub Issues                             |
+| Changelog            | `docs/project/CHANGELOG.md`               |
 
 ---
 
 ## 🎯 Règle Stricte
+
 **SEULEMENT 9 fichiers à la racine**
 **SEULEMENT 8 fichiers à la racine**
 
@@ -96,19 +103,21 @@ Tout le reste → dossiers organisés ou memories MCP !
 ---
 
 ## 📊 Réorganisation (2025-11-05)
+
 **De 14 fichiers → 9 fichiers à la racine**
 **De 14 fichiers → 8 fichiers à la racine**
 
 **Fichiers déplacés :**
+
 - `build.bat`, `Makefile` → `build/`
 - `nodemon.json` → `config/`
 - `_INSTALL.bat`, `_RUN.bat` → `scripts-shell/`
 
 **Fichiers supprimés :**
-- `.browser_opened` (temporaire)
-**Fichiers ajoutés :**
-- `build-helper.bat` (wrapper pour build/build.bat)
 
+- `.browser_opened` (temporaire)
+  **Fichiers ajoutés :**
+- `build-helper.bat` (wrapper pour build/build.bat)
 
 **Résultat :** Racine propre et organisée !
 **Note importante :** Préférer `npm run build:win` aux scripts directs.

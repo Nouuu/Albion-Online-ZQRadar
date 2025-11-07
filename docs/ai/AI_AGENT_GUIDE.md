@@ -195,9 +195,45 @@ Fichiers temporaires gitignorés:
 
 ### Logging
 
-- Utiliser le système de logging centralisé
-- Niveaux: `debug`, `info`, `warn`, `error`
-- Fichier de config: `config/settings.json`
+**Système centralisé v2.0** (LoggerClient + LoggerServer)
+
+#### Niveaux et Règles de Filtrage
+
+- **`debug`** : Logs verbeux → **FILTRÉ** par settings (`debugEnemies`, `debugFishing`, etc.)
+- **`info`** : Actions importantes → **TOUJOURS LOGGÉ** (pas de filtrage)
+- **`warn`** : Anomalies → **TOUJOURS LOGGÉ** (pas de filtrage)
+- **`error`** : Erreurs critiques → **TOUJOURS LOGGÉ** (pas de filtrage)
+
+#### Utilisation Correcte
+
+```javascript
+// ✅ DEBUG - Filtré par setting
+if (this.settings.debugEnemies && window.logger) {
+    window.logger.debug('MOB', 'DetailedEvent', {params});
+}
+
+// ✅ INFO/WARN/ERROR - Toujours loggés
+if (window.logger) {
+    window.logger.info('MOB', 'LoadComplete', {count});
+    window.logger.warn('MOB', 'UnexpectedData', {details});
+    window.logger.error('MOB', 'LoadFailed', error);
+}
+
+// ❌ INCORRECT - INFO ne doit PAS être filtré
+if (this.settings.debugMode && window.logger) {
+    window.logger.info(...); // ERREUR
+}
+```
+
+#### Settings Disponibles
+
+- `debugEnemies`, `debugPlayers`, `debugChests`, `debugDungeons`
+- `debugFishing`, `debugHarvestables`, `debugRawPackets`
+- `consoleRawPackets`, `sendLogsToServer`
+
+**⚠️ IMPORTANT:** Ces settings ne filtrent QUE les logs DEBUG. Les INFO/WARN/ERROR sont toujours loggés.
+
+**Voir:** [LOGGING.md](../technical/LOGGING.md) pour détails complets
 
 ### Commentaires
 
@@ -347,4 +383,3 @@ aim_create_entities({
 ---
 
 *"Un agent efficace utilise les bons outils au bon moment."*
-

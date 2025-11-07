@@ -14,6 +14,11 @@
     />
     <link rel="stylesheet" href="/scripts/tailwind.output.css" />
     <link rel="stylesheet" href="/scripts/styles/tooltips.css" />
+
+    <!-- 📊 Global Logger - Available on all pages -->
+    <script src="/scripts/constants/LoggerConstants.js"></script>
+    <script src="/scripts/LoggerClient.js"></script>
+
     <script
       src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js"
       defer
@@ -36,7 +41,7 @@
         @mouseenter="onSidebarMouseEnter"
         @mouseleave="onSidebarMouseLeave"
       >
-        <div class="py-4 text-gray-500 dark:text-gray-400">
+        <div class="py-4 text-gray-500 dark:text-gray-300">
           <div class="flex items-center justify-between px-6">
             <a
               class="text-lg font-bold text-gray-800 dark:text-gray-200"
@@ -341,7 +346,7 @@
         @click.away="closeSideMenu"
         @keydown.escape="closeSideMenu"
       >
-        <div class="py-4 text-gray-500 dark:text-gray-400">
+        <div class="py-4 text-gray-500 dark:text-gray-300">
           <a
             class="ml-6 text-lg font-bold text-gray-800 dark:text-gray-200"
             href="#"

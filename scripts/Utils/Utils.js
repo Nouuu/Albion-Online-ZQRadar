@@ -33,7 +33,37 @@ var canvasItems = document.getElementById("thirdCanvas");
 var contextItems = canvasItems ? canvasItems.getContext("2d") : null;
 
 import { Settings } from './Settings.js';
+
+console.log('🔧 [Utils.js] Module loaded');
+
 const settings = new Settings();
+
+const { CATEGORIES, EVENTS } = window;
+
+console.log('🔧 [Utils.js] Settings initialized (logger is managed by LoggerClient.js)');
+// 🔄 Dynamic Settings Update: Listen for localStorage changes
+// This allows settings to update in real-time without page reload
+window.addEventListener('storage', (event) => {
+    if (event.key && event.key.startsWith('setting')) {
+        window.logger?.info(CATEGORIES.SETTINGS, EVENTS.DynamicUpdate, { key: event.key, value: event.newValue });
+        settings.update();
+    }
+});
+
+// 🔄 Custom event for same-page localStorage changes
+// (storage event doesn't fire on the same page that made the change)
+const originalSetItem = localStorage.setItem;
+localStorage.setItem = function(key, value) {
+    const event = new Event('localStorageChange');
+    event.key = key;
+    event.newValue = value;
+    originalSetItem.apply(this, arguments);
+
+    if (key.startsWith('setting')) {
+        window.logger?.info(CATEGORIES.SETTINGS, EVENTS.SamePageUpdate, { key: key, value: value });
+        settings.update();
+    }
+};
 
 
 
@@ -46,19 +76,23 @@ var mobsInfo = new MobsInfo();
 itemsInfo.initItems();
 mobsInfo.initMobs();
 
-console.log(`[Utils] 📊 MobsInfo loaded: ${Object.keys(mobsInfo.moblist).length} TypeIDs (fusionné)`);
 
 var map = new MapH(-1);
 const mapsDrawing = new MapDrawing(settings);
 
-const chestsHandler = new ChestsHandler();
+const chestsHandler = new ChestsHandler(settings);
 const mobsHandler = new MobsHandler(settings);
 mobsHandler.updateMobInfo(mobsInfo.moblist);
 
 // existing logEnemiesList button stays the same
 window.addEventListener('load', () => {
     const logEnemiesList = document.getElementById('logEnemiesList');
-    if (logEnemiesList) logEnemiesList.addEventListener('click', () => console.log(mobsHandler.getMobList()));
+    if (logEnemiesList) {
+        logEnemiesList.addEventListener('click', () => {
+            const mobList = mobsHandler.getMobList();
+            window.logger?.debug(CATEGORIES.DEBUG, EVENTS.EnemiesList, { mobList: mobList });
+        });
+    }
 
     // Clear TypeID Cache button
     const clearTypeIDCache = document.getElementById('clearTypeIDCache');
@@ -68,12 +102,16 @@ window.addEventListener('load', () => {
             const cached = localStorage.getItem('cachedStaticResourceTypeIDs');
             if (cached) {
                 const entries = JSON.parse(cached);
-                console.log(`[clearTypeIDCache] 🗑️ Clearing ${entries.length} cached entries:`);
-                entries.forEach(([typeId, info]) => {
-                    console.log(`  - TypeID ${typeId}: ${info.type} T${info.tier}`);
+                window.logger?.info(CATEGORIES.CACHE, EVENTS.ClearingTypeIDCache, {
+                    entriesCount: entries.length,
+                    entries: entries.map(([typeId, info]) => ({
+                        typeId: typeId,
+                        type: info.type,
+                        tier: info.tier
+                    }))
                 });
             } else {
-                console.log('[clearTypeIDCache] ℹ️ Cache is already empty');
+                window.logger?.info(CATEGORIES.CACHE, EVENTS.CacheAlreadyEmpty, {});
             }
 
             // Clear in-memory cache in MobsHandler
@@ -85,7 +123,7 @@ window.addEventListener('load', () => {
                 window.location.reload();
             }
         } catch (e) {
-            console.error('❌ Failed to clear TypeID cache:', e);
+            window.logger?.error(CATEGORIES.CACHE, EVENTS.ClearCacheFailed, { error: e.message });
             alert('❌ Failed to clear cache: ' + e.message);
         }
     });
@@ -102,8 +140,9 @@ const harvestablesHandler = new HarvestablesHandler(settings, mobsHandler); // �
 const playersHandler = new PlayersHandler(settings);
 
 
-// 📊 Expose harvestablesHandler globally for statistics access
+// 📊 Expose handlers globally for statistics and debug access
 window.harvestablesHandler = harvestablesHandler;
+window.mobsHandler = mobsHandler;
 
 const wispCageHandler = new WispCageHandler(settings);
 const wispCageDrawing = new WispCageDrawing(settings);
@@ -130,10 +169,10 @@ drawingUtils.InitOurPlayerCanvas(canvasOurPlayer, contextOurPlayer);
 
 
 const socket = new WebSocket('ws://localhost:5002');
-      
-socket.addEventListener('open', (event) => {
-  console.log('Connected to the WebSocket server.');
 
+
+socket.addEventListener('open', () => {
+  window.logger?.info(CATEGORIES.WEBSOCKET, EVENTS.Connected, { page: 'Utils' });
 });
 
 socket.addEventListener('message', (event) => {
@@ -160,11 +199,64 @@ socket.addEventListener('message', (event) => {
   }
 });
 
+// Helper function pour obtenir le nom de l'événement (pour debug)
+function getEventName(eventCode) {
+    const eventNames = {
+        1: 'Leave',
+        2: 'Join',
+        3: 'CharacterEquipmentChanged',
+        6: 'HealthUpdate',
+        7: 'HealthUpdates',
+        15: 'Damage',
+        21: 'Move',
+        35: 'ClusterChange',
+        71: 'NewMob',
+        72: 'MobChangeState',
+        91: 'RegenerationHealthChanged',
+        101: 'NewHarvestableObject',
+        102: 'NewSimpleHarvestableObjectList',
+        103: 'HarvestStart',
+        104: 'HarvestCancel',
+        105: 'HarvestFinished',
+        137: 'GetCharacterStats',
+        201: 'NewSimpleItem',
+        202: 'NewEquipmentItem',
+        // Ajoutez d'autres au fur et à mesure de la découverte
+    };
+    return eventNames[eventCode] || `Unknown_${eventCode}`;
+}
 
 function onEvent(Parameters)
 {
     const id = parseInt(Parameters[0]);
     const eventCode = Parameters[252];
+
+    // 📦 DEBUG RAW: Log tous les paquets bruts (très verbeux, pour debug profond uniquement)
+    // Note: debugRawPacketsConsole contrôle l'affichage console, debugRawPacketsServer contrôle l'envoi au serveur
+    window.logger?.debug(CATEGORIES.PACKET_RAW, `Event_${eventCode}`, {
+        id,
+        eventCode,
+        allParameters: Parameters
+    });
+
+    // 🔍 DEBUG ALL EVENTS: Log événement avec détails si debug activé
+    // Permet d'identifier les patterns et correspondances paramètres <-> événements
+    if (eventCode !== 91) { // Skip RegenerationHealthChanged car trop verbeux
+        const paramDetails = {};
+        for (let key in Parameters) {
+            if (Parameters.hasOwnProperty(key) && key !== '252' && key !== '0') { // Skip eventCode et id déjà loggés
+                paramDetails[`param[${key}]`] = Parameters[key];
+            }
+        }
+
+        window.logger?.debug(CATEGORIES.EVENT_DETAIL, `Event_${eventCode}_ID_${id}`, {
+            id,
+            eventCode,
+            eventName: getEventName(eventCode),
+            parameterCount: Object.keys(Parameters).length,
+            parameters: paramDetails
+        });
+    }
 
     switch (eventCode)
     {
@@ -279,9 +371,16 @@ function onEvent(Parameters)
 
         case EventCodes.RegenerationHealthChanged:
             // 🐛 DEBUG: Log health regeneration events
-            if (settings && settings.debugEnemies) {
+            {
                 const mobInfo = mobsHandler.debugLogMobById(Parameters[0]);
-                console.log(`[DEBUG_HP] Event 91 (RegenerationHealthChanged) | ID=${Parameters[0]} | ${mobInfo} | params[2]=${Parameters[2]} params[3]=${Parameters[3]} | ALL:`, Parameters);
+                window.logger?.debug(CATEGORIES.MOB_HEALTH, EVENTS.RegenerationHealthChanged, {
+                    eventCode: 91,
+                    id: Parameters[0],
+                    mobInfo,
+                    params2: Parameters[2],
+                    params3: Parameters[3],
+                    allParameters: Parameters
+                });
             }
             playersHandler.UpdatePlayerHealth(Parameters);
             mobsHandler.updateMobHealthRegen(Parameters);  // Update mob HP
@@ -289,9 +388,15 @@ function onEvent(Parameters)
 
         case EventCodes.HealthUpdate:
             // 🐛 DEBUG: Log health update events
-            if (settings && settings.debugEnemies) {
+            {
                 const mobInfo = mobsHandler.debugLogMobById(Parameters[0]);
-                console.log(`[DEBUG_HP] Event 6 (HealthUpdate) | ID=${Parameters[0]} | ${mobInfo} | params[3]=${Parameters[3]} | ALL:`, Parameters);
+                window.logger?.debug(CATEGORIES.MOB_HEALTH, EVENTS.HealthUpdate, {
+                    eventCode: 6,
+                    id: Parameters[0],
+                    mobInfo,
+                    params3: Parameters[3],
+                    allParameters: Parameters
+                });
             }
             playersHandler.UpdatePlayerLooseHealth(Parameters);
             mobsHandler.updateMobHealth(Parameters);  // Update mob HP
@@ -299,8 +404,11 @@ function onEvent(Parameters)
 
         case EventCodes.HealthUpdates:
             // 🐛 DEBUG: Log bulk health updates (multiple entities at once)
-            if (settings && settings.debugEnemies) {
-                console.log(`[DEBUG_HP] Event 7 (HealthUpdates - BULK) | ALL:`, Parameters);
+            {
+                window.logger?.debug(CATEGORIES.MOB_HEALTH, EVENTS.BulkHPUpdate, {
+                    eventCode: 7,
+                    allParameters: Parameters
+                });
             }
             mobsHandler.updateMobHealthBulk(Parameters);
             break;
@@ -344,9 +452,10 @@ function onEvent(Parameters)
             break;
 
         case 590:
-            console.log()
-            console.log("Key sync")
-            console.log(Parameters)
+            // Key sync event (debug)
+            {
+                window.logger?.debug(CATEGORIES.PACKET_RAW, EVENTS.KeySync, { Parameters });
+            }
             break;
 
         /*default:
@@ -354,6 +463,7 @@ function onEvent(Parameters)
             console.log(Parameters);*/
     }
 };
+
 
 function onRequest(Parameters)
 { 
@@ -372,10 +482,6 @@ function onResponse(Parameters)
     if (Parameters[253] == 35)
     {
         map.id = Parameters[0];
-        
-        /*console.log()
-        console.log("Cluster change")
-        console.log(Parameters)*/
     }
     // All data on the player joining the map (us)
     else if (Parameters[253] == 2)
@@ -387,18 +493,12 @@ function onResponse(Parameters)
         // And clear everything too 
         map.isBZ = Parameters[103] == 2;
 
-        /*console.log()
-        console.log("Join")
-        console.log(Parameters)*/
-
         ClearHandlers();
     }
-    // GetCharacterStats  
+    // GetCharacterStats response (event 137)
     else if (Parameters[253] == 137)
     {
-        console.log()
-        console.log("GetCharacterStats")
-        console.log(Parameters)
+        // Character stats received
     }
 };
 
@@ -441,7 +541,8 @@ function render()
             // keep clusters for later to draw info boxes above everything
             __clustersForInfo = clusters;
         } catch (e) {
-            console.error('[Cluster] Failed to compute/draw clusters:', e);
+            // ❌ ERROR (toujours loggé) - Erreur critique de calcul de clusters
+            window.logger?.error(CATEGORIES.CLUSTER, EVENTS.ComputeFailed, e);
         }
     }
 
@@ -465,7 +566,8 @@ function render()
                     drawingUtils.drawClusterIndicatorFromCluster(context, cluster);
                 }
             } catch (e) {
-                console.error('[Cluster] Failed to draw cluster info box:', e);
+                // ❌ ERROR (toujours loggé) - Erreur critique de rendu de cluster
+                window.logger?.error(CATEGORIES.CLUSTER, EVENTS.DrawInfoBoxFailed, e);
             }
         }
     }
