@@ -28,6 +28,7 @@ Cette documentation est organisée en plusieurs sections pour faciliter la navig
 - **[DEBUG_LOGGING_GUIDE.md](../work/DEBUG_LOGGING_GUIDE.md)** - Guide complet debug & logging
 - **[SETTINGS.md](./technical/SETTINGS.md)** - Configuration et settings
 - **[ENCHANTMENTS.md](./technical/ENCHANTMENTS.md)** - Système d'enchantements
+- **[PLAYERS.md](./technical/PLAYERS.md)** - Player detection & radar display ⭐
 
 ### 🔧 Scripts Utilitaires (work/)
 
@@ -50,6 +51,7 @@ Cette documentation est organisée en plusieurs sections pour faciliter la navig
 - **Comprendre l'architecture** → [ARCHITECTURE.md](./dev/ARCHITECTURE.md)
 - **Débugger et tracer les événements** → [DEBUG_LOGGING_GUIDE.md](../work/DEBUG_LOGGING_GUIDE.md) ⭐
 - **Utiliser les outils Python** → [WORK_OVERVIEW.md](./work/WORK_OVERVIEW.md) ⭐
+- **Player detection système** → [PLAYERS.md](./technical/PLAYERS.md) ⭐
 - **Guide pour agents IA** → [AI_AGENT_GUIDE.md](./ai/AI_AGENT_GUIDE.md)
 - **Configurer un agent IA** → [AI_AGENT_GUIDE.md](./ai/AI_AGENT_GUIDE.md)
 - **Débugger le logging** → [LOGGING.md](./technical/LOGGING.md)
