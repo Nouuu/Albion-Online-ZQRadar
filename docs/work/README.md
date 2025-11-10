@@ -1,0 +1,125 @@
+# 📋 Documentation de Travail - ZQRadar
+
+**Dernière mise à jour**: 2025-11-10
+
+---
+
+## 🎯 État Actuel du Projet
+
+### Problème en Cours: Mouvement des Joueurs 🔴
+
+**Fichier de référence**: [`PLAYER_MOVEMENT_CURRENT_STATUS.md`](PLAYER_MOVEMENT_CURRENT_STATUS.md)
+
+**Résumé**:
+- ✅ Les joueurs sont **détectés** et apparaissent sur le radar
+- ❌ Les joueurs **ne bougent pas** (restent figés à position initiale)
+- 🔍 En cours de débogage avec logs diagnostiques
+
+**Actions à faire**:
+1. Lancer le radar et observer les joueurs
+2. Analyser les nouveaux logs:
+   - `Event_Full_Dictionary` → Photon Event Code
+   - `DIAG_MoveBuffer_Structure` → Structure du Buffer
+   - `DIAG_MoveBuffer_Decoded` → Valeurs décodées
+
+---
+
+## 📁 Organisation des Documents
+
+### Documents Actifs
+
+| Fichier | Description | Status |
+|---------|-------------|--------|
+| [`PLAYER_MOVEMENT_CURRENT_STATUS.md`](PLAYER_MOVEMENT_CURRENT_STATUS.md) | État actuel du débogage joueurs | 🔴 EN COURS |
+| [`IMPROVEMENTS.md`](IMPROVEMENTS.md) | Historique des améliorations | ✅ À jour |
+| [`COLLECTION_GUIDE.md`](COLLECTION_GUIDE.md) | Guide collecte TypeIDs mobs | ✅ Valide |
+| [`QUICK_START.md`](QUICK_START.md) | Démarrage rapide outils | ✅ Valide |
+| [`TOOLS_README.md`](TOOLS_README.md) | Documentation scripts Python | ✅ Valide |
+| [`WORK_OVERVIEW.md`](WORK_OVERVIEW.md) | Vue d'ensemble scripts utilitaires | ✅ Valide |
+
+### Archive
+
+- `archive_2025-11-09/` → Anciennes investigations basées sur hypothèses incorrectes (protocole différent, chiffrement, etc.)
+
+---
+
+## 🚀 Comment Reprendre le Travail
+
+### Si vous êtes Claude (ou un autre IA)
+
+1. **Lire d'abord**: [`PLAYER_MOVEMENT_CURRENT_STATUS.md`](PLAYER_MOVEMENT_CURRENT_STATUS.md)
+   - Contient l'état exact du problème
+   - Timeline du bug
+   - Hypothèses en cours
+   - Logs diagnostiques actifs
+
+2. **Vérifier**: [`IMPROVEMENTS.md`](IMPROVEMENTS.md) section "2025-11-10"
+   - Résumé des corrections appliquées
+   - Fichiers modifiés
+
+3. **Analyser**: Nouveaux logs dans `logs/sessions/session_YYYY-MM-DD.jsonl`
+   - Chercher `Event_Full_Dictionary`
+   - Chercher `DIAG_MoveBuffer_*`
+
+### Si vous êtes le Développeur
+
+1. **État actuel**: Les joueurs sont détectés mais ne bougent pas
+2. **Prochaine étape**: Tester le radar et envoyer les logs qui contiennent:
+   - `Event_Full_Dictionary` (3 premiers events)
+   - `DIAG_MoveBuffer_Structure` (5 premiers Buffers)
+   - `DIAG_MoveBuffer_Decoded` (5 premiers)
+
+3. **Repos de référence**: `work/data/`
+   - AO-Radar (C#)
+   - albion-network (C#)
+   - ao-network (JavaScript?)
+   - AlbionOnlinePhotonEventIds
+
+---
+
+## ⚠️ Documents Obsolètes/Trompeurs (SUPPRIMÉS)
+
+Ces documents ont été **supprimés** car ils contenaient des conclusions incorrectes:
+
+- ~~`PLAYER_DETECTION_SOLUTION.md`~~ → Disait que tout était résolu (faux!)
+- Voir `archive_2025-11-09/README.md` pour la liste complète
+
+**Pourquoi supprimés?**
+- Induisaient en erreur (détection initiale ≠ mouvement)
+- Conclusions basées sur tests incomplets
+- Créaient confusion sur l'état réel du projet
+
+---
+
+## 🎯 Objectifs
+
+### Court Terme (Cette Semaine)
+
+1. **Résoudre mouvement des joueurs** 🔴 PRIORITÉ
+   - Identifier pourquoi Move events ne mettent pas à jour positions
+   - Tester Photon Event Code 2 vs 3
+   - Analyser structure Buffer
+
+### Moyen Terme
+
+2. **Collecte TypeIDs Living Resources**
+   - Voir [`COLLECTION_GUIDE.md`](COLLECTION_GUIDE.md)
+   - Couverture T4-T8 complète
+
+### Long Terme
+
+3. **Stabilité et Performance**
+   - Optimisation détection
+   - Réduction faux positifs
+   - Tests extensifs
+
+---
+
+## 📞 Contacts
+
+- **GitHub Issues**: [anthropics/claude-code/issues](https://github.com/anthropics/claude-code/issues)
+- **Documentation**: `docs/` et `docs/work/`
+
+---
+
+**Prêt à reprendre le débogage! 🔍🐛**

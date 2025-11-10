@@ -1,6 +1,73 @@
-# 📊 Résumé des Améliorations - Session de Logging
+# 📊 Résumé des Améliorations
 
-**Date :** 2025-11-03  
+---
+
+## 🚧 [2025-11-10] DÉBOGAGE - Mouvement des Joueurs
+
+**Problème :** Les joueurs sont détectés mais **ne bougent pas** (restent figés à position initiale)
+**Cause :** Move events ne mettent pas à jour les positions
+**Status :** 🔴 **EN COURS** (voir `PLAYER_MOVEMENT_CURRENT_STATUS.md`)
+
+### Ce qui fonctionne ✅
+
+1. **Détection initiale (NewCharacter)**
+   - ✅ Utilise `param[12]` ou `param[13]` (corrigé le 2025-11-09)
+   - ✅ Joueurs apparaissent sur radar
+   - ✅ Position initiale correcte
+
+### Ce qui NE fonctionne PAS ❌
+
+1. **Mise à jour positions (Move)**
+   - ❌ Buffer offsets 9/13 donnent valeurs **invalides** (1.28e-28, 6.2e+21)
+   - ❌ `updatePlayerPosition()` jamais appelé (positions invalides → skip)
+   - ❌ Joueurs restent **figés** à leur position initiale
+   - ❌ Apparaissent "au centre" quand local player bouge
+
+### Investigation en Cours
+
+**Hypothèses:**
+1. Photon Event Code 2 vs 3 (joueurs vs entités génériques?)
+2. Format Buffer différent pour joueurs
+3. Workaround actif bloque mises à jour
+
+**Logs diagnostiques ajoutés:**
+- `Event_Full_Dictionary` → Cherche Photon Event Code
+- `DIAG_MoveBuffer_Structure` → Analyse bytes du Buffer
+- `DIAG_MoveBuffer_Decoded` → Valeurs décodées offsets 9/13
+
+### Fichiers Modifiés (2025-11-10)
+
+- `scripts/Drawings/PlayersDrawing.js` - Garde lpX/lpY, filtre hX/hY
+- `scripts/Utils/Utils.js` - Logs diagnostiques Buffer
+
+### Documentation
+
+- 📋 `docs/work/PLAYER_MOVEMENT_CURRENT_STATUS.md` - **État actuel détaillé**
+- 📦 `docs/work/archive_2025-11-09/PLAYER_DETECTION_SOLUTION_OBSOLETE.md` - Conclusion prématurée (détection ≠ mouvement)
+
+---
+
+## 🎯 [2025-11-09] FIX PARTIEL - Détection des Joueurs
+
+**Problème :** Les autres joueurs ne s'affichaient pas sur le radar
+**Cause :** Mauvais paramètres pour position initiale
+**Status :** ✅ **CORRIGÉ** (détection uniquement, pas le mouvement)
+
+### Correction Appliquée
+
+1. **NewCharacter (EventCode 29)** - Position initiale
+   - ❌ **Avant** : Lisait `param[7]`
+   - ✅ **Après** : Lit `param[12]` ou `param[13]`
+
+### Impact
+
+- ✅ Joueurs détectés et apparaissent
+- ❌ Ne bougent pas (problème différent, voir ci-dessus)
+
+---
+
+## 📊 [2025-11-03] Session de Logging
+
 **Objectif :** Système de logging enrichi pour collecte TypeIDs
 
 ---
